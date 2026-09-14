@@ -1,4 +1,4 @@
-﻿import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { Database } from "@/lib/types/database.types";
@@ -6,7 +6,10 @@ import { Database } from "@/lib/types/database.types";
 export async function createClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock-provento.supabase.co";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "mock-anon-key";
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "mock-anon-key";
 
   return createServerClient(
     supabaseUrl,

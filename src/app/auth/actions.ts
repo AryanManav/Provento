@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -92,6 +92,27 @@ export async function signupAction(
 
   if (!data.user) {
     return { error: "Failed to create account. Please try again." };
+  }
+
+  // Ensure public.users and profile records exist
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const adminSupabase = createAdminClient();
+    await adminSupabase.from("users").upsert({
+      id: data.user.id,
+      email: validated.data.email,
+      full_name: validated.data.fullName,
+      role: validated.data.role,
+      email_verified: !!data.user.email_confirmed_at,
+    });
+
+    if (role === "candidate") {
+      await adminSupabase.from("candidate_profiles").upsert({
+        user_id: data.user.id,
+      });
+    }
+  } catch (err) {
+    console.error("Admin user sync fallback error:", err);
   }
 
   if (role === "company") {
