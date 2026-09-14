@@ -1,6 +1,7 @@
-﻿import { requireCandidate } from "@/lib/auth/guards";
+import { requireCandidate } from "@/lib/auth/guards";
 import { CandidateNav } from "@/components/layout/candidate-nav";
 import { PublicNavbar } from "@/components/layout/public-navbar";
+import { PublicFooter } from "@/components/layout/public-footer";
 
 export default async function CandidateLayout({
   children,
@@ -10,12 +11,13 @@ export default async function CandidateLayout({
   const user = await requireCandidate();
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-[#f4f2ee]">
       <PublicNavbar />
-      <div className="flex flex-1">
-        <CandidateNav user={user} />
-        <main className="flex-1 p-6 md:p-8 max-w-6xl">{children}</main>
-      </div>
+      <CandidateNav user={user} />
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {children}
+      </main>
+      <PublicFooter />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -12,18 +12,19 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         border: "var(--border)",
+        canvas: "#f4f2ee",
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
-          950: "#1e1b4b",
+          50: "#ebf4fd",
+          100: "#cce4f9",
+          200: "#99c9f4",
+          300: "#66aeee",
+          400: "#3393e9",
+          500: "#0a66c2", // LinkedIn signature blue
+          600: "#08529c",
+          700: "#063e76",
+          800: "#04294f",
+          900: "#021529",
+          950: "#010b15",
         },
       },
     },

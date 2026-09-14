@@ -1,11 +1,11 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --border: #e2e8f0;
+  --background: #f4f2ee;
+  --foreground: #191919;
+  --border: #e0dfdc;
 }
 
 body {
