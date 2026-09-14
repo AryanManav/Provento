@@ -1,5 +1,5 @@
-﻿-- ============================================================================
--- PROVENTO INITIAL SCHEMA MIGRATION
+-- ============================================================================
+-- PROVENTO INITIAL SCHEMA MIGRATION (IDEMPOTENT)
 -- Project-Based Talent Discovery & Evaluation Platform for Startups
 -- ============================================================================
 
@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS public.company_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL DEFAULT 'member', -- 'owner', 'admin', 'hiring_manager', 'member'
+    role TEXT NOT NULL DEFAULT 'member',
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     UNIQUE (company_id, user_id)
 );
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS public.project_feedback (
     revisions_required INTEGER NOT NULL DEFAULT 0,
     written_feedback TEXT NOT NULL,
     what_was_missing TEXT,
-    would_interview_or_hire TEXT NOT NULL, -- 'yes', 'maybe', 'no'
+    would_interview_or_hire TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
@@ -363,8 +363,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
 -- ----------------------------------------------------------------------------
 -- 10. HELPER FUNCTIONS & TRIGGERS
 -- ----------------------------------------------------------------------------
-
--- Check if current user is an admin
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -375,7 +373,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Check if current user is a member of a given company
 CREATE OR REPLACE FUNCTION public.is_company_member(lookup_company_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -386,7 +383,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Get candidate profile ID for current user
 CREATE OR REPLACE FUNCTION public.get_current_candidate_id()
 RETURNS UUID AS $$
 DECLARE
@@ -399,7 +395,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Auto-update updated_at timestamp function
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -408,7 +403,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply updated_at trigger to relevant tables
 DO $$
 DECLARE
     t text;
@@ -424,7 +418,6 @@ BEGIN
 END;
 $$;
 
--- Trigger to create public.users on auth.users signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -454,7 +447,6 @@ BEGIN
         email_verified = EXCLUDED.email_verified,
         updated_at = timezone('utc'::text, now());
 
-    -- If role is candidate, auto-create empty candidate profile
     IF user_role_val = 'candidate' THEN
         INSERT INTO public.candidate_profiles (user_id)
         VALUES (NEW.id)
@@ -471,10 +463,8 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ----------------------------------------------------------------------------
--- 11. ROW LEVEL SECURITY (RLS)
+-- 11. ROW LEVEL SECURITY (RLS) - DROP IF EXISTS FIRST
 -- ----------------------------------------------------------------------------
-
--- Enable RLS on all tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_skills ENABLE ROW LEVEL SECURITY;
@@ -494,228 +484,218 @@ ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- USERS POLICIES
+DROP POLICY IF EXISTS "Users are viewable by authenticated users" ON public.users;
 CREATE POLICY "Users are viewable by authenticated users"
-    ON public.users FOR SELECT
-    TO authenticated
-    USING (true);
+    ON public.users FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Users can update their own record" ON public.users;
 CREATE POLICY "Users can update their own record"
-    ON public.users FOR UPDATE
-    TO authenticated
-    USING (auth.uid() = id);
+    ON public.users FOR UPDATE TO authenticated USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Admins have full access to users" ON public.users;
 CREATE POLICY "Admins have full access to users"
-    ON public.users FOR ALL
-    TO authenticated
-    USING (public.is_admin());
+    ON public.users FOR ALL TO authenticated USING (public.is_admin());
 
 -- CANDIDATE PROFILES POLICIES
+DROP POLICY IF EXISTS "Candidate profiles viewable by authenticated users" ON public.candidate_profiles;
 CREATE POLICY "Candidate profiles viewable by authenticated users"
-    ON public.candidate_profiles FOR SELECT
-    TO authenticated
-    USING (true);
+    ON public.candidate_profiles FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Candidates can update own profile" ON public.candidate_profiles;
 CREATE POLICY "Candidates can update own profile"
-    ON public.candidate_profiles FOR UPDATE
-    TO authenticated
-    USING (user_id = auth.uid());
+    ON public.candidate_profiles FOR UPDATE TO authenticated USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Candidates can insert own profile" ON public.candidate_profiles;
 CREATE POLICY "Candidates can insert own profile"
-    ON public.candidate_profiles FOR INSERT
-    TO authenticated
-    WITH CHECK (user_id = auth.uid());
+    ON public.candidate_profiles FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
 -- CANDIDATE SKILLS & PROJECTS
+DROP POLICY IF EXISTS "Candidate skills viewable by authenticated users" ON public.candidate_skills;
 CREATE POLICY "Candidate skills viewable by authenticated users"
-    ON public.candidate_skills FOR SELECT
-    TO authenticated
-    USING (true);
+    ON public.candidate_skills FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Candidates can manage own skills" ON public.candidate_skills;
 CREATE POLICY "Candidates can manage own skills"
-    ON public.candidate_skills FOR ALL
-    TO authenticated
+    ON public.candidate_skills FOR ALL TO authenticated
     USING (candidate_id = public.get_current_candidate_id())
     WITH CHECK (candidate_id = public.get_current_candidate_id());
 
+DROP POLICY IF EXISTS "Candidate projects viewable by authenticated users" ON public.candidate_projects;
 CREATE POLICY "Candidate projects viewable by authenticated users"
-    ON public.candidate_projects FOR SELECT
-    TO authenticated
-    USING (true);
+    ON public.candidate_projects FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Candidates can manage own projects" ON public.candidate_projects;
 CREATE POLICY "Candidates can manage own projects"
-    ON public.candidate_projects FOR ALL
-    TO authenticated
+    ON public.candidate_projects FOR ALL TO authenticated
     USING (candidate_id = public.get_current_candidate_id())
     WITH CHECK (candidate_id = public.get_current_candidate_id());
 
 -- COMPANIES POLICIES
+DROP POLICY IF EXISTS "Companies viewable by all authenticated users" ON public.companies;
 CREATE POLICY "Companies viewable by all authenticated users"
-    ON public.companies FOR SELECT
-    TO authenticated
-    USING (true);
+    ON public.companies FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Company members can update company" ON public.companies;
 CREATE POLICY "Company members can update company"
-    ON public.companies FOR UPDATE
-    TO authenticated
-    USING (public.is_company_member(id));
+    ON public.companies FOR UPDATE TO authenticated USING (public.is_company_member(id));
 
+DROP POLICY IF EXISTS "Authenticated users can create companies" ON public.companies;
 CREATE POLICY "Authenticated users can create companies"
-    ON public.companies FOR INSERT
-    TO authenticated
-    WITH CHECK (true);
+    ON public.companies FOR INSERT TO authenticated WITH CHECK (true);
 
 -- COMPANY MEMBERS POLICIES
+DROP POLICY IF EXISTS "Company members can view team" ON public.company_members;
 CREATE POLICY "Company members can view team"
-    ON public.company_members FOR SELECT
-    TO authenticated
+    ON public.company_members FOR SELECT TO authenticated
     USING (public.is_company_member(company_id) OR public.is_admin());
 
+DROP POLICY IF EXISTS "Company members manage members" ON public.company_members;
 CREATE POLICY "Company members manage members"
-    ON public.company_members FOR ALL
-    TO authenticated
+    ON public.company_members FOR ALL TO authenticated
     USING (public.is_company_member(company_id) OR public.is_admin())
     WITH CHECK (public.is_company_member(company_id) OR public.is_admin());
 
 -- PROJECTS POLICIES
+DROP POLICY IF EXISTS "Published projects viewable by everyone" ON public.projects;
 CREATE POLICY "Published projects viewable by everyone"
     ON public.projects FOR SELECT
     USING (status IN ('published', 'applications_open', 'candidate_selected', 'in_progress', 'completed') OR public.is_company_member(company_id) OR public.is_admin());
 
+DROP POLICY IF EXISTS "Company members can create projects" ON public.projects;
 CREATE POLICY "Company members can create projects"
-    ON public.projects FOR INSERT
-    TO authenticated
+    ON public.projects FOR INSERT TO authenticated
     WITH CHECK (public.is_company_member(company_id) OR public.is_admin());
 
+DROP POLICY IF EXISTS "Company members can update own projects" ON public.projects;
 CREATE POLICY "Company members can update own projects"
-    ON public.projects FOR UPDATE
-    TO authenticated
+    ON public.projects FOR UPDATE TO authenticated
     USING (public.is_company_member(company_id) OR public.is_admin());
 
 -- PROJECT SKILLS POLICIES
+DROP POLICY IF EXISTS "Project skills viewable by all" ON public.project_skills;
 CREATE POLICY "Project skills viewable by all"
-    ON public.project_skills FOR SELECT
-    USING (true);
+    ON public.project_skills FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Company members manage project skills" ON public.project_skills;
 CREATE POLICY "Company members manage project skills"
-    ON public.project_skills FOR ALL
-    TO authenticated
+    ON public.project_skills FOR ALL TO authenticated
     USING (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin())));
 
 -- APPLICATIONS POLICIES
+DROP POLICY IF EXISTS "Candidates can view their own applications" ON public.applications;
 CREATE POLICY "Candidates can view their own applications"
-    ON public.applications FOR SELECT
-    TO authenticated
+    ON public.applications FOR SELECT TO authenticated
     USING (candidate_id = public.get_current_candidate_id());
 
+DROP POLICY IF EXISTS "Company members can view applications for their projects" ON public.applications;
 CREATE POLICY "Company members can view applications for their projects"
-    ON public.applications FOR SELECT
-    TO authenticated
+    ON public.applications FOR SELECT TO authenticated
     USING (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND public.is_company_member(p.company_id)));
 
+DROP POLICY IF EXISTS "Candidates can submit applications" ON public.applications;
 CREATE POLICY "Candidates can submit applications"
-    ON public.applications FOR INSERT
-    TO authenticated
+    ON public.applications FOR INSERT TO authenticated
     WITH CHECK (candidate_id = public.get_current_candidate_id());
 
+DROP POLICY IF EXISTS "Company members can update application status" ON public.applications;
 CREATE POLICY "Company members can update application status"
-    ON public.applications FOR UPDATE
-    TO authenticated
+    ON public.applications FOR UPDATE TO authenticated
     USING (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin())));
 
 -- SELECTIONS POLICIES
+DROP POLICY IF EXISTS "Candidate and company can view selection" ON public.project_selections;
 CREATE POLICY "Candidate and company can view selection"
-    ON public.project_selections FOR SELECT
-    TO authenticated
+    ON public.project_selections FOR SELECT TO authenticated
     USING (
         candidate_id = public.get_current_candidate_id() OR
         EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin()))
     );
 
+DROP POLICY IF EXISTS "Company members can select candidates" ON public.project_selections;
 CREATE POLICY "Company members can select candidates"
-    ON public.project_selections FOR INSERT
-    TO authenticated
+    ON public.project_selections FOR INSERT TO authenticated
     WITH CHECK (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin())));
 
 -- SUBMISSIONS POLICIES
+DROP POLICY IF EXISTS "Candidate and company can view submissions" ON public.project_submissions;
 CREATE POLICY "Candidate and company can view submissions"
-    ON public.project_submissions FOR SELECT
-    TO authenticated
+    ON public.project_submissions FOR SELECT TO authenticated
     USING (
         candidate_id = public.get_current_candidate_id() OR
         EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin()))
     );
 
+DROP POLICY IF EXISTS "Selected candidate can submit work" ON public.project_submissions;
 CREATE POLICY "Selected candidate can submit work"
-    ON public.project_submissions FOR INSERT
-    TO authenticated
+    ON public.project_submissions FOR INSERT TO authenticated
     WITH CHECK (
         candidate_id = public.get_current_candidate_id() AND
         EXISTS (SELECT 1 FROM public.project_selections ps WHERE ps.project_id = project_submissions.project_id AND ps.candidate_id = candidate_id)
     );
 
+DROP POLICY IF EXISTS "Company can update submission status" ON public.project_submissions;
 CREATE POLICY "Company can update submission status"
-    ON public.project_submissions FOR UPDATE
-    TO authenticated
+    ON public.project_submissions FOR UPDATE TO authenticated
     USING (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin())));
 
 -- FEEDBACK POLICIES
+DROP POLICY IF EXISTS "Company and candidate can view feedback" ON public.project_feedback;
 CREATE POLICY "Company and candidate can view feedback"
-    ON public.project_feedback FOR SELECT
-    TO authenticated
+    ON public.project_feedback FOR SELECT TO authenticated
     USING (
         candidate_id = public.get_current_candidate_id() OR
         public.is_company_member(company_id) OR
         public.is_admin()
     );
 
+DROP POLICY IF EXISTS "Company members can submit feedback" ON public.project_feedback;
 CREATE POLICY "Company members can submit feedback"
-    ON public.project_feedback FOR INSERT
-    TO authenticated
+    ON public.project_feedback FOR INSERT TO authenticated
     WITH CHECK (public.is_company_member(company_id) OR public.is_admin());
 
 -- OUTCOMES POLICIES
+DROP POLICY IF EXISTS "Company and candidate can view outcome" ON public.project_outcomes;
 CREATE POLICY "Company and candidate can view outcome"
-    ON public.project_outcomes FOR SELECT
-    TO authenticated
+    ON public.project_outcomes FOR SELECT TO authenticated
     USING (
         candidate_id = public.get_current_candidate_id() OR
         EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin()))
     );
 
+DROP POLICY IF EXISTS "Company members can record outcome" ON public.project_outcomes;
 CREATE POLICY "Company members can record outcome"
-    ON public.project_outcomes FOR INSERT
-    TO authenticated
+    ON public.project_outcomes FOR INSERT TO authenticated
     WITH CHECK (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND (public.is_company_member(p.company_id) OR public.is_admin())));
 
 -- PAYMENTS POLICIES
+DROP POLICY IF EXISTS "Company and candidate can view related payments" ON public.payments;
 CREATE POLICY "Company and candidate can view related payments"
-    ON public.payments FOR SELECT
-    TO authenticated
+    ON public.payments FOR SELECT TO authenticated
     USING (
         public.is_company_member(company_id) OR
         candidate_id = public.get_current_candidate_id() OR
         public.is_admin()
     );
 
+DROP POLICY IF EXISTS "Company can initiate payment" ON public.payments;
 CREATE POLICY "Company can initiate payment"
-    ON public.payments FOR INSERT
-    TO authenticated
+    ON public.payments FOR INSERT TO authenticated
     WITH CHECK (public.is_company_member(company_id) OR public.is_admin());
 
 -- NOTIFICATIONS POLICIES
+DROP POLICY IF EXISTS "Users can only view and update own notifications" ON public.notifications;
 CREATE POLICY "Users can only view and update own notifications"
-    ON public.notifications FOR ALL
-    TO authenticated
+    ON public.notifications FOR ALL TO authenticated
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
 -- ADMIN NOTES & AUDIT LOGS
+DROP POLICY IF EXISTS "Admins only for admin notes" ON public.admin_notes;
 CREATE POLICY "Admins only for admin notes"
-    ON public.admin_notes FOR ALL
-    TO authenticated
+    ON public.admin_notes FOR ALL TO authenticated
     USING (public.is_admin());
 
+DROP POLICY IF EXISTS "Admins only for audit logs" ON public.audit_logs;
 CREATE POLICY "Admins only for audit logs"
-    ON public.audit_logs FOR ALL
-    TO authenticated
+    ON public.audit_logs FOR ALL TO authenticated
     USING (public.is_admin());
