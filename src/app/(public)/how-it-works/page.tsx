@@ -1,5 +1,4 @@
 ﻿import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function HowItWorksPage() {
   const steps = [
@@ -37,7 +36,8 @@ export default function HowItWorksPage() {
           The Provento Evaluation Loop
         </h1>
         <p className="text-slate-600 max-w-xl mx-auto">
-          How startups turn hiring uncertainty into high-confidence engineering decisions through real work.
+          How startups turn hiring uncertainty into high-confidence engineering decisions
+          through real work.
         </p>
       </div>
 
