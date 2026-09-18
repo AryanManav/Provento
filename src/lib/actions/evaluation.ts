@@ -157,25 +157,15 @@ export async function reviewSubmissionAction(
   );
   if ("error" in ownership) return { error: ownership.error };
 
+  // apply_submission_decision (database) refuses a second decision and moves
+  // the project on: accepted/rejected → completed, revision → reopened.
   const { error } = await supabase
     .from("project_submissions")
     .update({ status: validated.data.decision })
     .eq("id", validated.data.submissionId);
 
-  if (error) return { error: error.message };
-
-  // Accepting closes the work phase; a revision request reopens it.
-  const nextProjectStatus: ProjectStatus =
-    validated.data.decision === "accepted"
-      ? "completed"
-      : validated.data.decision === "revision_requested"
-        ? "revision_requested"
-        : "under_review";
-
-  await supabase
-    .from("projects")
-    .update({ status: nextProjectStatus })
-    .eq("id", submission.project_id);
+  if (error?.code === "P0001") return { error: error.message };
+  if (error) return { error: "Couldn't record the decision. Please try again." };
 
   revalidatePath(`/company/projects/${submission.project_id}/review`);
   revalidatePath(`/candidate/trials/${submission.project_id}`);

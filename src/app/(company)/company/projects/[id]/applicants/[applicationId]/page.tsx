@@ -17,6 +17,7 @@ import { SectionCard } from "@/components/common/section-card";
 import { StatusBanner } from "@/components/common/status-banner";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { formatDate } from "@/lib/utils";
+import { getSelectedCandidateId } from "@/lib/data/evaluation";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +32,10 @@ export default async function ApplicantProfilePage({
   const { id, applicationId } = await params;
   const { updated, error } = await searchParams;
 
-  const [project, applicant] = await Promise.all([
+  const [project, applicant, selectedCandidateId] = await Promise.all([
     getProjectHeader(id),
     getApplicantProfile(applicationId),
+    getSelectedCandidateId(id),
   ]);
 
   // The application must belong to this project, and the project to this
@@ -98,6 +100,7 @@ export default async function ApplicantProfilePage({
             <ApplicationStatusForm
               applicationId={applicant.applicationId}
               status={applicant.status}
+              selectionTaken={selectedCandidateId !== null}
               returnTo={selfPath}
             />
           </div>

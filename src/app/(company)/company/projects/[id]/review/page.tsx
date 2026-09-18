@@ -141,7 +141,14 @@ export default async function ProjectReviewPage({
 
                   <AttachmentList attachments={submission.attachments} />
 
-                  <ReviewSubmissionForm submissionId={submission.id} />
+                  {submission.status === "submitted" ||
+                  submission.status === "under_review" ? (
+                    <ReviewSubmissionForm submissionId={submission.id} />
+                  ) : (
+                    <p className="border-t border-slate-100 pt-3 text-xs font-semibold text-slate-500">
+                      Decision recorded: {humanize(submission.status)} · final
+                    </p>
+                  )}
                 </article>
               ))
             )}

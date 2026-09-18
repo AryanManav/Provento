@@ -220,27 +220,18 @@ export async function updateApplicationStatusAction(formData: FormData) {
     ? requested
     : projectPath;
 
+  // apply_application_decision (database) makes Selected and Rejected final,
+  // allows one selection per project, and creates that selection atomically.
   const { error } = await supabase
     .from("applications")
     .update({ status: validated.data.status })
     .eq("id", validated.data.applicationId);
 
-  if (error) redirectWithError(destination, error.message);
-
-  if (validated.data.status === "selected") {
-    await supabase.from("project_selections").upsert(
-      {
-        project_id: application.project_id,
-        candidate_id: application.candidate_id,
-        selected_by: user.id,
-        status: "active",
-      },
-      { onConflict: "project_id" }
+  if (error) {
+    redirectWithError(
+      destination,
+      error.code === "P0001" ? error.message : "Couldn't update the application."
     );
-    await supabase
-      .from("projects")
-      .update({ status: "candidate_selected" })
-      .eq("id", application.project_id);
   }
 
   revalidatePath(projectPath);

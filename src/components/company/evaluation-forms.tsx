@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   recordProjectFeedbackAction,
@@ -38,29 +38,69 @@ function Feedback({ state }: { state: ActionResponse | null }) {
   return null;
 }
 
+const SUBMISSION_DECISIONS = [
+  { value: "accepted", label: "Accept work" },
+  { value: "revision_requested", label: "Request a revision" },
+  { value: "rejected", label: "Reject work" },
+] as const;
+
+/**
+ * One decision per submission. Accepting or rejecting ends the project's work
+ * phase; a revision request lets the candidate send a new submission, which
+ * gets its own decision. The database refuses any second decision.
+ */
 export function ReviewSubmissionForm({ submissionId }: { submissionId: string }) {
   const [state, formAction, isPending] = useActionState(
     async (prev: ActionResponse | null, formData: FormData) =>
       reviewSubmissionAction(prev, formData),
     null
   );
+  const [decision, setDecision] =
+    useState<(typeof SUBMISSION_DECISIONS)[number]["value"]>("accepted");
+  const [confirming, setConfirming] = useState(false);
 
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-2">
+    <form action={formAction} className="space-y-2 border-t border-slate-100 pt-3">
       <input type="hidden" name="submissionId" value={submissionId} />
       <Feedback state={state} />
-      <select
-        name="decision"
-        defaultValue="accepted"
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-      >
-        <option value="accepted">Accept</option>
-        <option value="revision_requested">Request revision</option>
-        <option value="rejected">Reject</option>
-      </select>
-      <Button size="sm" type="submit" disabled={isPending}>
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply decision"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          name="decision"
+          value={decision}
+          onChange={(event) => {
+            setDecision(event.target.value as typeof decision);
+            setConfirming(false);
+          }}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        >
+          {SUBMISSION_DECISIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {confirming ? (
+          <Button size="sm" type="submit" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Confirm decision"
+            )}
+          </Button>
+        ) : (
+          <Button size="sm" type="button" onClick={() => setConfirming(true)}>
+            Decide
+          </Button>
+        )}
+      </div>
+      {confirming && (
+        <p className="text-xs text-amber-700">
+          This decision is final for this submission.
+          {decision === "revision_requested"
+            ? " The candidate can then send a revised submission."
+            : " It closes the work phase of the project."}
+        </p>
+      )}
     </form>
   );
 }

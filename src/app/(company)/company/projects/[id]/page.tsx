@@ -60,6 +60,9 @@ export default async function ManageProjectPage({
   // Rejected and withdrawn applications leave the main list but stay on record.
   const activeApplicants = applicants.filter((application) => !isClosed(application));
   const closedApplicants = applicants.filter(isClosed);
+  const selectionTaken = applicants.some(
+    (application) => application.status === "selected"
+  );
   const placesTaken = applicants.filter(
     (application) => application.status !== "withdrawn"
   ).length;
@@ -107,6 +110,7 @@ export default async function ManageProjectPage({
         <ApplicationStatusForm
           applicationId={application.id}
           status={application.status}
+          selectionTaken={selectionTaken}
         />
       </div>
     </article>
