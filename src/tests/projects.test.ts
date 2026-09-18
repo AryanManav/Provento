@@ -144,3 +144,35 @@ describe("decision messages", () => {
     ).toBe(false);
   });
 });
+
+describe("project controls", () => {
+  const projectId = "9f59a967-7782-4975-bac4-1ff6cc8e765d";
+
+  it("accepts only public or private", async () => {
+    const { projectVisibilitySchema } = await import("../lib/validations/project");
+    expect(
+      projectVisibilitySchema.safeParse({ projectId, visibility: "private" }).success
+    ).toBe(true);
+    expect(
+      projectVisibilitySchema.safeParse({ projectId, visibility: "hidden" }).success
+    ).toBe(false);
+  });
+
+  it("keeps the withdrawal reason optional and bounded", async () => {
+    const { withdrawProjectSchema } = await import("../lib/validations/project");
+    const blank = withdrawProjectSchema.safeParse({ projectId, reason: "" });
+    expect(blank.success && blank.data.reason).toBe(null);
+    expect(
+      withdrawProjectSchema.safeParse({ projectId, reason: "x".repeat(1001) }).success
+    ).toBe(false);
+  });
+
+  it("only lets a company manage a project before a candidate is selected", async () => {
+    const { COMPANY_MANAGEABLE_PROJECT_STATUSES } = await import("../lib/constants");
+    expect([...COMPANY_MANAGEABLE_PROJECT_STATUSES]).toEqual([
+      "draft",
+      "published",
+      "applications_open",
+    ]);
+  });
+});

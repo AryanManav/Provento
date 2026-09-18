@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBanner } from "@/components/common/status-banner";
 import { EmptyState } from "@/components/common/empty-state";
 import { ApplicationStatusForm } from "@/components/company/application-status-form";
+import { ProjectControls } from "@/components/company/project-controls";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { CountBadge } from "@/components/notifications/count-badge";
 import { getNotificationSummary } from "@/lib/data/notifications";
@@ -19,6 +20,13 @@ import type { ApplicantView } from "@/lib/types/domain";
 import type { ApplicationStatus } from "@/lib/types/database.types";
 
 export const dynamic = "force-dynamic";
+
+const PROJECT_UPDATE_MESSAGES: Record<string, string> = {
+  selected: "Candidate selected. They can now see the brief and submit their work.",
+  private: "Project is now private — hidden from Browse, applications paused.",
+  public: "Project is public again and taking applications.",
+  withdrawn: "Project withdrawn. Applicants have been notified.",
+};
 
 export default async function ManageProjectPage({
   params,
@@ -160,11 +168,16 @@ export default async function ManageProjectPage({
       )}
 
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
+      <ProjectControls
+        projectId={project.id}
+        status={project.status}
+        applicationCount={applicants.length}
+      />
+
       {updated && (
         <StatusBanner tone="success">
-          {updated === "selected"
-            ? "Candidate selected. They can now see the brief and submit their work."
-            : `Application marked as ${updated.replaceAll("_", " ")}.`}
+          {PROJECT_UPDATE_MESSAGES[updated] ??
+            `Application marked as ${updated.replaceAll("_", " ")}.`}
         </StatusBanner>
       )}
 

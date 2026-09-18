@@ -286,3 +286,13 @@ export const SETTINGS_BY_ROLE: Record<UserRole, string | null> = {
 export function settingsFor(role: UserRole): string | null {
   return SETTINGS_BY_ROLE[role] ?? null;
 }
+
+/**
+ * Before a candidate is selected, the company may hide, re-publish or withdraw
+ * its project (enforced by guard_project_status). After that, it can't.
+ */
+export const COMPANY_MANAGEABLE_PROJECT_STATUSES = [
+  "draft",
+  "published",
+  "applications_open",
+] as const satisfies readonly ProjectStatus[];

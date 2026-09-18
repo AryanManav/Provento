@@ -33,7 +33,7 @@ export const COMPANY_PROJECT_STATUS: Record<
   ProjectStatus,
   { label: string; tone: "neutral" | "info" | "warning" | "success" | "danger" }
 > = {
-  draft: { label: "Draft", tone: "neutral" },
+  draft: { label: "Private — hidden from Browse", tone: "neutral" },
   pending_review: { label: "Pending review", tone: "neutral" },
   published: { label: "Published", tone: "info" },
   applications_open: { label: "Accepting applications", tone: "info" },

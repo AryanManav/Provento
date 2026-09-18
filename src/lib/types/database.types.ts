@@ -311,6 +311,7 @@ export interface Database {
           evaluation_criteria: string[];
           work_mode: ProjectWorkMode;
           max_applicants: number | null;
+          withdrawal_reason: string | null;
           expected_hours: number;
           payment_amount: number;
           currency: string;
@@ -334,6 +335,7 @@ export interface Database {
           evaluation_criteria?: string[];
           work_mode?: ProjectWorkMode;
           max_applicants?: number | null;
+          withdrawal_reason?: string | null;
           expected_hours?: number;
           payment_amount: number;
           currency?: string;
@@ -355,6 +357,7 @@ export interface Database {
           evaluation_criteria?: string[];
           work_mode?: ProjectWorkMode;
           max_applicants?: number | null;
+          withdrawal_reason?: string | null;
           expected_hours?: number;
           payment_amount?: number;
           currency?: string;
@@ -763,6 +766,10 @@ export interface Database {
       };
       delete_my_account: {
         Args: Record<string, never>;
+        Returns: undefined;
+      };
+      delete_project: {
+        Args: { target_project_id: string };
         Returns: undefined;
       };
       project_application_counts: {

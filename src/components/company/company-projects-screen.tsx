@@ -147,11 +147,13 @@ export async function CompanyProjectsScreen({
   userId,
   tab,
   created,
+  deleted,
   error,
 }: {
   userId: string;
   tab: CompanyProjectsTab;
   created?: string;
+  deleted?: string;
   error?: string;
 }) {
   const companyId = await getCompanyIdForUser(userId);
@@ -196,6 +198,7 @@ export async function CompanyProjectsScreen({
       </div>
 
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
+      {deleted && <StatusBanner tone="success">Project deleted.</StatusBanner>}
       {created && (
         <StatusBanner tone="success">
           Project published and open for applications.

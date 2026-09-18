@@ -234,13 +234,16 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
 export async function getProjectHeader(projectId: string): Promise<{
   id: string;
   title: string;
+  slug: string;
+  status: ProjectStatus;
   companyId: string;
   maxApplicants: number | null;
+  applicationDeadline: string;
 } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, title, company_id, max_applicants")
+    .select("id, title, slug, status, company_id, max_applicants, application_deadline")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -248,8 +251,11 @@ export async function getProjectHeader(projectId: string): Promise<{
   return {
     id: data.id,
     title: data.title,
+    slug: data.slug,
+    status: data.status as ProjectStatus,
     companyId: data.company_id,
     maxApplicants: data.max_applicants ?? null,
+    applicationDeadline: data.application_deadline,
   };
 }
 

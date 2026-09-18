@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_CURRENCY, MAX_APPLICANTS_LIMIT } from "@/lib/constants";
+import { optionalNote } from "./application";
 
 export const createProjectSchema = z
   .object({
@@ -55,3 +56,20 @@ export const createProjectSchema = z
   });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+
+export const projectVisibilitySchema = z.object({
+  projectId: z.string().uuid("Invalid project"),
+  visibility: z.enum(["public", "private"], {
+    errorMap: () => ({ message: "Choose public or private" }),
+  }),
+});
+
+export const withdrawProjectSchema = z.object({
+  projectId: z.string().uuid("Invalid project"),
+  /** Sent to every applicant with the notification. */
+  reason: optionalNote(1000),
+});
+
+export const deleteProjectSchema = z.object({
+  projectId: z.string().uuid("Invalid project"),
+});

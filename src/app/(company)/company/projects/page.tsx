@@ -7,15 +7,16 @@ export const dynamic = "force-dynamic";
 export default async function CompanyActiveProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; deleted?: string; error?: string }>;
 }) {
   const user = await requireRole(["company", "admin"]);
-  const { created, error } = await searchParams;
+  const { created, deleted, error } = await searchParams;
   return (
     <CompanyProjectsScreen
       userId={user.id}
       tab="active"
       created={created}
+      deleted={deleted}
       error={error}
     />
   );

@@ -8,7 +8,10 @@ import { getCompanyIdForUser, getProjectHeader } from "@/lib/data/company";
 import {
   companyProfileSchema,
   createProjectSchema,
+  deleteProjectSchema,
+  projectVisibilitySchema,
   updateApplicationStatusSchema,
+  withdrawProjectSchema,
 } from "@/lib/validations";
 import { DEFAULT_CURRENCY, PROFILE_MEDIA_BUCKET } from "@/lib/constants";
 import type { ActionResponse } from "@/lib/types/actions";
@@ -290,4 +293,105 @@ export async function removeCompanyLogoAction(): Promise<ActionResponse> {
 
   revalidatePath("/company/profile");
   return { success: true };
+}
+
+/** Loads a project and confirms the caller's company owns it, or redirects. */
+async function requireOwnedProject(projectId: string) {
+  const user = await requireRole(["company", "admin"]);
+  const header = await getProjectHeader(projectId);
+  if (!header) redirectWithError("/company/projects", "Project not found");
+  if (user.role !== "admin") {
+    const companyId = await getCompanyIdForUser(user.id);
+    if (companyId !== header.companyId) {
+      redirectWithError("/company/projects", "You can't change this project");
+    }
+  }
+  return header;
+}
+
+/**
+ * Private hides the project from Browse and pauses applications; public brings
+ * it back. Only before a candidate is selected (guard_project_status).
+ */
+export async function setProjectVisibilityAction(formData: FormData) {
+  const parsed = projectVisibilitySchema.safeParse({
+    projectId: formData.get("projectId"),
+    visibility: formData.get("visibility"),
+  });
+  if (!parsed.success)
+    redirectWithError("/company/projects", parsed.error.errors[0].message);
+
+  const project = await requireOwnedProject(parsed.data.projectId);
+  const path = `/company/projects/${project.id}`;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      status: parsed.data.visibility === "private" ? "draft" : "applications_open",
+    })
+    .eq("id", project.id);
+  if (error) {
+    redirectWithError(
+      path,
+      error.code === "P0001" ? error.message : "Couldn't update the project."
+    );
+  }
+
+  revalidatePath(path);
+  revalidatePath("/projects");
+  redirect(`${path}?updated=${parsed.data.visibility}`);
+}
+
+/** Closes the project for good and tells every applicant why. */
+export async function withdrawProjectAction(formData: FormData) {
+  const parsed = withdrawProjectSchema.safeParse({
+    projectId: formData.get("projectId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success)
+    redirectWithError("/company/projects", parsed.error.errors[0].message);
+
+  const project = await requireOwnedProject(parsed.data.projectId);
+  const path = `/company/projects/${project.id}`;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("projects")
+    .update({ status: "cancelled", withdrawal_reason: parsed.data.reason ?? null })
+    .eq("id", project.id);
+  if (error) {
+    redirectWithError(
+      path,
+      error.code === "P0001" ? error.message : "Couldn't withdraw the project."
+    );
+  }
+
+  revalidatePath(path);
+  revalidatePath("/company/projects");
+  revalidatePath("/projects");
+  redirect(`${path}?updated=withdrawn`);
+}
+
+/** Removes a project nobody has applied to (delete_project enforces that). */
+export async function deleteProjectAction(formData: FormData) {
+  const parsed = deleteProjectSchema.safeParse({ projectId: formData.get("projectId") });
+  if (!parsed.success)
+    redirectWithError("/company/projects", parsed.error.errors[0].message);
+
+  const project = await requireOwnedProject(parsed.data.projectId);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_project", {
+    target_project_id: project.id,
+  });
+  if (error) {
+    redirectWithError(
+      `/company/projects/${project.id}`,
+      error.code === "P0001" ? error.message : "Couldn't delete the project."
+    );
+  }
+
+  revalidatePath("/company/projects");
+  revalidatePath("/projects");
+  redirect("/company/projects?deleted=1");
 }
