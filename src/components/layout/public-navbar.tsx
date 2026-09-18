@@ -1,17 +1,17 @@
 ﻿import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { Briefcase, ArrowRight } from "lucide-react";
+import { primaryNavFor } from "@/lib/constants";
+import { UserMenu } from "@/components/layout/user-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { getNotificationSummary } from "@/lib/data/notifications";
 
 export async function PublicNavbar() {
   const user = await getCurrentUser();
-
-  const getDashboardLink = () => {
-    if (!user) return "/login";
-    if (user.role === "admin") return "/admin";
-    if (user.role === "company") return "/company/dashboard";
-    return "/candidate/dashboard";
-  };
+  const links = primaryNavFor(user?.role);
+  // Admins aren't party to any application, so nothing is ever addressed to them.
+  const notifications =
+    user && user.role !== "admin" ? await getNotificationSummary(user.id) : null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -22,34 +22,33 @@ export async function PublicNavbar() {
               P
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-slate-900 text-lg leading-tight tracking-tight">Provento</span>
-              <span className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">Talent Evaluation</span>
+              <span className="font-bold text-slate-900 text-lg leading-tight tracking-tight">
+                Provento
+              </span>
+              <span className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">
+                Talent Evaluation
+              </span>
             </div>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-            <Link href="/projects" className="hover:text-indigo-600 transition-colors">
-              Browse Projects
-            </Link>
-            <Link href="/how-it-works" className="hover:text-indigo-600 transition-colors">
-              How It Works
-            </Link>
-            <Link href="/for-candidates" className="hover:text-indigo-600 transition-colors">
-              For Candidates
-            </Link>
-            <Link href="/for-companies" className="hover:text-indigo-600 transition-colors">
-              For Startups
-            </Link>
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-brand-600 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
           {user ? (
-            <Link href={getDashboardLink()}>
-              <Button size="sm" className="gap-2">
-                <span>Dashboard ({user.role})</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <>
+              {notifications && <NotificationBell initial={notifications} />}
+              <UserMenu user={user} />
+            </>
           ) : (
             <>
               <Link href="/login">
