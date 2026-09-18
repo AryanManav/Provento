@@ -10,6 +10,8 @@ import type {
   ApplicationStatus,
   ProjectMessageAuthorRole,
   ProjectOutcomeType,
+  ProjectPurpose,
+  SelectionWorkStatus,
   ProjectStatus,
   ProjectWorkMode,
   SubmissionStatus,
@@ -63,6 +65,9 @@ export interface ProjectSummaryView {
   companyName: string | null;
   /** Applicant cap set by the company; null means no cap. */
   maxApplicants: number | null;
+  /** Recruiting ("hire", up to `openings` candidates) or just the work ("build", one). */
+  purpose: ProjectPurpose;
+  openings: number;
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -76,10 +81,9 @@ export interface CompanyProjectView extends ProjectSummaryView {
   awaitingReview: number;
 }
 
-/** Who did a finished project and what the company decided. */
+/** Who did a finished project and what the company decided, per candidate. */
 export interface CompanyProjectResult {
-  candidateName: string | null;
-  outcome: ProjectOutcomeType | null;
+  candidates: { name: string; outcome: ProjectOutcomeType | null }[];
 }
 
 export interface ProjectDetailView extends BrowseProjectView {
@@ -109,6 +113,8 @@ export interface ApplicationSummaryView {
   status: ApplicationStatus;
   /** The company's message with a Selected / Rejected decision. */
   decisionNote: string | null;
+  /** This candidate's own work status once selected; null before that. */
+  workStatus: SelectionWorkStatus | null;
   coverMessage: string;
   createdAt: string;
   project: {
@@ -125,7 +131,10 @@ export interface ApplicationSummaryView {
 
 export interface ApplicantView {
   id: string;
+  candidateId: string;
   status: ApplicationStatus;
+  /** The candidate's work status once selected; null before that. */
+  workStatus: SelectionWorkStatus | null;
   coverMessage: string;
   relevantExperience: string | null;
   candidateName: string;
@@ -226,6 +235,8 @@ export interface ApplicantProfileView {
 /** A project the candidate was selected for — their side of the evaluation. */
 export interface TrialView {
   projectId: string;
+  /** This candidate's own work cycle on the project. */
+  workStatus: SelectionWorkStatus;
   companyId: string;
   title: string;
   slug: string;
@@ -279,6 +290,9 @@ export interface EvaluationView {
   title: string;
   companyId: string;
   status: ProjectStatus;
+  purpose: ProjectPurpose;
+  /** This candidate's own work status on the project. */
+  workStatus: SelectionWorkStatus;
   evaluationCriteria: string[];
   acceptanceCriteria: string[];
   projectDeadline: string;
@@ -287,7 +301,7 @@ export interface EvaluationView {
     name: string;
     email: string | null;
     headline: string | null;
-  } | null;
+  };
   submissions: SubmissionView[];
   feedback: FeedbackView | null;
   outcome: OutcomeView | null;

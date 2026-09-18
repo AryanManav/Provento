@@ -4,8 +4,8 @@
 
 :root {
   --surface: #ffffff;
-  --surface-muted: #fafafa;
-  --line: #e9e9ec;
+  --surface-muted: #fafaf9;
+  --line: #e7e5e4;
 }
 
 @layer base {

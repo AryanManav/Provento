@@ -46,6 +46,7 @@ export type ReviewSubmissionInput = z.infer<typeof reviewSubmissionSchema>;
  */
 export const projectFeedbackSchema = z.object({
   projectId: z.string().uuid("Invalid project ID"),
+  candidateId: z.string().uuid("Invalid candidate"),
   requirementsCompleted: z.coerce.boolean(),
   technicalQuality: z.enum(QUALITY_LEVELS),
   completeness: z.enum(QUALITY_LEVELS),
@@ -66,6 +67,7 @@ export type ProjectFeedbackInput = z.infer<typeof projectFeedbackSchema>;
 
 export const projectOutcomeSchema = z.object({
   projectId: z.string().uuid("Invalid project ID"),
+  candidateId: z.string().uuid("Invalid candidate"),
   outcome: z.enum(RECORDABLE_OUTCOMES, {
     errorMap: () => ({ message: "Select an outcome" }),
   }),
@@ -113,6 +115,8 @@ export type SubmissionAttachmentInput = z.infer<typeof submissionAttachmentSchem
 
 export const projectMessageSchema = z.object({
   projectId: z.string().uuid("Invalid project ID"),
+  /** Which selected candidate's thread; companies must say, candidates can't. */
+  candidateId: z.string().uuid("Invalid candidate").optional(),
   body: z
     .string()
     .trim()

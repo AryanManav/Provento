@@ -19,7 +19,9 @@ import type {
 import type {
   ApplicationStatus,
   ProjectOutcomeType,
+  ProjectPurpose,
   ProjectStatus,
+  SelectionWorkStatus,
 } from "@/lib/types/database.types";
 
 interface RawCompanyRow {
@@ -41,6 +43,7 @@ interface RawMembership {
 
 interface RawApplicant {
   id: string;
+  candidate_id: string;
   status: ApplicationStatus;
   cover_message: string;
   relevant_experience: string | null;
@@ -129,7 +132,7 @@ export async function getCompanyProjects(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings"
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -150,12 +153,15 @@ export async function getCompanyProjects(
     companyId,
     companyName: null,
     maxApplicants: row.max_applicants ?? null,
+    purpose: (row.purpose ?? "hire") as ProjectPurpose,
+    openings: row.openings ?? 1,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
 }
 
 interface RawSelectionResult {
   project_id: string;
+  candidate_id: string;
   candidate_profiles:
     | { users: { full_name: string } | { full_name: string }[] | null }
     | { users: { full_name: string } | { full_name: string }[] | null }[]
@@ -163,8 +169,8 @@ interface RawSelectionResult {
 }
 
 /**
- * For finished projects: the selected candidate and the recorded outcome, keyed
- * by project. Callers pass ids already scoped to the company.
+ * For finished projects: every selected candidate and the outcome recorded for
+ * each, keyed by project. Callers pass ids already scoped to the company.
  */
 export async function getCompanyProjectResults(
   projectIds: string[]
@@ -176,29 +182,29 @@ export async function getCompanyProjectResults(
   const [selections, outcomes] = await Promise.all([
     supabase
       .from("project_selections")
-      .select("project_id, candidate_profiles(users(full_name))")
-      .in("project_id", projectIds),
+      .select("project_id, candidate_id, candidate_profiles(users(full_name))")
+      .in("project_id", projectIds)
+      .order("selected_at", { ascending: true }),
     supabase
       .from("project_outcomes")
-      .select("project_id, outcome, created_at")
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: true }),
+      .select("project_id, candidate_id, outcome")
+      .in("project_id", projectIds),
   ]);
 
+  const outcomeOf = new Map(
+    (outcomes.data ?? []).map((row) => [
+      `${row.project_id}:${row.candidate_id}`,
+      row.outcome as ProjectOutcomeType,
+    ])
+  );
+
   for (const row of (selections.data ?? []) as unknown as RawSelectionResult[]) {
-    const user = one(one(row.candidate_profiles)?.users);
-    results.set(row.project_id, {
-      candidateName: user?.full_name ?? null,
-      outcome: null,
+    const entry = results.get(row.project_id) ?? { candidates: [] };
+    entry.candidates.push({
+      name: one(one(row.candidate_profiles)?.users)?.full_name ?? "Candidate",
+      outcome: outcomeOf.get(`${row.project_id}:${row.candidate_id}`) ?? null,
     });
-  }
-  // Oldest first, so the latest recorded outcome wins.
-  for (const row of outcomes.data ?? []) {
-    const current = results.get(row.project_id) ?? { candidateName: null, outcome: null };
-    results.set(row.project_id, {
-      ...current,
-      outcome: row.outcome as ProjectOutcomeType,
-    });
+    results.set(row.project_id, entry);
   }
   return results;
 }
@@ -208,19 +214,28 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, cover_message, relevant_experience, candidate_profiles(headline, users(full_name, email))"
+      "id, candidate_id, status, cover_message, relevant_experience, candidate_profiles(headline, users(full_name, email))"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
 
   const rows = (data ?? []) as unknown as RawApplicant[];
+  const { data: selections } = await supabase
+    .from("project_selections")
+    .select("candidate_id, status")
+    .eq("project_id", projectId);
+  const workByCandidate = new Map(
+    (selections ?? []).map((row) => [row.candidate_id, row.status as SelectionWorkStatus])
+  );
 
   return rows.map((row) => {
     const candidate = one(row.candidate_profiles);
     const account = one(candidate?.users);
     return {
       id: row.id,
+      candidateId: row.candidate_id,
       status: row.status,
+      workStatus: workByCandidate.get(row.candidate_id) ?? null,
       coverMessage: row.cover_message,
       relevantExperience: row.relevant_experience,
       candidateName: account?.full_name ?? "Candidate",
@@ -239,11 +254,15 @@ export async function getProjectHeader(projectId: string): Promise<{
   companyId: string;
   maxApplicants: number | null;
   applicationDeadline: string;
+  purpose: ProjectPurpose;
+  openings: number;
 } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, title, slug, status, company_id, max_applicants, application_deadline")
+    .select(
+      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings"
+    )
     .eq("id", projectId)
     .maybeSingle();
 
@@ -256,6 +275,8 @@ export async function getProjectHeader(projectId: string): Promise<{
     companyId: data.company_id,
     maxApplicants: data.max_applicants ?? null,
     applicationDeadline: data.application_deadline,
+    purpose: (data.purpose ?? "hire") as ProjectPurpose,
+    openings: data.openings ?? 1,
   };
 }
 

@@ -80,26 +80,27 @@ function ProjectCard({
           </div>
 
           {closed ? (
-            <p className="mt-fib2 text-sm text-ink-500">
-              {result?.candidateName ? (
-                <>
-                  Built by{" "}
-                  <span className="font-semibold text-ink-700">
-                    {result.candidateName}
-                  </span>
-                </>
+            <div className="mt-fib2 space-y-fib1 text-sm text-ink-500">
+              {!result || result.candidates.length === 0 ? (
+                <p>No candidate completed it</p>
               ) : (
-                "No candidate completed it"
+                result.candidates.map((candidate) => (
+                  <p key={candidate.name}>
+                    <span className="font-semibold text-ink-700">{candidate.name}</span>
+                    {" · "}
+                    {project.purpose === "build" ? (
+                      "Built it"
+                    ) : candidate.outcome ? (
+                      <span className="font-semibold text-ink-700">
+                        {OUTCOME_LABEL[candidate.outcome]}
+                      </span>
+                    ) : (
+                      <span className="text-amber-700">Outcome not recorded yet</span>
+                    )}
+                  </p>
+                ))
               )}
-              {" · "}
-              {result?.outcome ? (
-                <span className="font-semibold text-ink-700">
-                  {OUTCOME_LABEL[result.outcome]}
-                </span>
-              ) : (
-                <span className="text-amber-700">Outcome not recorded yet</span>
-              )}
-            </p>
+            </div>
           ) : (
             <p className="mt-fib2 text-sm text-ink-500">
               {project.expectedHours} hours · Apply by{" "}

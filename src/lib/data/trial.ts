@@ -3,7 +3,7 @@ import { one } from "@/lib/data/utils";
 import {
   DEFAULT_CURRENCY,
   SUBMISSION_FILES_BUCKET,
-  SUBMITTABLE_PROJECT_STATUSES,
+  SUBMITTABLE_WORK_STATUSES,
 } from "@/lib/constants";
 import type {
   AttachmentView,
@@ -14,6 +14,7 @@ import type {
 import type {
   ProjectStatus,
   ProjectWorkMode,
+  SelectionWorkStatus,
   SubmissionStatus,
 } from "@/lib/types/database.types";
 
@@ -32,6 +33,7 @@ interface RawTrialProject {
 
 interface RawSelection {
   selected_at: string;
+  status: SelectionWorkStatus;
   projects: RawTrialProject | RawTrialProject[] | null;
 }
 
@@ -47,6 +49,7 @@ interface RawTrialDetailProject extends RawTrialProject {
 
 interface RawSelectionDetail {
   selected_at: string;
+  status: SelectionWorkStatus;
   projects: RawTrialDetailProject | RawTrialDetailProject[] | null;
 }
 
@@ -75,9 +78,14 @@ const ATTACHMENT_URL_TTL_SECONDS = 60 * 15;
 const TRIAL_PROJECT_COLUMNS =
   "id, slug, title, status, payment_amount, currency, expected_hours, project_deadline, company_id, companies(name)";
 
-function toTrial(selectedAt: string, project: RawTrialProject): TrialView {
+function toTrial(
+  selectedAt: string,
+  workStatus: SelectionWorkStatus,
+  project: RawTrialProject
+): TrialView {
   return {
     projectId: project.id,
+    workStatus,
     title: project.title,
     slug: project.slug,
     companyId: project.company_id,
@@ -119,7 +127,7 @@ export async function getCandidateTrials(candidateId: string): Promise<TrialView
   const supabase = await createClient();
   const { data } = await supabase
     .from("project_selections")
-    .select(`selected_at, projects(${TRIAL_PROJECT_COLUMNS})`)
+    .select(`selected_at, status, projects(${TRIAL_PROJECT_COLUMNS})`)
     .eq("candidate_id", candidateId)
     .order("selected_at", { ascending: false });
 
@@ -127,7 +135,7 @@ export async function getCandidateTrials(candidateId: string): Promise<TrialView
 
   return rows.flatMap((row) => {
     const project = one(row.projects);
-    return project ? [toTrial(row.selected_at, project)] : [];
+    return project ? [toTrial(row.selected_at, row.status, project)] : [];
   });
 }
 
@@ -139,7 +147,7 @@ export async function getCandidateTrial(
   const { data } = await supabase
     .from("project_selections")
     .select(
-      `selected_at, projects(${TRIAL_PROJECT_COLUMNS}, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria)`
+      `selected_at, status, projects(${TRIAL_PROJECT_COLUMNS}, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria)`
     )
     .eq("candidate_id", candidateId)
     .eq("project_id", projectId)
@@ -152,7 +160,7 @@ export async function getCandidateTrial(
   const submissions = await getSubmissions(projectId, candidateId);
 
   return {
-    ...toTrial(selection.selected_at, project),
+    ...toTrial(selection.selected_at, selection.status, project),
     workMode: project.work_mode ?? "local",
     problemStatement: project.problem_statement,
     context: project.context,
@@ -161,9 +169,12 @@ export async function getCandidateTrial(
     acceptanceCriteria: project.acceptance_criteria ?? [],
     evaluationCriteria: project.evaluation_criteria ?? [],
     submissions,
-    canSubmit: (SUBMITTABLE_PROJECT_STATUSES as readonly ProjectStatus[]).includes(
-      project.status
-    ),
+    // The candidate's own cycle decides (apply_project_submission enforces it).
+    canSubmit:
+      project.status !== "cancelled" &&
+      (SUBMITTABLE_WORK_STATUSES as readonly SelectionWorkStatus[]).includes(
+        selection.status
+      ),
   };
 }
 

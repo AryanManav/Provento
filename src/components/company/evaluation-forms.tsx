@@ -148,9 +148,12 @@ function QualitySelect({ name, label }: { name: string; label: string }) {
 
 export function ProjectFeedbackForm({
   projectId,
+  candidateId,
   evaluationCriteria,
 }: {
   projectId: string;
+  /** The selected candidate this evaluation is about. */
+  candidateId: string;
   evaluationCriteria: string[];
 }) {
   const [state, formAction, isPending] = useActionState(
@@ -162,6 +165,7 @@ export function ProjectFeedbackForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="candidateId" value={candidateId} />
       <Feedback state={state} />
 
       {evaluationCriteria.length > 0 && (
@@ -252,7 +256,13 @@ export function ProjectFeedbackForm({
   );
 }
 
-export function ProjectOutcomeForm({ projectId }: { projectId: string }) {
+export function ProjectOutcomeForm({
+  projectId,
+  candidateId,
+}: {
+  projectId: string;
+  candidateId: string;
+}) {
   const [state, formAction, isPending] = useActionState(
     async (prev: ActionResponse | null, formData: FormData) =>
       recordProjectOutcomeAction(prev, formData),
@@ -262,6 +272,7 @@ export function ProjectOutcomeForm({ projectId }: { projectId: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="candidateId" value={candidateId} />
       <Feedback state={state} />
 
       <div className="space-y-1.5">

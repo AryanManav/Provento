@@ -122,6 +122,9 @@ export async function createProjectAction(formData: FormData) {
     paymentAmount: formData.get("paymentAmount"),
     currency: DEFAULT_CURRENCY,
     maxApplicants: formData.get("maxApplicants"),
+    purpose: formData.get("purpose") || "hire",
+    // Build-only projects always have one candidate, whatever was typed.
+    openings: formData.get("purpose") === "build" ? 1 : formData.get("openings") || 1,
     applicationDeadline: applicationDeadline.toISOString(),
     projectDeadline: projectDeadline.toISOString(),
   });
@@ -158,6 +161,8 @@ export async function createProjectAction(formData: FormData) {
       application_deadline: validated.data.applicationDeadline,
       project_deadline: validated.data.projectDeadline,
       max_applicants: validated.data.maxApplicants ?? null,
+      purpose: validated.data.purpose,
+      openings: validated.data.openings,
       status: "applications_open",
     })
     .select("id")

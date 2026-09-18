@@ -11,10 +11,14 @@ import type {
   ProjectDetailView,
   ProjectSummaryView,
 } from "@/lib/types/domain";
-import type { ProjectStatus, ProjectWorkMode } from "@/lib/types/database.types";
+import type {
+  ProjectPurpose,
+  ProjectStatus,
+  ProjectWorkMode,
+} from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, companies(name)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, companies(name)";
 
 interface RawProjectSummary {
   id: string;
@@ -28,6 +32,8 @@ interface RawProjectSummary {
   application_deadline: string;
   company_id: string;
   max_applicants: number | null;
+  purpose: ProjectPurpose;
+  openings: number;
   companies: { name: string | null } | { name: string | null }[] | null;
 }
 
@@ -45,6 +51,8 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     companyId: row.company_id,
     companyName: one(row.companies)?.name ?? null,
     maxApplicants: row.max_applicants ?? null,
+    purpose: row.purpose ?? "hire",
+    openings: row.openings ?? 1,
   };
 }
 
@@ -138,7 +146,7 @@ export async function getBrowsableProjectBySlug(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
     .in("status", [...BROWSABLE_PROJECT_STATUSES])

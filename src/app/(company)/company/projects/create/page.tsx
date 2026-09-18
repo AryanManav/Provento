@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBanner } from "@/components/common/status-banner";
+import { ProjectPurposeFields } from "@/components/company/project-purpose-fields";
 import { MAX_APPLICANTS_LIMIT, WORK_MODES } from "@/lib/constants";
 
 export default async function CreateProjectPage({
@@ -34,6 +35,7 @@ export default async function CreateProjectPage({
         className="rounded-xl border bg-white p-6 space-y-5"
       >
         <Input name="title" placeholder="Project title" required />
+        <ProjectPurposeFields />
         <fieldset className="space-y-fib4">
           <legend className="text-xs font-semibold uppercase tracking-wider text-ink-500">
             How will the candidate build this?

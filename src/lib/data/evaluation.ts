@@ -2,13 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
 import { getSubmissions } from "@/lib/data/trial";
 import type { EvaluationView, FeedbackView, OutcomeView } from "@/lib/types/domain";
-import type { ProjectOutcomeType, ProjectStatus } from "@/lib/types/database.types";
+import type {
+  ProjectOutcomeType,
+  ProjectPurpose,
+  ProjectStatus,
+  SelectionWorkStatus,
+} from "@/lib/types/database.types";
 
 interface RawProject {
   id: string;
   title: string;
   company_id: string;
   status: ProjectStatus;
+  purpose: ProjectPurpose;
   evaluation_criteria: string[];
   acceptance_criteria: string[];
   project_deadline: string;
@@ -84,26 +90,54 @@ function toOutcome(row: RawOutcomeRow): OutcomeView {
   };
 }
 
-/** The selected candidate for a project, or null if none has been chosen. */
-export async function getSelectedCandidateId(projectId: string): Promise<string | null> {
+/** Candidates selected on a project, in the order they were picked. */
+export async function getSelectedCandidates(
+  projectId: string
+): Promise<{ candidateId: string; name: string; workStatus: SelectionWorkStatus }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("project_selections")
+    .select(
+      "candidate_id, status, selected_at, candidate_profiles(headline, users(full_name, email))"
+    )
+    .eq("project_id", projectId)
+    .order("selected_at", { ascending: true });
+
+  return ((data ?? []) as unknown as (RawSelectedCandidate & { status: string })[]).map(
+    (row) => ({
+      candidateId: row.candidate_id,
+      name: one(one(row.candidate_profiles)?.users)?.full_name ?? "Candidate",
+      workStatus: row.status as SelectionWorkStatus,
+    })
+  );
+}
+
+/** True when this candidate is selected on this project. */
+export async function isSelectedCandidate(
+  projectId: string,
+  candidateId: string
+): Promise<boolean> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("project_selections")
     .select("candidate_id")
     .eq("project_id", projectId)
+    .eq("candidate_id", candidateId)
     .maybeSingle();
-
-  return data?.candidate_id ?? null;
+  return data !== null;
 }
 
-/** Everything the company evaluation screen renders, in one call. */
-export async function getEvaluation(projectId: string): Promise<EvaluationView | null> {
+/** One selected candidate's evaluation screen, in one call. */
+export async function getEvaluation(
+  projectId: string,
+  candidateId: string
+): Promise<EvaluationView | null> {
   const supabase = await createClient();
 
   const { data: projectRow } = await supabase
     .from("projects")
     .select(
-      "id, title, company_id, status, evaluation_criteria, acceptance_criteria, project_deadline"
+      "id, title, company_id, status, purpose, evaluation_criteria, acceptance_criteria, project_deadline"
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -113,24 +147,25 @@ export async function getEvaluation(projectId: string): Promise<EvaluationView |
 
   const { data: selectionRow } = await supabase
     .from("project_selections")
-    .select("candidate_id, candidate_profiles(headline, users(full_name, email))")
+    .select("candidate_id, status, candidate_profiles(headline, users(full_name, email))")
     .eq("project_id", projectId)
+    .eq("candidate_id", candidateId)
     .maybeSingle();
 
-  const selection = selectionRow as unknown as RawSelectedCandidate | null;
+  const selection = selectionRow as unknown as
+    (RawSelectedCandidate & { status: string }) | null;
+  if (!selection) return null;
   const profile = one(selection?.candidate_profiles);
   const account = one(profile?.users);
 
-  const candidate = selection
-    ? {
-        id: selection.candidate_id,
-        name: account?.full_name ?? "Candidate",
-        email: account?.email ?? null,
-        headline: profile?.headline ?? null,
-      }
-    : null;
+  const candidate = {
+    id: selection.candidate_id,
+    name: account?.full_name ?? "Candidate",
+    email: account?.email ?? null,
+    headline: profile?.headline ?? null,
+  };
 
-  const submissions = candidate ? await getSubmissions(projectId, candidate.id) : [];
+  const submissions = await getSubmissions(projectId, candidate.id);
 
   const [{ data: feedbackRow }, { data: outcomeRow }] = await Promise.all([
     supabase
@@ -139,11 +174,13 @@ export async function getEvaluation(projectId: string): Promise<EvaluationView |
         "id, requirements_completed, technical_quality, completeness, testing_quality, documentation_quality, deadline_met, revisions_required, written_feedback, what_was_missing, would_interview_or_hire, created_at"
       )
       .eq("project_id", projectId)
+      .eq("candidate_id", candidateId)
       .maybeSingle(),
     supabase
       .from("project_outcomes")
       .select("id, outcome, reason, notes, created_at")
       .eq("project_id", projectId)
+      .eq("candidate_id", candidateId)
       .maybeSingle(),
   ]);
 
@@ -152,6 +189,8 @@ export async function getEvaluation(projectId: string): Promise<EvaluationView |
     title: project.title,
     companyId: project.company_id,
     status: project.status,
+    purpose: project.purpose ?? "hire",
+    workStatus: selection.status as SelectionWorkStatus,
     evaluationCriteria: project.evaluation_criteria ?? [],
     acceptanceCriteria: project.acceptance_criteria ?? [],
     projectDeadline: project.project_deadline,

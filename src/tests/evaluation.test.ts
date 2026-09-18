@@ -78,6 +78,8 @@ describe("Evaluation loop schemas", () => {
   describe("projectFeedbackSchema", () => {
     const validFeedback = {
       projectId: PROJECT_ID,
+      // Feedback belongs to one selected candidate.
+      candidateId: PROJECT_ID,
       requirementsCompleted: true,
       technicalQuality: "meets_expectations",
       completeness: "exceeds_expectations",
@@ -124,6 +126,7 @@ describe("Evaluation loop schemas", () => {
     it("treats no_hire as a valid recorded outcome", () => {
       const result = projectOutcomeSchema.safeParse({
         projectId: PROJECT_ID,
+        candidateId: PROJECT_ID,
         outcome: "no_hire",
         reason: "Strong engineer but we paused the role this quarter.",
       });
@@ -133,6 +136,7 @@ describe("Evaluation loop schemas", () => {
     it("rejects outcomes that are not reviewer-recordable", () => {
       const result = projectOutcomeSchema.safeParse({
         projectId: PROJECT_ID,
+        candidateId: PROJECT_ID,
         outcome: "project_cancelled",
       });
       expect(result.success).toBe(false);

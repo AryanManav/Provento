@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getBrowseProjects } from "@/lib/data/project";
-import { spotsLeft } from "@/lib/projects";
+import { purposeLabel, spotsLeft } from "@/lib/projects";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Clock, Banknote, Building, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
@@ -105,6 +105,9 @@ export default async function ProjectsDirectoryPage() {
                     <span>{project.expectedHours} hours effort</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-500">
+                    <span className="font-semibold text-brand-700">
+                      {purposeLabel(project)}
+                    </span>
                     <span>Apply by {formatDate(project.applicationDeadline)}</span>
                     {spotsLeft(project.maxApplicants, project.applicationCount) !==
                       null && (

@@ -1,5 +1,13 @@
-import { BROWSABLE_PROJECT_STATUSES, CLOSED_PROJECT_STATUSES } from "@/lib/constants";
-import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
+import {
+  BROWSABLE_PROJECT_STATUSES,
+  CLOSED_PROJECT_STATUSES,
+  CLOSED_WORK_STATUSES,
+} from "@/lib/constants";
+import type {
+  ApplicationStatus,
+  ProjectStatus,
+  SelectionWorkStatus,
+} from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
 
 /**
@@ -19,6 +27,17 @@ export type ApplicationStage =
   | "not_selected"
   | "withdrawn";
 
+/** A selected candidate's work is over: done, or the project was withdrawn. */
+export function isClosedWork(trial: {
+  workStatus: SelectionWorkStatus;
+  status: ProjectStatus;
+}): boolean {
+  return (
+    trial.status === "cancelled" ||
+    (CLOSED_WORK_STATUSES as readonly SelectionWorkStatus[]).includes(trial.workStatus)
+  );
+}
+
 export function isClosedProject(status: ProjectStatus | null | undefined): boolean {
   return (
     !!status && (CLOSED_PROJECT_STATUSES as readonly ProjectStatus[]).includes(status)
@@ -27,7 +46,9 @@ export function isClosedProject(status: ProjectStatus | null | undefined): boole
 
 export function applicationStage(
   applicationStatus: ApplicationStatus,
-  projectStatus: ProjectStatus | null | undefined
+  projectStatus: ProjectStatus | null | undefined,
+  /** The candidate's own selection status; wins over the project's once selected. */
+  workStatus?: SelectionWorkStatus | null
 ): ApplicationStage {
   // A project cancelled before any decision (e.g. its company left) closes
   // every application still waiting on it.
@@ -52,6 +73,16 @@ export function applicationStage(
     case "submitted":
       return "applied";
     case "selected":
+      // Several candidates can work on one project, so their own cycle decides.
+      if (workStatus) {
+        if (workStatus === "completed") return "completed";
+        if (workStatus === "cancelled") return "cancelled";
+        if (workStatus === "revision_requested") return "revision_requested";
+        if (workStatus === "submitted" || workStatus === "under_review") {
+          return "awaiting_review";
+        }
+        return projectStatus === "cancelled" ? "cancelled" : "building";
+      }
       if (projectStatus === "completed") return "completed";
       if (projectStatus === "cancelled") return "cancelled";
       if (projectStatus === "revision_requested") return "revision_requested";
@@ -60,6 +91,15 @@ export function applicationStage(
       }
       return "building";
   }
+}
+
+/** An application's stage, from its own status and the candidate's work status. */
+export function stageOf(application: ApplicationSummaryView): ApplicationStage {
+  return applicationStage(
+    application.status,
+    application.project?.status,
+    application.workStatus
+  );
 }
 
 /**
@@ -140,7 +180,7 @@ export function summarizeApplications(
     completedValue: 0,
   };
   for (const application of applications) {
-    const stage = applicationStage(application.status, application.project?.status);
+    const stage = stageOf(application);
     if (PENDING_STAGES.includes(stage)) summary.pending += 1;
     if (ACTIVE_TRIAL_STAGES.includes(stage)) summary.activeTrials += 1;
     if (stage === "completed") {

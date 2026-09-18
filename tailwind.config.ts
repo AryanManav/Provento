@@ -1,22 +1,23 @@
 import type { Config } from "tailwindcss";
 
 /**
- * A single electric blue carries the whole interface. Everything else is
- * greyscale, so colour always means something: brand blue for action, emerald
- * for money, rose for danger. Gold appears only in illustration, never chrome.
+ * A single deep violet carries the whole interface. Everything else is warm
+ * greyscale, so colour always means something: brand violet for action, emerald
+ * for money and success, rose for danger, amber for waiting. Gold appears only
+ * in illustration, never chrome.
  */
-const blue = {
-  50: "#eff6ff",
-  100: "#dbeafe",
-  200: "#bfdbfe",
-  300: "#93c5fd",
-  400: "#60a5fa",
-  500: "#3b82f6",
-  600: "#2570f0",
-  700: "#1d5bc9",
-  800: "#1c47a3",
-  900: "#1a3d82",
-  950: "#132752",
+const violet = {
+  50: "#f5f3ff",
+  100: "#ede9fe",
+  200: "#ddd6fe",
+  300: "#c4b5fd",
+  400: "#a78bfa",
+  500: "#8b5cf6",
+  600: "#6d28d9",
+  700: "#5b21b6",
+  800: "#4c1d95",
+  900: "#3b1680",
+  950: "#240d54",
 };
 
 const gold = {
@@ -33,19 +34,19 @@ const gold = {
   950: "#431b03",
 };
 
-/** Near-neutral greys: the quiet backdrop a single saturated accent needs. */
+/** Warm greys (stone): a softer backdrop that suits violet better than cool zinc. */
 const grey = {
-  50: "#fafafa",
-  100: "#f4f4f5",
-  200: "#e9e9ec",
-  300: "#d4d4d8",
-  400: "#a1a1aa",
-  500: "#71717a",
-  600: "#52525b",
-  700: "#3f3f46",
-  800: "#27272a",
-  900: "#18181b",
-  950: "#09090b",
+  50: "#fafaf9",
+  100: "#f5f5f4",
+  200: "#e7e5e4",
+  300: "#d6d3d1",
+  400: "#a8a29e",
+  500: "#78716c",
+  600: "#57534e",
+  700: "#44403c",
+  800: "#292524",
+  900: "#1c1917",
+  950: "#0c0a09",
 };
 
 /**
@@ -69,7 +70,7 @@ const config: Config = {
       },
       colors: {
         // Semantic tokens — prefer these in new code.
-        brand: blue,
+        brand: violet,
         accent: gold,
         ink: grey,
 
@@ -77,7 +78,7 @@ const config: Config = {
         // ~411 `slate-*` usages; re-pointing the built-in names re-themes every
         // one of them from here instead of touching 80 files. New code should
         // use brand/ink. Remove these once the migration finishes.
-        indigo: blue,
+        indigo: violet,
         slate: grey,
 
         surface: "var(--surface)",

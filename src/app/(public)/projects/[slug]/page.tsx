@@ -5,7 +5,7 @@ import {
   getCandidateApplicationForProject,
   getCandidateProfileId,
 } from "@/lib/data/candidate";
-import { spotsLeft } from "@/lib/projects";
+import { purposeLabel, spotsLeft } from "@/lib/projects";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ApplicationForm } from "@/components/candidate/application-form";
@@ -55,9 +55,14 @@ export default async function ProjectDetailPage({
               {project.companyLocation ? ` · ${project.companyLocation}` : ""}
             </p>
             <h1 className="text-3xl font-bold text-slate-900 mt-1">{project.title}</h1>
-            <span className="mt-fib4 inline-flex rounded-full bg-brand-50 px-fib5 py-fib2 text-xs font-semibold text-brand-700">
-              {WORK_MODES[project.workMode].label}
-            </span>
+            <div className="mt-fib4 flex flex-wrap gap-fib3">
+              <span className="inline-flex rounded-full bg-brand-50 px-fib5 py-fib2 text-xs font-semibold text-brand-700">
+                {purposeLabel(project)}
+              </span>
+              <span className="inline-flex rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold text-ink-700">
+                {WORK_MODES[project.workMode].label}
+              </span>
+            </div>
           </div>
           <Badge
             variant={

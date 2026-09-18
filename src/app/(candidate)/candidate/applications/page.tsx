@@ -11,7 +11,7 @@ import { WithdrawApplicationButton } from "@/components/candidate/withdraw-appli
 import {
   STAGE_DISPLAY,
   applicationHref,
-  applicationStage,
+  stageOf,
   type ApplicationStage,
 } from "@/lib/applications";
 import {
@@ -49,7 +49,7 @@ function ApplicationCard({
   application: ApplicationSummaryView;
   changed: boolean;
 }) {
-  const stage = applicationStage(application.status, application.project?.status);
+  const stage = stageOf(application);
   const href = applicationHref(application);
   const note = STAGE_NOTE[stage];
   const canWithdraw = (
@@ -177,9 +177,7 @@ export default async function CandidateApplicationsPage() {
   );
 
   const isClosed = (application: ApplicationSummaryView) =>
-    CLOSED_STAGES.includes(
-      applicationStage(application.status, application.project?.status)
-    );
+    CLOSED_STAGES.includes(stageOf(application));
   const active = applications.filter((application) => !isClosed(application));
   const closed = applications.filter(isClosed);
 

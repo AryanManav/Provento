@@ -27,11 +27,14 @@ function timestamp(iso: string): string {
  */
 export function ProjectThread({
   projectId,
+  candidateId,
   messages,
   viewer,
   canPost = true,
 }: {
   projectId: string;
+  /** Whose thread, when a company is viewing — each selected candidate has one. */
+  candidateId?: string;
   messages: ProjectMessageView[];
   viewer: "candidate" | "company";
   canPost?: boolean;
@@ -95,6 +98,9 @@ export function ProjectThread({
         {canPost && (
           <form ref={formRef} action={formAction} className="space-y-fib4">
             <input type="hidden" name="projectId" value={projectId} />
+            {candidateId && (
+              <input type="hidden" name="candidateId" value={candidateId} />
+            )}
             {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
             <Textarea
               name="body"

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_CURRENCY, MAX_APPLICANTS_LIMIT } from "@/lib/constants";
+import { DEFAULT_CURRENCY, MAX_APPLICANTS_LIMIT, MAX_OPENINGS } from "@/lib/constants";
 import { optionalNote } from "./application";
 
 export const createProjectSchema = z
@@ -37,6 +37,17 @@ export const createProjectSchema = z
       .number()
       .min(1000, "Minimum payment is ₹1,000 to respect candidate labor"),
     currency: z.string().default(DEFAULT_CURRENCY),
+    purpose: z
+      .enum(["hire", "build"], {
+        errorMap: () => ({ message: "Choose whether you're hiring or only building" }),
+      })
+      .default("hire"),
+    openings: z.coerce
+      .number()
+      .int("Openings must be a whole number")
+      .min(1, "At least 1 opening")
+      .max(MAX_OPENINGS, `At most ${MAX_OPENINGS} openings`)
+      .default(1),
     // Empty means no cap.
     maxApplicants: z.preprocess(
       (value) => (value === "" || value === null ? undefined : value),
@@ -53,6 +64,10 @@ export const createProjectSchema = z
   .refine((data) => new Date(data.applicationDeadline) < new Date(data.projectDeadline), {
     message: "Application deadline must be before the project deadline",
     path: ["applicationDeadline"],
+  })
+  .refine((data) => data.purpose === "hire" || data.openings === 1, {
+    message: "A build-only project has one candidate",
+    path: ["openings"],
   });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;

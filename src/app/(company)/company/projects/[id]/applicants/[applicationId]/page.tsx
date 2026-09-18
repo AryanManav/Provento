@@ -17,7 +17,7 @@ import { SectionCard } from "@/components/common/section-card";
 import { StatusBanner } from "@/components/common/status-banner";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { formatDate } from "@/lib/utils";
-import { getSelectedCandidateId } from "@/lib/data/evaluation";
+import { getSelectedCandidates } from "@/lib/data/evaluation";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +32,10 @@ export default async function ApplicantProfilePage({
   const { id, applicationId } = await params;
   const { updated, error } = await searchParams;
 
-  const [project, applicant, selectedCandidateId] = await Promise.all([
+  const [project, applicant, selected] = await Promise.all([
     getProjectHeader(id),
     getApplicantProfile(applicationId),
-    getSelectedCandidateId(id),
+    getSelectedCandidates(id),
   ]);
 
   // The application must belong to this project, and the project to this
@@ -97,12 +97,21 @@ export default async function ApplicantProfilePage({
                 {applicant.status.replaceAll("_", " ")}
               </span>
             </p>
-            <ApplicationStatusForm
-              applicationId={applicant.applicationId}
-              status={applicant.status}
-              selectionTaken={selectedCandidateId !== null}
-              returnTo={selfPath}
-            />
+            {applicant.status === "selected" ? (
+              <Link
+                href={`/company/projects/${project.id}/review/${applicant.profile.id}`}
+                className="inline-flex items-center gap-fib2 rounded-full bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                Evaluate work →
+              </Link>
+            ) : (
+              <ApplicationStatusForm
+                applicationId={applicant.applicationId}
+                status={applicant.status}
+                selectionTaken={selected.length >= project.openings}
+                returnTo={selfPath}
+              />
+            )}
           </div>
         </div>
       </SectionCard>

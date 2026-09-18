@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { CountBadge } from "@/components/notifications/count-badge";
 import { getNotificationSummary } from "@/lib/data/notifications";
 import { unreadByProject } from "@/lib/notifications";
-import { isClosedProject } from "@/lib/applications";
+import { isClosedWork } from "@/lib/applications";
 import { cn, formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function CandidateTrialsPage() {
   ]);
   const updates = unreadByProject(notifications.unread);
   // Finished trials move to My Applications ("Completed & closed").
-  const trials = allTrials.filter((trial) => !isClosedProject(trial.status));
+  const trials = allTrials.filter((trial) => !isClosedWork(trial));
   const finishedCount = allTrials.length - trials.length;
 
   return (
@@ -96,7 +96,7 @@ export default async function CandidateTrialsPage() {
                       {formatCurrency(trial.paymentAmount, trial.currency)}
                     </span>
                     <Badge variant="secondary" className="capitalize text-[10px]">
-                      {trial.status.replaceAll("_", " ")}
+                      {trial.workStatus.replaceAll("_", " ")}
                     </Badge>
                     <Button size="sm" variant="outline" className="rounded-full text-xs">
                       Open

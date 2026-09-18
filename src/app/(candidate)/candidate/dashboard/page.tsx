@@ -25,11 +25,7 @@ import { GitHubConnect } from "@/components/candidate/github-connect";
 import { GithubLinkBanner } from "@/components/candidate/github-link-banner";
 import { ProfileStrengthCard } from "@/components/candidate/profile-strength-card";
 import { ApplicationStageBadge } from "@/components/candidate/application-stage-badge";
-import {
-  applicationHref,
-  applicationStage,
-  summarizeApplications,
-} from "@/lib/applications";
+import { applicationHref, stageOf, summarizeApplications } from "@/lib/applications";
 import { UpdatesPanel } from "@/components/notifications/updates-panel";
 import { getUnreadNotifications } from "@/lib/data/notifications";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -134,10 +130,7 @@ export default async function CandidateDashboardPage({
             ) : (
               <div className="space-y-fib4">
                 {applications.slice(0, 4).map((application) => {
-                  const stage = applicationStage(
-                    application.status,
-                    application.project?.status
-                  );
+                  const stage = stageOf(application);
                   const href = applicationHref(application);
                   const body = (
                     <>

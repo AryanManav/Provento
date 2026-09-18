@@ -19,6 +19,18 @@ export type ProjectStatus =
 export type ApplicationStatus =
   "submitted" | "reviewing" | "shortlisted" | "selected" | "rejected" | "withdrawn";
 
+/** Whether the company is recruiting, or only wants the work built. */
+export type ProjectPurpose = "hire" | "build";
+
+/** Each selected candidate's own work cycle (project_selections.status). */
+export type SelectionWorkStatus =
+  | "in_progress"
+  | "submitted"
+  | "under_review"
+  | "revision_requested"
+  | "completed"
+  | "cancelled";
+
 export type ProjectWorkMode = "local" | "in_app";
 
 export type ProjectMessageAuthorRole = "candidate" | "company";
@@ -312,6 +324,8 @@ export interface Database {
           work_mode: ProjectWorkMode;
           max_applicants: number | null;
           withdrawal_reason: string | null;
+          purpose: ProjectPurpose;
+          openings: number;
           expected_hours: number;
           payment_amount: number;
           currency: string;
@@ -336,6 +350,8 @@ export interface Database {
           work_mode?: ProjectWorkMode;
           max_applicants?: number | null;
           withdrawal_reason?: string | null;
+          purpose?: ProjectPurpose;
+          openings?: number;
           expected_hours?: number;
           payment_amount: number;
           currency?: string;
@@ -358,6 +374,8 @@ export interface Database {
           work_mode?: ProjectWorkMode;
           max_applicants?: number | null;
           withdrawal_reason?: string | null;
+          purpose?: ProjectPurpose;
+          openings?: number;
           expected_hours?: number;
           payment_amount?: number;
           currency?: string;
@@ -428,7 +446,7 @@ export interface Database {
           candidate_id: string;
           selected_by: string | null;
           selected_at: string;
-          status: string;
+          status: SelectionWorkStatus;
         };
         Insert: {
           id?: string;
@@ -436,10 +454,10 @@ export interface Database {
           candidate_id: string;
           selected_by?: string | null;
           selected_at?: string;
-          status?: string;
+          status?: SelectionWorkStatus;
         };
         Update: {
-          status?: string;
+          status?: SelectionWorkStatus;
         };
         Relationships: [];
       };

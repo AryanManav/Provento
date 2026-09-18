@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
 import { getCandidateProfileId, getCandidateVerifiedTrials } from "@/lib/data/candidate";
-import { isClosedProject } from "@/lib/applications";
+import { isClosedWork } from "@/lib/applications";
 import { getCandidateTrial } from "@/lib/data/trial";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { getProjectThread } from "@/lib/data/thread";
@@ -176,7 +176,8 @@ export default async function CandidateTrialWorkspacePage({
     getCandidateVerifiedTrials(candidateId),
   ]);
   if (!trial) notFound();
-  const closed = isClosedProject(trial.status);
+  const closed = isClosedWork(trial);
+  const cancelled = trial.status === "cancelled" || trial.workStatus === "cancelled";
   const evaluation = verified.find((item) => item.projectId === trial.projectId);
 
   const latest = trial.submissions[0];
@@ -200,7 +201,7 @@ export default async function CandidateTrialWorkspacePage({
                 {mode.label}
               </span>
               <span className="rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
-                {trial.status.replaceAll("_", " ")}
+                {trial.workStatus.replaceAll("_", " ")}
               </span>
             </div>
             <h1 className="mt-fib4 text-2xl font-bold text-ink-900">{trial.title}</h1>
@@ -237,7 +238,7 @@ export default async function CandidateTrialWorkspacePage({
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
             <div className="min-w-0 space-y-fib3">
               <h2 className="font-bold text-emerald-900">
-                {trial.status === "completed" ? "Project completed" : "Project cancelled"}
+                {cancelled ? "Project cancelled" : "Project completed"}
               </h2>
               {evaluation ? (
                 <>
@@ -266,7 +267,7 @@ export default async function CandidateTrialWorkspacePage({
                 </>
               ) : (
                 <p className="text-sm text-emerald-900/80">
-                  {trial.status === "completed"
+                  {!cancelled
                     ? "Your work was accepted. The startup's written feedback will appear here once they record it."
                     : "The startup closed this project. Your submissions stay below for reference."}
                 </p>
@@ -317,7 +318,7 @@ export default async function CandidateTrialWorkspacePage({
                 <p className="text-sm text-ink-500">
                   This project isn&rsquo;t accepting submissions right now — its status is{" "}
                   <span className="font-medium capitalize">
-                    {trial.status.replaceAll("_", " ")}
+                    {trial.workStatus.replaceAll("_", " ")}
                   </span>
                   .
                 </p>

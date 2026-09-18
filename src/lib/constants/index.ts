@@ -1,4 +1,5 @@
 import type {
+  SelectionWorkStatus,
   ApplicationStatus,
   ProjectOutcomeType,
   ProjectStatus,
@@ -90,13 +91,6 @@ export const CLOSED_APPLICATION_STATUSES = [
 export const SKILL_LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
 export type SkillLevel = (typeof SKILL_LEVELS)[number];
-
-/** Project statuses in which the selected candidate may submit or resubmit work. */
-export const SUBMITTABLE_PROJECT_STATUSES = [
-  "candidate_selected",
-  "in_progress",
-  "revision_requested",
-] as const satisfies readonly ProjectStatus[];
 
 /**
  * Deliberately descriptive rather than numeric.
@@ -296,3 +290,31 @@ export const COMPANY_MANAGEABLE_PROJECT_STATUSES = [
   "published",
   "applications_open",
 ] as const satisfies readonly ProjectStatus[];
+
+/** Most candidates a hiring project can select. */
+export const MAX_OPENINGS = 10;
+
+export const PROJECT_PURPOSES = {
+  hire: {
+    label: "Hire",
+    description:
+      "You're recruiting. Select up to your number of openings; the project keeps taking applications until they're filled.",
+  },
+  build: {
+    label: "Build only",
+    description:
+      "You want the work done, not a hire. One candidate builds it; applications close when you select them.",
+  },
+} as const;
+
+/** A selected candidate's work is finished once it reaches one of these. */
+export const CLOSED_WORK_STATUSES = [
+  "completed",
+  "cancelled",
+] as const satisfies readonly SelectionWorkStatus[];
+
+/** A selected candidate can (re)submit in these states. */
+export const SUBMITTABLE_WORK_STATUSES = [
+  "in_progress",
+  "revision_requested",
+] as const satisfies readonly SelectionWorkStatus[];

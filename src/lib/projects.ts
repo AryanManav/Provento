@@ -41,3 +41,13 @@ export function projectAvailability(
 export function spotsLeft(maxApplicants: number | null, applicationCount: number) {
   return maxApplicants === null ? null : Math.max(0, maxApplicants - applicationCount);
 }
+
+/** "Hiring · 2 openings" / "Paid build — no hiring", for Browse and the brief. */
+export function purposeLabel(project: {
+  purpose: "hire" | "build";
+  openings: number;
+}): string {
+  return project.purpose === "hire"
+    ? `Hiring · ${project.openings} opening${project.openings === 1 ? "" : "s"}`
+    : "Paid build — no hiring";
+}

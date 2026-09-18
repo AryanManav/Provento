@@ -176,3 +176,80 @@ describe("project controls", () => {
     ]);
   });
 });
+
+describe("hire vs build projects", () => {
+  const project = {
+    title: "Build REST API for Inventory System",
+    description: "Develop a clean Node.js and PostgreSQL REST API for warehouse stock.",
+    problemStatement:
+      "Current warehouse team faces discrepancy issues with spreadsheet logging.",
+    context: "We are a 12 person logistics startup moving off spreadsheets this quarter.",
+    requirements: ["CRUD endpoints"],
+    deliverables: ["Repository"],
+    acceptanceCriteria: ["Tests pass"],
+    evaluationCriteria: ["Code quality"],
+    expectedHours: 8,
+    paymentAmount: 5000,
+    applicationDeadline: "2026-10-01T00:00:00.000Z",
+    projectDeadline: "2026-10-10T00:00:00.000Z",
+  };
+
+  it("lets a hiring project have up to 10 openings", () => {
+    const parsed = createProjectSchema.safeParse({
+      ...project,
+      purpose: "hire",
+      openings: "3",
+    });
+    expect(parsed.success && parsed.data.openings).toBe(3);
+    expect(
+      createProjectSchema.safeParse({ ...project, purpose: "hire", openings: "11" })
+        .success
+    ).toBe(false);
+  });
+
+  it("keeps a build-only project to one candidate", () => {
+    expect(
+      createProjectSchema.safeParse({ ...project, purpose: "build", openings: "2" })
+        .success
+    ).toBe(false);
+    expect(
+      createProjectSchema.safeParse({ ...project, purpose: "build", openings: "1" })
+        .success
+    ).toBe(true);
+  });
+
+  it("labels the purpose for candidates", async () => {
+    const { purposeLabel } = await import("../lib/projects");
+    expect(purposeLabel({ purpose: "hire", openings: 1 })).toBe("Hiring · 1 opening");
+    expect(purposeLabel({ purpose: "hire", openings: 3 })).toBe("Hiring · 3 openings");
+    expect(purposeLabel({ purpose: "build", openings: 1 })).toBe(
+      "Paid build — no hiring"
+    );
+  });
+});
+
+describe("each selected candidate's own cycle", () => {
+  it("follows the candidate's work status, not the project's", async () => {
+    const { applicationStage } = await import("../lib/applications");
+    // The project is still open for more hires, but this candidate submitted.
+    expect(applicationStage("selected", "applications_open", "submitted")).toBe(
+      "awaiting_review"
+    );
+    expect(applicationStage("selected", "in_progress", "completed")).toBe("completed");
+    expect(applicationStage("selected", "in_progress", "revision_requested")).toBe(
+      "revision_requested"
+    );
+    expect(applicationStage("selected", "applications_open", "in_progress")).toBe(
+      "building"
+    );
+  });
+
+  it("treats a candidate's work as closed when finished or withdrawn", async () => {
+    const { isClosedWork } = await import("../lib/applications");
+    expect(isClosedWork({ workStatus: "completed", status: "in_progress" })).toBe(true);
+    expect(isClosedWork({ workStatus: "in_progress", status: "cancelled" })).toBe(true);
+    expect(isClosedWork({ workStatus: "submitted", status: "applications_open" })).toBe(
+      false
+    );
+  });
+});

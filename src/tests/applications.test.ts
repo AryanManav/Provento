@@ -14,6 +14,7 @@ const application = (
   id: "a1",
   status,
   decisionNote: null,
+  workStatus: null,
   coverMessage: "",
   createdAt: "2026-09-18T00:00:00.000Z",
   project: {

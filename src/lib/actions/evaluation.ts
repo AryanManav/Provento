@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCandidateProfileId } from "@/lib/data/candidate";
 import { recordActivity } from "@/lib/data/activity";
 import { getCompanyIdForUser, getProjectHeader } from "@/lib/data/company";
-import { getSelectedCandidateId } from "@/lib/data/evaluation";
+import { isSelectedCandidate } from "@/lib/data/evaluation";
 import {
   projectFeedbackSchema,
   projectMessageSchema,
@@ -15,8 +15,8 @@ import {
   submissionAttachmentsSchema,
   submitWorkSchema,
 } from "@/lib/validations";
-import { CANDIDATE_ACTIVITY_TYPES, SUBMITTABLE_PROJECT_STATUSES } from "@/lib/constants";
-import type { ProjectStatus } from "@/lib/types/database.types";
+import { CANDIDATE_ACTIVITY_TYPES, SUBMITTABLE_WORK_STATUSES } from "@/lib/constants";
+import type { SelectionWorkStatus } from "@/lib/types/database.types";
 import type { ActionResponse } from "@/lib/types/actions";
 
 /**
@@ -75,23 +75,26 @@ export async function submitProjectWorkAction(
 
   const supabase = await createClient();
 
-  // Only the selected candidate may submit, and only while the project is open
-  // for work. RLS enforces the first; this also gives a usable error message.
-  const { data: project } = await supabase
-    .from("projects")
+  // Only a selected candidate may submit, and only while their own work cycle
+  // allows it. apply_project_submission enforces this; checking first gives a
+  // clearer message.
+  const { data: selection } = await supabase
+    .from("project_selections")
     .select("status")
-    .eq("id", validated.data.projectId)
+    .eq("project_id", validated.data.projectId)
+    .eq("candidate_id", candidateId)
     .maybeSingle();
 
-  if (!project) return { error: "Project not found" };
+  if (!selection) return { error: "You weren't selected for this project" };
   if (
-    !(SUBMITTABLE_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
+    !(SUBMITTABLE_WORK_STATUSES as readonly SelectionWorkStatus[]).includes(
+      selection.status as SelectionWorkStatus
+    )
   ) {
-    return { error: "This project is not currently accepting submissions" };
+    return { error: "Your submission is with the startup — wait for their decision" };
   }
 
-  // The apply_project_submission trigger moves the project to "submitted";
-  // candidates cannot update projects directly.
+  // apply_project_submission moves this candidate's work to "submitted".
   const { data: submission, error } = await supabase
     .from("project_submissions")
     .insert({
@@ -104,7 +107,9 @@ export async function submitProjectWorkAction(
     .select("id")
     .single();
 
-  if (error || !submission) return { error: error?.message ?? "Could not submit" };
+  if (error?.code === "P0001") return { error: error.message };
+  if (error || !submission)
+    return { error: "Couldn't submit your work. Please try again." };
 
   if (attachments.data.length > 0) {
     const { error: attachError } = await supabase.from("submission_attachments").insert(
@@ -171,7 +176,7 @@ export async function reviewSubmissionAction(
   if (error?.code === "P0001") return { error: error.message };
   if (error) return { error: "Couldn't record the decision. Please try again." };
 
-  revalidatePath(`/company/projects/${submission.project_id}/review`);
+  revalidatePath(`/company/projects/${submission.project_id}`, "layout");
   revalidatePath(`/candidate/trials/${submission.project_id}`);
   return { success: true };
 }
@@ -184,6 +189,7 @@ export async function recordProjectFeedbackAction(
 
   const validated = projectFeedbackSchema.safeParse({
     projectId: formData.get("projectId"),
+    candidateId: formData.get("candidateId"),
     requirementsCompleted: formData.get("requirementsCompleted") === "on",
     technicalQuality: formData.get("technicalQuality"),
     completeness: formData.get("completeness"),
@@ -204,8 +210,10 @@ export async function recordProjectFeedbackAction(
   );
   if ("error" in ownership) return { error: ownership.error };
 
-  const candidateId = await getSelectedCandidateId(validated.data.projectId);
-  if (!candidateId) return { error: "No candidate has been selected for this project" };
+  const { candidateId } = validated.data;
+  if (!(await isSelectedCandidate(validated.data.projectId, candidateId))) {
+    return { error: "This candidate isn't selected on this project" };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("project_feedback").insert({
@@ -225,9 +233,10 @@ export async function recordProjectFeedbackAction(
     would_interview_or_hire: validated.data.wouldInterviewOrHire,
   });
 
-  if (error) return { error: error.message };
+  if (error?.code === "23505") return { error: "This has already been recorded." };
+  if (error) return { error: "Couldn't save. Please try again." };
 
-  revalidatePath(`/company/projects/${validated.data.projectId}/review`);
+  revalidatePath(`/company/projects/${validated.data.projectId}/review/${candidateId}`);
   revalidatePath("/candidate/profile");
   return { success: true };
 }
@@ -240,6 +249,7 @@ export async function recordProjectOutcomeAction(
 
   const validated = projectOutcomeSchema.safeParse({
     projectId: formData.get("projectId"),
+    candidateId: formData.get("candidateId"),
     outcome: formData.get("outcome"),
     reason: (formData.get("reason") as string)?.trim() || null,
     notes: (formData.get("notes") as string)?.trim() || null,
@@ -253,8 +263,10 @@ export async function recordProjectOutcomeAction(
   );
   if ("error" in ownership) return { error: ownership.error };
 
-  const candidateId = await getSelectedCandidateId(validated.data.projectId);
-  if (!candidateId) return { error: "No candidate has been selected for this project" };
+  const { candidateId } = validated.data;
+  if (!(await isSelectedCandidate(validated.data.projectId, candidateId))) {
+    return { error: "This candidate isn't selected on this project" };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("project_outcomes").insert({
@@ -266,9 +278,10 @@ export async function recordProjectOutcomeAction(
     notes: validated.data.notes,
   });
 
-  if (error) return { error: error.message };
+  if (error?.code === "23505") return { error: "This has already been recorded." };
+  if (error) return { error: "Couldn't save. Please try again." };
 
-  revalidatePath(`/company/projects/${validated.data.projectId}/review`);
+  revalidatePath(`/company/projects/${validated.data.projectId}/review/${candidateId}`);
   revalidatePath("/candidate/profile");
   return { success: true };
 }
@@ -287,23 +300,34 @@ export async function postProjectMessageAction(
 
   const validated = projectMessageSchema.safeParse({
     projectId: formData.get("projectId"),
+    candidateId: formData.get("candidateId") || undefined,
     body: formData.get("body"),
   });
   if (!validated.success) return { error: validated.error.errors[0].message };
 
   const { projectId, body } = validated.data;
-  const candidateId = await getSelectedCandidateId(projectId);
-  if (!candidateId) return { error: "No candidate has been selected for this project" };
 
+  // A thread belongs to one selected candidate. Candidates write in their own;
+  // a company names the candidate whose thread it's replying in.
+  let candidateId: string;
   let authorRole: "candidate" | "company";
   if (user.role === "candidate") {
-    if ((await getCandidateProfileId(user.id)) !== candidateId) {
+    const ownId = await getCandidateProfileId(user.id);
+    if (!ownId || !(await isSelectedCandidate(projectId, ownId))) {
       return { error: "You can only message about projects you were selected for" };
     }
+    candidateId = ownId;
     authorRole = "candidate";
   } else {
     const ownership = await assertProjectOwnership(user.id, user.role, projectId);
     if ("error" in ownership) return { error: ownership.error };
+    if (
+      !validated.data.candidateId ||
+      !(await isSelectedCandidate(projectId, validated.data.candidateId))
+    ) {
+      return { error: "Choose a selected candidate to message" };
+    }
+    candidateId = validated.data.candidateId;
     authorRole = "company";
   }
 
@@ -318,6 +342,6 @@ export async function postProjectMessageAction(
   if (error) return { error: error.message };
 
   revalidatePath(`/candidate/trials/${projectId}`);
-  revalidatePath(`/company/projects/${projectId}/review`);
+  revalidatePath(`/company/projects/${projectId}/review/${candidateId}`);
   return { success: true };
 }

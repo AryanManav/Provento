@@ -19,7 +19,7 @@ const ICONS: Record<NotificationView["type"], { icon: LucideIcon; tone: string }
   application_status: { icon: UserCheck, tone: "bg-emerald-50 text-emerald-600" },
   work_submitted: { icon: FileUp, tone: "bg-amber-50 text-amber-600" },
   submission_status: { icon: ClipboardCheck, tone: "bg-emerald-50 text-emerald-600" },
-  message: { icon: MessageSquare, tone: "bg-violet-50 text-violet-600" },
+  message: { icon: MessageSquare, tone: "bg-sky-50 text-sky-600" },
   feedback: { icon: Star, tone: "bg-amber-50 text-amber-600" },
   outcome: { icon: Trophy, tone: "bg-emerald-50 text-emerald-600" },
   other: { icon: Bell, tone: "bg-ink-100 text-ink-500" },

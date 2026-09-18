@@ -29,7 +29,7 @@ export function ApplicationStatusForm({
 }: {
   applicationId: string;
   status: ApplicationStatus;
-  /** Another candidate is already selected for this project. */
+  /** Every opening on the project is filled, so nobody else can be selected. */
   selectionTaken?: boolean;
   /** Where to land afterwards; the action only honours this project's applicant pages. */
   returnTo?: string;
@@ -126,12 +126,12 @@ export function ApplicationStatusForm({
         <p className="flex basis-full items-center justify-end gap-fib2 text-xs text-amber-700">
           <Lock className="h-3.5 w-3.5" />
           This decision is final and can&apos;t be changed.
-          {choice === "selected" && " Only one candidate can be selected per project."}
+          {choice === "selected" && " It uses one of the project's openings."}
         </p>
       )}
       {selectionTaken && (
         <p className="basis-full text-right text-xs text-ink-400">
-          A candidate is already selected for this project.
+          All openings on this project are filled.
         </p>
       )}
     </form>

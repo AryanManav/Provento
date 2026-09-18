@@ -9,7 +9,11 @@ import type {
   CandidateSkillView,
   VerifiedTrialView,
 } from "@/lib/types/domain";
-import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
+import type {
+  ApplicationStatus,
+  ProjectStatus,
+  SelectionWorkStatus,
+} from "@/lib/types/database.types";
 import type { SkillLevel } from "@/lib/constants";
 import { DEFAULT_CURRENCY } from "@/lib/constants";
 
@@ -183,12 +187,22 @@ export async function getCandidateApplications(
 
   const rows = (data ?? []) as unknown as RawApplication[];
 
+  // Each selected candidate has their own work cycle on the project.
+  const { data: selections } = await supabase
+    .from("project_selections")
+    .select("project_id, status")
+    .eq("candidate_id", candidateId);
+  const workByProject = new Map(
+    (selections ?? []).map((row) => [row.project_id, row.status as SelectionWorkStatus])
+  );
+
   return rows.map((row) => {
     const project = one(row.projects);
     return {
       id: row.id,
       status: row.status,
       decisionNote: row.decision_note,
+      workStatus: project ? (workByProject.get(project.id) ?? null) : null,
       coverMessage: row.cover_message,
       createdAt: row.created_at,
       project: project
