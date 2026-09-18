@@ -29,6 +29,17 @@ export function applicationStage(
   applicationStatus: ApplicationStatus,
   projectStatus: ProjectStatus | null | undefined
 ): ApplicationStage {
+  // A project cancelled before any decision (e.g. its company left) closes
+  // every application still waiting on it.
+  if (
+    projectStatus === "cancelled" &&
+    (applicationStatus === "submitted" ||
+      applicationStatus === "reviewing" ||
+      applicationStatus === "shortlisted")
+  ) {
+    return "cancelled";
+  }
+
   switch (applicationStatus) {
     case "withdrawn":
       return "withdrawn";

@@ -1,3 +1,4 @@
+import { StatusBanner } from "@/components/common/status-banner";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -55,9 +56,21 @@ const ROLES = [
   "DevOps Engineer",
 ];
 
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ account?: string }>;
+}) {
+  const { account } = await searchParams;
   return (
     <div className="pb-fib9">
+      {account === "deleted" && (
+        <div className="mx-auto max-w-6xl px-fib5 pt-fib5 sm:px-fib6">
+          <StatusBanner tone="success">
+            Your account has been deleted. Thanks for trying Trialent.
+          </StatusBanner>
+        </div>
+      )}
       {/* ---------------------------------------------------------------- Hero */}
       <section className="relative overflow-hidden border-b border-line">
         <div className="bg-dot-grid mask-radial absolute inset-0" />

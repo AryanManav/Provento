@@ -327,3 +327,11 @@ export interface CompanyPublicView {
   };
   openProjects: ProjectSummaryView[];
 }
+
+export interface AccountSettingsView {
+  signInMethods: { provider: string; label: string }[];
+  /** False for Google/GitHub-only accounts, which can still set one. */
+  hasPassword: boolean;
+  /** Reasons the account can't be deleted right now; empty when it can. */
+  deletionBlockers: string[];
+}

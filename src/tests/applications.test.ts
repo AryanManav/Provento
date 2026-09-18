@@ -45,6 +45,12 @@ describe("application stage", () => {
     expect(applicationStage("withdrawn", "applications_open")).toBe("withdrawn");
   });
 
+  it("closes pending applications when the project is cancelled", () => {
+    expect(applicationStage("submitted", "cancelled")).toBe("cancelled");
+    expect(applicationStage("shortlisted", "cancelled")).toBe("cancelled");
+    expect(applicationStage("withdrawn", "cancelled")).toBe("withdrawn");
+  });
+
   it("treats completed and cancelled projects as closed", () => {
     expect(isClosedProject("completed")).toBe(true);
     expect(isClosedProject("cancelled")).toBe(true);
@@ -109,6 +115,33 @@ describe("dashboard counts", () => {
       activeTrials: 0,
       completed: 1,
     });
+  });
+});
+
+describe("account settings", () => {
+  it("only deletes when DELETE is typed exactly", async () => {
+    const { deleteAccountSchema } = await import("../lib/validations/account");
+    expect(deleteAccountSchema.safeParse({ confirmation: "DELETE" }).success).toBe(true);
+    expect(deleteAccountSchema.safeParse({ confirmation: "delete" }).success).toBe(false);
+    expect(deleteAccountSchema.safeParse({ confirmation: "" }).success).toBe(false);
+  });
+
+  it("requires a strong, matching new password", async () => {
+    const { changePasswordSchema } = await import("../lib/validations/account");
+    expect(
+      changePasswordSchema.safeParse({
+        password: "Str0ngPass",
+        confirmPassword: "Str0ngPass",
+      }).success
+    ).toBe(true);
+    expect(
+      changePasswordSchema.safeParse({ password: "Str0ngPass", confirmPassword: "other" })
+        .success
+    ).toBe(false);
+    expect(
+      changePasswordSchema.safeParse({ password: "weak", confirmPassword: "weak" })
+        .success
+    ).toBe(false);
   });
 });
 

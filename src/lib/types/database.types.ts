@@ -417,7 +417,7 @@ export interface Database {
           id: string;
           project_id: string;
           candidate_id: string;
-          selected_by: string;
+          selected_by: string | null;
           selected_at: string;
           status: string;
         };
@@ -425,7 +425,7 @@ export interface Database {
           id?: string;
           project_id: string;
           candidate_id: string;
-          selected_by: string;
+          selected_by?: string | null;
           selected_at?: string;
           status?: string;
         };
@@ -492,7 +492,7 @@ export interface Database {
           id: string;
           project_id: string;
           candidate_id: string;
-          author_id: string;
+          author_id: string | null;
           author_role: ProjectMessageAuthorRole;
           body: string;
           created_at: string;
@@ -501,7 +501,7 @@ export interface Database {
           id?: string;
           project_id: string;
           candidate_id: string;
-          author_id: string;
+          author_id?: string | null;
           author_role: ProjectMessageAuthorRole;
           body: string;
           created_at?: string;
@@ -517,7 +517,7 @@ export interface Database {
           project_id: string;
           candidate_id: string;
           company_id: string;
-          reviewer_id: string;
+          reviewer_id: string | null;
           requirements_completed: boolean;
           technical_quality: string;
           completeness: string;
@@ -535,7 +535,7 @@ export interface Database {
           project_id: string;
           candidate_id: string;
           company_id: string;
-          reviewer_id: string;
+          reviewer_id?: string | null;
           requirements_completed?: boolean;
           technical_quality: string;
           completeness: string;
@@ -659,7 +659,7 @@ export interface Database {
       admin_notes: {
         Row: {
           id: string;
-          admin_id: string;
+          admin_id: string | null;
           target_type: string;
           target_id: string;
           note: string;
@@ -667,7 +667,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          admin_id: string;
+          admin_id?: string | null;
           target_type: string;
           target_id: string;
           note: string;
@@ -744,6 +744,14 @@ export interface Database {
       has_applied_to_project: {
         Args: { target_project_id: string };
         Returns: boolean;
+      };
+      account_deletion_blockers: {
+        Args: Record<string, never>;
+        Returns: string[];
+      };
+      delete_my_account: {
+        Args: Record<string, never>;
+        Returns: undefined;
       };
       company_track_record: {
         Args: { target_company_id: string };

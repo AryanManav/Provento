@@ -240,3 +240,14 @@ export function companyProfilePath(companyId: string): string {
  */
 export const OAUTH_INTENT_COOKIE = "trialent_oauth_intent";
 export const OAUTH_INTENT_MAX_AGE_SECONDS = 600;
+
+/** Where each role manages its account. Admins are managed by hand. */
+export const SETTINGS_BY_ROLE: Record<UserRole, string | null> = {
+  candidate: "/candidate/settings",
+  company: "/company/settings",
+  admin: null,
+};
+
+export function settingsFor(role: UserRole): string | null {
+  return SETTINGS_BY_ROLE[role] ?? null;
+}

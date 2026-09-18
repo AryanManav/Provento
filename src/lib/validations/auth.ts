@@ -31,7 +31,7 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-const strongPassword = PASSWORD_RULES.reduce(
+export const strongPassword = PASSWORD_RULES.reduce(
   (schema, rule) => schema.refine(rule.test, { message: rule.label }),
   z.string() as z.ZodType<string>
 );

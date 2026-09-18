@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Clock, Hammer, User } from "lucide-react";
+import { Briefcase, Clock, Hammer, Settings, User } from "lucide-react";
 import { SidebarNav, type SidebarNavItem } from "@/components/layout/sidebar-nav";
 import type { NotificationSummary } from "@/lib/types/domain";
 
@@ -18,6 +18,7 @@ const ITEMS: SidebarNavItem[] = [
     match: "prefix",
     badge: true,
   },
+  { label: "Settings", href: "/candidate/settings", icon: Settings },
 ];
 
 /** Identity and sign-out live in the navbar user menu, not here. */

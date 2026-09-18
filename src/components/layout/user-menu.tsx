@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, LayoutDashboard, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { dashboardFor, profileFor } from "@/lib/constants";
+import { dashboardFor, profileFor, settingsFor } from "@/lib/constants";
 import { Avatar } from "@/components/common/avatar";
 import type { CurrentUser } from "@/lib/auth/guards";
 
@@ -36,6 +36,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
     };
   }, [open]);
 
+  const settingsHref = settingsFor(user.role);
   const itemClass =
     "flex w-full items-center gap-fib4 px-fib5 py-fib4 text-sm text-ink-700 transition-colors hover:bg-ink-50";
 
@@ -86,6 +87,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             <Link href={profileFor(user.role)} role="menuitem" className={itemClass}>
               <UserRound className="h-4 w-4 text-ink-400" />
               My profile
+            </Link>
+          )}
+
+          {settingsHref && (
+            <Link href={settingsHref} role="menuitem" className={itemClass}>
+              <Settings className="h-4 w-4 text-ink-400" />
+              Settings
             </Link>
           )}
 
