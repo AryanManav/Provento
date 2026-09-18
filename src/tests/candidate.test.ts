@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
-  candidateProfileUpdateSchema,
+  candidateProfileSchema,
   candidateSkillSchema,
   candidateProjectSchema,
+  candidateSkillUpdateSchema,
+  candidateProjectUpdateSchema,
 } from "../lib/validations/candidate";
 
 describe("Candidate System Validation Schemas", () => {
-  describe("candidateProfileUpdateSchema", () => {
+  describe("candidateProfileSchema", () => {
     it("validates a complete candidate profile payload", () => {
-      const result = candidateProfileUpdateSchema.safeParse({
+      const result = candidateProfileSchema.safeParse({
         headline: "Junior Backend Developer | Node.js & PostgreSQL",
         bio: "Passionate about building clean REST APIs and data modeling.",
         location: "Bengaluru, Karnataka",
@@ -24,7 +26,7 @@ describe("Candidate System Validation Schemas", () => {
     });
 
     it("allows empty optional URLs", () => {
-      const result = candidateProfileUpdateSchema.safeParse({
+      const result = candidateProfileSchema.safeParse({
         headline: "Aspiring Frontend Developer",
         resumeUrl: "",
         githubUrl: "",
@@ -35,7 +37,7 @@ describe("Candidate System Validation Schemas", () => {
     });
 
     it("rejects invalid URLs", () => {
-      const result = candidateProfileUpdateSchema.safeParse({
+      const result = candidateProfileSchema.safeParse({
         githubUrl: "not-a-valid-url",
       });
       expect(result.success).toBe(false);
@@ -75,7 +77,8 @@ describe("Candidate System Validation Schemas", () => {
     it("accepts valid showcase project", () => {
       const result = candidateProjectSchema.safeParse({
         title: "Real-Time Chat Microservice",
-        description: "Built a WebSockets-based chat service with Redis pub/sub and MongoDB message persistence.",
+        description:
+          "Built a WebSockets-based chat service with Redis pub/sub and MongoDB message persistence.",
         technologies: "Node.js, WebSockets, Redis, MongoDB",
         repositoryUrl: "https://github.com/user/chat-service",
         liveUrl: "https://chat-service.up.railway.app",
@@ -91,5 +94,26 @@ describe("Candidate System Validation Schemas", () => {
       });
       expect(result.success).toBe(false);
     });
+  });
+
+  it("validates identifiers before updating a candidate skill or project", () => {
+    expect(
+      candidateSkillUpdateSchema.safeParse({
+        skillId: "not-a-uuid",
+        skillName: "React",
+        skillLevel: "advanced",
+        yearsExperience: 2,
+      }).success
+    ).toBe(false);
+    expect(
+      candidateProjectUpdateSchema.safeParse({
+        projectId: "9f59a967-7782-4975-bac4-1ff6cc8e765d",
+        title: "Portfolio API",
+        description: "A documented and tested API project.",
+        technologies: "TypeScript",
+        repositoryUrl: "",
+        liveUrl: "",
+      }).success
+    ).toBe(true);
   });
 });

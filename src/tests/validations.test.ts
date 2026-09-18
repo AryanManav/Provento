@@ -24,12 +24,20 @@ describe("Validation Schemas", () => {
       expect(result.success).toBe(false);
     });
 
-    it("rejects short passwords", () => {
+    it("rejects an empty password", () => {
       const result = loginSchema.safeParse({
         email: "valid@email.com",
-        password: "123",
+        password: "",
       });
       expect(result.success).toBe(false);
+    });
+
+    it("accepts a legacy password that predates the stronger signup rules", () => {
+      const result = loginSchema.safeParse({
+        email: "valid@email.com",
+        password: "abc123",
+      });
+      expect(result.success).toBe(true);
     });
   });
 
@@ -38,7 +46,7 @@ describe("Validation Schemas", () => {
       const result = signupSchema.safeParse({
         fullName: "Aarav Patel",
         email: "aarav@example.com",
-        password: "password123",
+        password: "Password123",
         role: "candidate",
       });
       expect(result.success).toBe(true);
@@ -48,17 +56,32 @@ describe("Validation Schemas", () => {
       const result = signupSchema.safeParse({
         fullName: "Priya Sharma",
         email: "priya@techstartup.in",
-        password: "password123",
+        password: "Password123",
         role: "company",
       });
       expect(result.success).toBe(true);
+    });
+
+    it.each([
+      ["too short", "Pass1"],
+      ["no uppercase", "password123"],
+      ["no lowercase", "PASSWORD123"],
+      ["no number or symbol", "PasswordOnly"],
+    ])("rejects a password with %s", (_label, password) => {
+      const result = signupSchema.safeParse({
+        fullName: "Aarav Patel",
+        email: "aarav@example.com",
+        password,
+        role: "candidate",
+      });
+      expect(result.success).toBe(false);
     });
 
     it("rejects invalid roles like admin", () => {
       const result = signupSchema.safeParse({
         fullName: "Hacker",
         email: "hacker@example.com",
-        password: "password123",
+        password: "Password123",
         role: "admin",
       });
       expect(result.success).toBe(false);
@@ -69,9 +92,12 @@ describe("Validation Schemas", () => {
     it("validates complete project specification", () => {
       const result = createProjectSchema.safeParse({
         title: "Build REST API for Inventory System",
-        description: "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
-        problemStatement: "Current warehouse team faces discrepancy issues with spreadsheet logging.",
-        context: "We are scaling our quick-commerce backend team and hiring a Junior Backend Engineer.",
+        description:
+          "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
+        problemStatement:
+          "Current warehouse team faces discrepancy issues with spreadsheet logging.",
+        context:
+          "We are scaling our quick-commerce backend team and hiring a Junior Backend Engineer.",
         requirements: ["Node.js", "PostgreSQL", "JWT Auth"],
         deliverables: ["GitHub repo", "OpenAPI spec", "README"],
         acceptanceCriteria: ["CRUD endpoints functional", "Passes auth checks"],
@@ -88,9 +114,12 @@ describe("Validation Schemas", () => {
     it("enforces minimum payment requirement to protect candidate labor", () => {
       const result = createProjectSchema.safeParse({
         title: "Build REST API for Inventory System",
-        description: "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
-        problemStatement: "Current warehouse team faces discrepancy issues with spreadsheet logging.",
-        context: "We are scaling our quick-commerce backend team and hiring a Junior Backend Engineer.",
+        description:
+          "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
+        problemStatement:
+          "Current warehouse team faces discrepancy issues with spreadsheet logging.",
+        context:
+          "We are scaling our quick-commerce backend team and hiring a Junior Backend Engineer.",
         requirements: ["Node.js"],
         deliverables: ["GitHub repo"],
         acceptanceCriteria: ["CRUD endpoints functional"],
@@ -109,7 +138,8 @@ describe("Validation Schemas", () => {
     it("validates application payload", () => {
       const result = createApplicationSchema.safeParse({
         projectId: "123e4567-e89b-12d3-a456-426614174000",
-        coverMessage: "I have built REST APIs with Express and PostgreSQL, and I would love to tackle this challenge.",
+        coverMessage:
+          "I have built REST APIs with Express and PostgreSQL, and I would love to tackle this challenge.",
         relevantExperience: "Built an ecommerce inventory backend project on GitHub.",
       });
       expect(result.success).toBe(true);
@@ -118,7 +148,8 @@ describe("Validation Schemas", () => {
     it("rejects non-UUID project IDs", () => {
       const result = createApplicationSchema.safeParse({
         projectId: "not-a-uuid",
-        coverMessage: "I have built REST APIs with Express and PostgreSQL, and I would love to tackle this challenge.",
+        coverMessage:
+          "I have built REST APIs with Express and PostgreSQL, and I would love to tackle this challenge.",
       });
       expect(result.success).toBe(false);
     });
