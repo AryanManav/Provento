@@ -118,6 +118,7 @@ export async function createProjectAction(formData: FormData) {
     expectedHours: formData.get("expectedHours"),
     paymentAmount: formData.get("paymentAmount"),
     currency: DEFAULT_CURRENCY,
+    maxApplicants: formData.get("maxApplicants"),
     applicationDeadline: applicationDeadline.toISOString(),
     projectDeadline: projectDeadline.toISOString(),
   });
@@ -153,6 +154,7 @@ export async function createProjectAction(formData: FormData) {
       currency: validated.data.currency,
       application_deadline: validated.data.applicationDeadline,
       project_deadline: validated.data.projectDeadline,
+      max_applicants: validated.data.maxApplicants ?? null,
       status: "applications_open",
     })
     .select("id")

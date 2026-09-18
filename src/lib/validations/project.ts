@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_CURRENCY } from "@/lib/constants";
+import { DEFAULT_CURRENCY, MAX_APPLICANTS_LIMIT } from "@/lib/constants";
 
 export const createProjectSchema = z
   .object({
@@ -36,6 +36,16 @@ export const createProjectSchema = z
       .number()
       .min(1000, "Minimum payment is ₹1,000 to respect candidate labor"),
     currency: z.string().default(DEFAULT_CURRENCY),
+    // Empty means no cap.
+    maxApplicants: z.preprocess(
+      (value) => (value === "" || value === null ? undefined : value),
+      z.coerce
+        .number()
+        .int("Applicant limit must be a whole number")
+        .min(1, "Allow at least 1 applicant")
+        .max(MAX_APPLICANTS_LIMIT, `At most ${MAX_APPLICANTS_LIMIT} applicants`)
+        .optional()
+    ),
     applicationDeadline: z.string().datetime({ message: "Invalid application deadline" }),
     projectDeadline: z.string().datetime({ message: "Invalid project deadline" }),
   })

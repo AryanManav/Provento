@@ -1,4 +1,4 @@
-import { CLOSED_PROJECT_STATUSES, OPEN_PROJECT_STATUSES } from "@/lib/constants";
+import { BROWSABLE_PROJECT_STATUSES, CLOSED_PROJECT_STATUSES } from "@/lib/constants";
 import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
 
@@ -64,14 +64,14 @@ export function applicationStage(
 
 /**
  * Selected candidates go to their workspace. Everyone else goes to the public
- * brief — which only exists while the project is open, so once it closes there
- * is nothing to link to.
+ * brief — which exists while Browse can list the project, so once it's
+ * finished or cancelled there is nothing to link to.
  */
 export function applicationHref(application: ApplicationSummaryView): string | null {
   const project = application.project;
   if (!project) return null;
   if (application.status === "selected") return `/candidate/trials/${project.id}`;
-  return (OPEN_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
+  return (BROWSABLE_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
     ? `/projects/${project.slug}`
     : null;
 }

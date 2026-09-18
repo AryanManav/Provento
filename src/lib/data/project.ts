@@ -1,11 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
-import { DEFAULT_CURRENCY, OPEN_PROJECT_STATUSES } from "@/lib/constants";
-import type { ProjectDetailView, ProjectSummaryView } from "@/lib/types/domain";
+import {
+  BROWSABLE_PROJECT_STATUSES,
+  DEFAULT_CURRENCY,
+  OPEN_PROJECT_STATUSES,
+} from "@/lib/constants";
+import { projectAvailability } from "@/lib/projects";
+import type {
+  BrowseProjectView,
+  ProjectDetailView,
+  ProjectSummaryView,
+} from "@/lib/types/domain";
 import type { ProjectStatus, ProjectWorkMode } from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, companies(name)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, companies(name)";
 
 interface RawProjectSummary {
   id: string;
@@ -18,6 +27,7 @@ interface RawProjectSummary {
   currency: string;
   application_deadline: string;
   company_id: string;
+  max_applicants: number | null;
   companies: { name: string | null } | { name: string | null }[] | null;
 }
 
@@ -34,26 +44,63 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     applicationDeadline: row.application_deadline,
     companyId: row.company_id,
     companyName: one(row.companies)?.name ?? null,
+    maxApplicants: row.max_applicants ?? null,
   };
 }
 
-/** Projects visible in the public directory and candidate recommendations. */
-export async function getOpenProjects(
-  limit?: number,
+/** Places taken per project (withdrawn applications don't count). */
+export async function getApplicationCounts(
+  projectIds: string[]
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (projectIds.length === 0) return counts;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("project_application_counts", {
+    project_ids: projectIds,
+  });
+  for (const row of data ?? []) counts.set(row.project_id, row.applications);
+  return counts;
+}
+
+/**
+ * Browse: every project still before its application deadline — open ones and
+ * ones where a candidate is already working — with its availability.
+ */
+export async function getBrowseProjects(
   companyId?: string
-): Promise<ProjectSummaryView[]> {
+): Promise<BrowseProjectView[]> {
   const supabase = await createClient();
   let query = supabase
     .from("projects")
     .select(SUMMARY_COLUMNS)
-    .in("status", [...OPEN_PROJECT_STATUSES])
+    .in("status", [...BROWSABLE_PROJECT_STATUSES])
+    .gt("application_deadline", new Date().toISOString())
     .order("created_at", { ascending: false });
-
   if (companyId) query = query.eq("company_id", companyId);
-  if (limit) query = query.limit(limit);
 
   const { data } = await query;
-  return ((data ?? []) as unknown as RawProjectSummary[]).map(toSummary);
+  const projects = ((data ?? []) as unknown as RawProjectSummary[]).map(toSummary);
+  const counts = await getApplicationCounts(projects.map((project) => project.id));
+
+  return projects.map((project) => {
+    const applicationCount = counts.get(project.id) ?? 0;
+    return {
+      ...project,
+      applicationCount,
+      availability: projectAvailability({ ...project, applicationCount }),
+    };
+  });
+}
+
+/** Projects a candidate can apply to right now, for recommendations. */
+export async function getOpenProjects(
+  limit?: number,
+  companyId?: string
+): Promise<BrowseProjectView[]> {
+  const open = (await getBrowseProjects(companyId)).filter(
+    (project) => project.availability === "open"
+  );
+  return limit ? open.slice(0, limit) : open;
 }
 
 interface RawProjectDetail extends RawProjectSummary {
@@ -80,27 +127,34 @@ interface RawDetailCompany {
   verified: boolean | null;
 }
 
-/** Full public project page, restricted to projects that are open for applications. */
-export async function getOpenProjectBySlug(
+/**
+ * The public brief, for any project Browse can list. `availability` says
+ * whether the Apply form should show.
+ */
+export async function getBrowsableProjectBySlug(
   slug: string
 ): Promise<ProjectDetailView | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
-    .in("status", [...OPEN_PROJECT_STATUSES])
+    .in("status", [...BROWSABLE_PROJECT_STATUSES])
     .maybeSingle();
 
   if (!data) return null;
 
   const row = data as unknown as RawProjectDetail;
   const company = one(row.companies);
+  const summary = toSummary(row);
+  const applicationCount = (await getApplicationCounts([row.id])).get(row.id) ?? 0;
 
   return {
-    ...toSummary(row),
+    ...summary,
+    applicationCount,
+    availability: projectAvailability({ ...summary, applicationCount }),
     workMode: row.work_mode ?? "local",
     companyLocation: company?.location ?? null,
     company: {
@@ -136,15 +190,21 @@ export async function getProjectIdBySlug(slug: string): Promise<string | null> {
   return data?.id ?? null;
 }
 
-/** True when the project still accepts applications. */
+/**
+ * True when the project still accepts applications: open status and before its
+ * deadline. The cap is enforced by the database trigger, atomically.
+ */
 export async function isProjectOpen(projectId: string): Promise<boolean> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("status")
+    .select("status, application_deadline")
     .eq("id", projectId)
     .maybeSingle();
 
   if (!data) return false;
-  return (OPEN_PROJECT_STATUSES as readonly ProjectStatus[]).includes(data.status);
+  return (
+    (OPEN_PROJECT_STATUSES as readonly ProjectStatus[]).includes(data.status) &&
+    new Date(data.application_deadline).getTime() > Date.now()
+  );
 }

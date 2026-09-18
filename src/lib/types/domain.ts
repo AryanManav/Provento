@@ -15,6 +15,7 @@ import type {
   SubmissionStatus,
 } from "@/lib/types/database.types";
 import type { NotificationType, SkillLevel } from "@/lib/constants";
+import type { ProjectAvailability } from "@/lib/projects";
 
 export interface CandidateProfileView {
   id: string;
@@ -60,6 +61,14 @@ export interface ProjectSummaryView {
   applicationDeadline: string;
   companyId: string;
   companyName: string | null;
+  /** Applicant cap set by the company; null means no cap. */
+  maxApplicants: number | null;
+}
+
+/** A project in Browse, with how many places are taken. */
+export interface BrowseProjectView extends ProjectSummaryView {
+  applicationCount: number;
+  availability: ProjectAvailability;
 }
 
 export interface CompanyProjectView extends ProjectSummaryView {
@@ -73,7 +82,7 @@ export interface CompanyProjectResult {
   outcome: ProjectOutcomeType | null;
 }
 
-export interface ProjectDetailView extends ProjectSummaryView {
+export interface ProjectDetailView extends BrowseProjectView {
   workMode: ProjectWorkMode;
   companyLocation: string | null;
   /** From the company profile, for the brief's "About" section. */

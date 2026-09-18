@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getOpenProjects } from "@/lib/data/project";
-import { formatCurrency } from "@/lib/utils";
+import { getBrowseProjects } from "@/lib/data/project";
+import { spotsLeft } from "@/lib/projects";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Clock, Banknote, Building, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { getCurrentUser } from "@/lib/auth/guards";
@@ -19,7 +20,7 @@ import { companyProfilePath } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsDirectoryPage() {
-  const [projects, user] = await Promise.all([getOpenProjects(), getCurrentUser()]);
+  const [projects, user] = await Promise.all([getBrowseProjects(), getCurrentUser()]);
   // Posting is for startups and visitors; candidates only browse here.
   const postHref =
     user?.role === "company" || user?.role === "admin"
@@ -70,7 +71,21 @@ export default async function ProjectsDirectoryPage() {
                       {project.companyName || "Startup"}
                     </Link>
                   </div>
-                  <Badge variant="success">Applications Open</Badge>
+                  <Badge
+                    variant={
+                      project.availability === "open"
+                        ? "success"
+                        : project.availability === "full"
+                          ? "warning"
+                          : "secondary"
+                    }
+                  >
+                    {project.availability === "open"
+                      ? "Applications open"
+                      : project.availability === "full"
+                        ? "Full"
+                        : "Candidate selected"}
+                  </Badge>
                 </div>
                 <CardTitle className="text-xl text-slate-900 mt-2">
                   {project.title}
@@ -89,12 +104,25 @@ export default async function ProjectsDirectoryPage() {
                     <Clock className="h-4 w-4 text-slate-400" />
                     <span>{project.expectedHours} hours effort</span>
                   </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-500">
+                    <span>Apply by {formatDate(project.applicationDeadline)}</span>
+                    {spotsLeft(project.maxApplicants, project.applicationCount) !==
+                      null && (
+                      <span>
+                        {project.applicationCount} / {project.maxApplicants} places taken
+                      </span>
+                    )}
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t border-slate-100 pt-4">
                 <Link href={`/projects/${project.slug}`} className="w-full">
                   <Button className="w-full gap-2">
-                    <span>Apply for Evaluation</span>
+                    <span>
+                      {project.availability === "open"
+                        ? "Apply for Evaluation"
+                        : "View brief"}
+                    </span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>

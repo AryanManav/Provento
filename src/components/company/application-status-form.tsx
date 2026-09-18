@@ -1,7 +1,10 @@
 import { updateApplicationStatusAction } from "@/lib/actions/company";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { REVIEWABLE_APPLICATION_STATUSES } from "@/lib/constants";
+import {
+  REVIEWABLE_APPLICATION_STATUSES,
+  REVIEWABLE_STATUS_LABELS,
+} from "@/lib/constants";
 import type { ApplicationStatus } from "@/lib/types/database.types";
 
 export function ApplicationStatusForm({
@@ -39,7 +42,7 @@ export function ApplicationStatusForm({
       >
         {REVIEWABLE_APPLICATION_STATUSES.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {REVIEWABLE_STATUS_LABELS[option]}
           </option>
         ))}
       </Select>

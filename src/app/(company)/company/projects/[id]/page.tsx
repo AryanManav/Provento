@@ -14,6 +14,9 @@ import { MarkNotificationsRead } from "@/components/notifications/mark-notificat
 import { CountBadge } from "@/components/notifications/count-badge";
 import { getNotificationSummary } from "@/lib/data/notifications";
 import { cn } from "@/lib/utils";
+import { CLOSED_APPLICATION_STATUSES } from "@/lib/constants";
+import type { ApplicantView } from "@/lib/types/domain";
+import type { ApplicationStatus } from "@/lib/types/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +53,65 @@ export default async function ManageProjectPage({
     (marker) => marker.linkUrl === reviewPath
   ).length;
 
+  const isClosed = (application: ApplicantView) =>
+    (CLOSED_APPLICATION_STATUSES as readonly ApplicationStatus[]).includes(
+      application.status
+    );
+  // Rejected and withdrawn applications leave the main list but stay on record.
+  const activeApplicants = applicants.filter((application) => !isClosed(application));
+  const closedApplicants = applicants.filter(isClosed);
+  const placesTaken = applicants.filter(
+    (application) => application.status !== "withdrawn"
+  ).length;
+
+  const renderApplicant = (application: ApplicantView) => (
+    <article
+      key={application.id}
+      className={cn(
+        "space-y-fib5 rounded-2xl border bg-white p-fib6 shadow-xs",
+        unreadLinks.has(applicantPath(application.id))
+          ? "border-brand-300 ring-2 ring-brand-100"
+          : "border-line"
+      )}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-fib4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-fib4">
+            <h2 className="font-semibold text-ink-900">{application.candidateName}</h2>
+            {application.status === "submitted" && (
+              <span className="rounded-full bg-brand-600 px-fib4 py-fib1 text-xs font-semibold text-white">
+                New
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-ink-500">
+            {application.candidateHeadline || application.candidateEmail}
+          </p>
+        </div>
+        <span className="rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
+          {application.status.replaceAll("_", " ")}
+        </span>
+      </div>
+
+      <p className="line-clamp-4 whitespace-pre-wrap text-sm text-ink-700">
+        {application.coverMessage}
+      </p>
+
+      <div className="flex flex-wrap items-center justify-between gap-fib4 border-t border-line pt-fib5">
+        <Link
+          href={applicantPath(application.id)}
+          className="text-sm font-semibold text-brand-600 hover:underline"
+        >
+          View full profile →
+        </Link>
+        <ApplicationStatusForm
+          applicationId={application.id}
+          status={application.status}
+        />
+      </div>
+    </article>
+  );
+
   return (
     <div className="max-w-4xl space-y-6">
       {/* Applicants are on screen now; review-page items stay unread until opened. */}
@@ -65,6 +127,11 @@ export default async function ManageProjectPage({
           <h1 className="text-2xl font-bold">{project.title}</h1>
           <p className="text-sm text-slate-500 mt-1">
             Review submitted applications and keep candidates informed.
+            {project.maxApplicants !== null && (
+              <span className="ml-fib3 font-semibold text-ink-700">
+                {placesTaken} / {project.maxApplicants} places taken
+              </span>
+            )}
           </p>
         </div>
         <Link href={reviewPath}>
@@ -103,56 +170,30 @@ export default async function ManageProjectPage({
           description="Candidates who apply will appear here. You'll see their full profile before deciding."
         />
       ) : (
-        <div className="space-y-fib5">
-          {applicants.map((application) => (
-            <article
-              key={application.id}
-              className={cn(
-                "space-y-fib5 rounded-2xl border bg-white p-fib6 shadow-xs",
-                unreadLinks.has(applicantPath(application.id))
-                  ? "border-brand-300 ring-2 ring-brand-100"
-                  : "border-line"
-              )}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-fib4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-fib4">
-                    <h2 className="font-semibold text-ink-900">
-                      {application.candidateName}
-                    </h2>
-                    {application.status === "submitted" && (
-                      <span className="rounded-full bg-brand-600 px-fib4 py-fib1 text-xs font-semibold text-white">
-                        New
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-ink-500">
-                    {application.candidateHeadline || application.candidateEmail}
-                  </p>
-                </div>
-                <span className="rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
-                  {application.status.replaceAll("_", " ")}
+        <div className="space-y-fib6">
+          {activeApplicants.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-line p-fib6 text-center text-sm text-ink-500">
+              No applications waiting on you.
+            </p>
+          ) : (
+            <div className="space-y-fib5">
+              {activeApplicants.map((application) => renderApplicant(application))}
+            </div>
+          )}
+
+          {closedApplicants.length > 0 && (
+            <details className="group rounded-2xl border border-line bg-white">
+              <summary className="cursor-pointer list-none px-fib6 py-fib5 text-sm font-semibold text-ink-600 hover:text-ink-900">
+                Rejected &amp; withdrawn · {closedApplicants.length}
+                <span className="ml-fib3 font-normal text-ink-400 group-open:hidden">
+                  Show
                 </span>
+              </summary>
+              <div className="space-y-fib5 border-t border-line p-fib5">
+                {closedApplicants.map((application) => renderApplicant(application))}
               </div>
-
-              <p className="line-clamp-4 whitespace-pre-wrap text-sm text-ink-700">
-                {application.coverMessage}
-              </p>
-
-              <div className="flex flex-wrap items-center justify-between gap-fib4 border-t border-line pt-fib5">
-                <Link
-                  href={applicantPath(application.id)}
-                  className="text-sm font-semibold text-brand-600 hover:underline"
-                >
-                  View full profile →
-                </Link>
-                <ApplicationStatusForm
-                  applicationId={application.id}
-                  status={application.status}
-                />
-              </div>
-            </article>
-          ))}
+            </details>
+          )}
         </div>
       )}
     </div>

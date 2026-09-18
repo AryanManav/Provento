@@ -321,3 +321,20 @@ export async function getGithubIdentity(): Promise<string | null> {
   } = await supabase.auth.getUser();
   return githubUsernameOf(user);
 }
+
+/** This candidate's application to one project, if any. */
+export async function getCandidateApplicationForProject(
+  candidateId: string,
+  projectId: string
+): Promise<{ status: ApplicationStatus; createdAt: string } | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("applications")
+    .select("status, created_at")
+    .eq("candidate_id", candidateId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  return data
+    ? { status: data.status as ApplicationStatus, createdAt: data.created_at }
+    : null;
+}

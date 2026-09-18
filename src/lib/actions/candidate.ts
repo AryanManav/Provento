@@ -294,7 +294,9 @@ export async function createApplicationAction(
   if (error?.code === "23505") {
     return { error: "You have already applied to this project" };
   }
-  if (error) return { error: error.message };
+  // enforce_application_window: closed, past the deadline, or full.
+  if (error?.code === "P0001") return { error: error.message };
+  if (error) return { error: "Couldn't submit your application. Please try again." };
 
   await recordActivity(
     supabase,

@@ -1,6 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { getOpenProjectBySlug } from "@/lib/data/project";
+import { getBrowsableProjectBySlug } from "@/lib/data/project";
+import {
+  getCandidateApplicationForProject,
+  getCandidateProfileId,
+} from "@/lib/data/candidate";
+import { spotsLeft } from "@/lib/projects";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ApplicationForm } from "@/components/candidate/application-form";
@@ -18,11 +23,18 @@ export default async function ProjectDetailPage({
 }) {
   const { slug } = await params;
 
-  const project = await getOpenProjectBySlug(slug);
+  const project = await getBrowsableProjectBySlug(slug);
   if (!project) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect(`/login?redirect=/projects/${slug}`);
+
+  const candidateId =
+    user.role === "candidate" ? await getCandidateProfileId(user.id) : null;
+  const existing = candidateId
+    ? await getCandidateApplicationForProject(candidateId, project.id)
+    : null;
+  const spots = spotsLeft(project.maxApplicants, project.applicationCount);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
@@ -47,7 +59,23 @@ export default async function ProjectDetailPage({
               {WORK_MODES[project.workMode].label}
             </span>
           </div>
-          <Badge variant="success">Applications open</Badge>
+          <Badge
+            variant={
+              project.availability === "open"
+                ? "success"
+                : project.availability === "full"
+                  ? "warning"
+                  : "secondary"
+            }
+          >
+            {project.availability === "open"
+              ? "Applications open"
+              : project.availability === "full"
+                ? "Full"
+                : project.availability === "selected"
+                  ? "Candidate selected"
+                  : "Applications closed"}
+          </Badge>
         </div>
 
         <p className="text-slate-700 leading-relaxed">{project.description}</p>
@@ -59,6 +87,13 @@ export default async function ProjectDetailPage({
           </span>
           <span>{project.expectedHours} hours estimated</span>
           <span>Apply by {formatDate(project.applicationDeadline)}</span>
+          {spots !== null && (
+            <span>
+              {spots === 0
+                ? `All ${project.maxApplicants} places taken`
+                : `${spots} of ${project.maxApplicants} places left`}
+            </span>
+          )}
         </div>
       </section>
 
@@ -145,11 +180,29 @@ export default async function ProjectDetailPage({
 
       <section className="rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-bold mb-4">Apply for this evaluation</h2>
-        {user.role === "candidate" ? (
+        {user.role !== "candidate" ? (
+          <p className="text-sm text-slate-600">
+            Only candidate accounts can submit an application.
+          </p>
+        ) : existing ? (
+          <p className="text-sm text-slate-600">
+            You applied on {formatDate(existing.createdAt)}.{" "}
+            <Link href="/candidate/applications" className="font-semibold text-brand-600">
+              Track it in My Applications →
+            </Link>
+          </p>
+        ) : project.availability === "open" ? (
           <ApplicationForm projectId={project.id} />
         ) : (
           <p className="text-sm text-slate-600">
-            Only candidate accounts can submit an application.
+            {project.availability === "full"
+              ? "This project has reached its applicant limit, so it isn't taking more applications."
+              : project.availability === "selected"
+                ? "The startup has selected a candidate and work is under way, so applications are closed."
+                : "Applications for this project have closed."}{" "}
+            <Link href="/projects" className="font-semibold text-brand-600">
+              Browse other projects →
+            </Link>
           </p>
         )}
       </section>

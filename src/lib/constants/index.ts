@@ -39,6 +39,23 @@ export function profileFor(role: UserRole): string {
 }
 
 /** Statuses in which a project still accepts candidate applications. */
+/**
+ * Statuses Browse lists (until the application deadline): open ones, and ones
+ * where a candidate was picked and the work is under way.
+ */
+export const BROWSABLE_PROJECT_STATUSES = [
+  "published",
+  "applications_open",
+  "candidate_selected",
+  "in_progress",
+  "submitted",
+  "under_review",
+  "revision_requested",
+] as const satisfies readonly ProjectStatus[];
+
+/** Most applicants a company may allow on one project. */
+export const MAX_APPLICANTS_LIMIT = 500;
+
 export const OPEN_PROJECT_STATUSES = [
   "published",
   "applications_open",
@@ -47,9 +64,27 @@ export const OPEN_PROJECT_STATUSES = [
 /** Application statuses a company reviewer is allowed to set by hand. */
 export const REVIEWABLE_APPLICATION_STATUSES = [
   "reviewing",
-  "shortlisted",
   "selected",
   "rejected",
+] as const satisfies readonly ApplicationStatus[];
+
+/** Labels for the company's status dropdown. */
+export const REVIEWABLE_STATUS_LABELS: Record<
+  (typeof REVIEWABLE_APPLICATION_STATUSES)[number],
+  string
+> = {
+  reviewing: "Reviewing",
+  selected: "Selected",
+  rejected: "Rejected",
+};
+
+/**
+ * Applications a company has closed — kept, but moved out of the main list.
+ * ("shortlisted" is no longer offered; older applications may still carry it.)
+ */
+export const CLOSED_APPLICATION_STATUSES = [
+  "rejected",
+  "withdrawn",
 ] as const satisfies readonly ApplicationStatus[];
 
 export const SKILL_LEVELS = ["beginner", "intermediate", "advanced"] as const;

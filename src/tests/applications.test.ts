@@ -77,7 +77,7 @@ describe("where an application opens", () => {
 
   it("has no brief to link to once the project stops taking applications", () => {
     expect(applicationHref(application("rejected", "completed"))).toBe(null);
-    expect(applicationHref(application("submitted", "candidate_selected"))).toBe(null);
+    expect(applicationHref(application("submitted", "cancelled"))).toBe(null);
   });
 
   it("has nowhere to go without a project", () => {

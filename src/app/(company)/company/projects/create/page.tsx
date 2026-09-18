@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBanner } from "@/components/common/status-banner";
-import { WORK_MODES } from "@/lib/constants";
+import { MAX_APPLICANTS_LIMIT, WORK_MODES } from "@/lib/constants";
 
 export default async function CreateProjectPage({
   searchParams,
@@ -128,6 +128,23 @@ export default async function CreateProjectPage({
             placeholder="Payment amount (INR)"
             required
           />
+          <div className="sm:col-span-2">
+            <label className="text-sm" htmlFor="max-applicants">
+              Applicant limit <span className="text-slate-400">(optional)</span>
+            </label>
+            <Input
+              id="max-applicants"
+              name="maxApplicants"
+              type="number"
+              min="1"
+              max={MAX_APPLICANTS_LIMIT}
+              placeholder="e.g. 20 — leave empty for no limit"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              Once this many candidates apply, the project shows as Full and stops taking
+              applications. Withdrawn applications free their place.
+            </p>
+          </div>
           <div>
             <label className="text-sm">Application deadline</label>
             <Input name="applicationDeadline" type="datetime-local" required />

@@ -129,7 +129,7 @@ export async function getCompanyProjects(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants"
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -149,6 +149,7 @@ export async function getCompanyProjects(
     applicationDeadline: row.application_deadline,
     companyId,
     companyName: null,
+    maxApplicants: row.max_applicants ?? null,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
 }
@@ -230,18 +231,26 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
 }
 
 /** Title + owning company for a project, used to authorize company screens. */
-export async function getProjectHeader(
-  projectId: string
-): Promise<{ id: string; title: string; companyId: string } | null> {
+export async function getProjectHeader(projectId: string): Promise<{
+  id: string;
+  title: string;
+  companyId: string;
+  maxApplicants: number | null;
+} | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, title, company_id")
+    .select("id, title, company_id, max_applicants")
     .eq("id", projectId)
     .maybeSingle();
 
   if (!data) return null;
-  return { id: data.id, title: data.title, companyId: data.company_id };
+  return {
+    id: data.id,
+    title: data.title,
+    companyId: data.company_id,
+    maxApplicants: data.max_applicants ?? null,
+  };
 }
 
 export interface CompanyDashboardStats {
