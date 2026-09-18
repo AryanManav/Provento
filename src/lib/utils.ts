@@ -20,3 +20,27 @@ export function formatDate(dateString: string) {
     year: "numeric",
   });
 }
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${Math.round((bytes / (1024 * 1024)) * 10) / 10} MB`;
+}
+
+/** True for a same-origin path such as "/company/projects" — not "//evil.com". */
+export function isInternalPath(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//");
+}
+
+/** "just now", "5 min ago", "3 h ago", "2 days ago", then a date. */
+export function formatRelativeTime(dateString: string, now: Date = new Date()): string {
+  const elapsed = now.getTime() - new Date(dateString).getTime();
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return formatDate(dateString);
+}

@@ -1,10 +1,5 @@
 ﻿export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+  string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type UserRole = "candidate" | "company" | "admin";
 
@@ -22,19 +17,14 @@ export type ProjectStatus =
   | "cancelled";
 
 export type ApplicationStatus =
-  | "submitted"
-  | "reviewing"
-  | "shortlisted"
-  | "selected"
-  | "rejected"
-  | "withdrawn";
+  "submitted" | "reviewing" | "shortlisted" | "selected" | "rejected" | "withdrawn";
+
+export type ProjectWorkMode = "local" | "in_app";
+
+export type ProjectMessageAuthorRole = "candidate" | "company";
 
 export type SubmissionStatus =
-  | "submitted"
-  | "under_review"
-  | "revision_requested"
-  | "accepted"
-  | "rejected";
+  "submitted" | "under_review" | "revision_requested" | "accepted" | "rejected";
 
 export type ProjectOutcomeType =
   | "no_hire"
@@ -45,13 +35,7 @@ export type ProjectOutcomeType =
   | "project_cancelled";
 
 export type PaymentStatus =
-  | "pending"
-  | "paid"
-  | "processing"
-  | "completed"
-  | "refunded"
-  | "failed"
-  | "disputed";
+  "pending" | "paid" | "processing" | "completed" | "refunded" | "failed" | "disputed";
 
 export interface Database {
   public: {
@@ -101,6 +85,7 @@ export interface Database {
           github_url: string | null;
           portfolio_url: string | null;
           linkedin_url: string | null;
+          banner_url: string | null;
           availability: string;
           created_at: string;
           updated_at: string;
@@ -117,6 +102,7 @@ export interface Database {
           github_url?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          banner_url?: string | null;
           availability?: string;
           created_at?: string;
           updated_at?: string;
@@ -131,6 +117,7 @@ export interface Database {
           github_url?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          banner_url?: string | null;
           availability?: string;
           updated_at?: string;
         };
@@ -141,7 +128,39 @@ export interface Database {
             isOneToOne: true;
             referencedRelation: "users";
             referencedColumns: ["id"];
-          }
+          },
+        ];
+      };
+      candidate_activity: {
+        Row: {
+          id: string;
+          candidate_id: string;
+          activity_type: string;
+          activity_date: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          candidate_id: string;
+          activity_type: string;
+          activity_date?: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          activity_type?: string;
+          activity_date?: string;
+          metadata?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "candidate_activity_candidate_id_fkey";
+            columns: ["candidate_id"];
+            isOneToOne: false;
+            referencedRelation: "candidate_profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       candidate_skills: {
@@ -173,7 +192,7 @@ export interface Database {
             isOneToOne: false;
             referencedRelation: "candidate_profiles";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
       candidate_projects: {
@@ -214,7 +233,7 @@ export interface Database {
             isOneToOne: false;
             referencedRelation: "candidate_profiles";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
       companies: {
@@ -290,6 +309,7 @@ export interface Database {
           deliverables: string[];
           acceptance_criteria: string[];
           evaluation_criteria: string[];
+          work_mode: ProjectWorkMode;
           expected_hours: number;
           payment_amount: number;
           currency: string;
@@ -311,6 +331,7 @@ export interface Database {
           deliverables?: string[];
           acceptance_criteria?: string[];
           evaluation_criteria?: string[];
+          work_mode?: ProjectWorkMode;
           expected_hours?: number;
           payment_amount: number;
           currency?: string;
@@ -330,6 +351,7 @@ export interface Database {
           deliverables?: string[];
           acceptance_criteria?: string[];
           evaluation_criteria?: string[];
+          work_mode?: ProjectWorkMode;
           expected_hours?: number;
           payment_amount?: number;
           currency?: string;
@@ -438,6 +460,54 @@ export interface Database {
           deployment_url?: string | null;
           submission_notes?: string;
           status?: SubmissionStatus;
+        };
+        Relationships: [];
+      };
+      submission_attachments: {
+        Row: {
+          id: string;
+          submission_id: string;
+          storage_path: string;
+          file_name: string;
+          size_bytes: number;
+          content_type: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          storage_path: string;
+          file_name: string;
+          size_bytes: number;
+          content_type?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          [_ in never]: never;
+        };
+        Relationships: [];
+      };
+      project_messages: {
+        Row: {
+          id: string;
+          project_id: string;
+          candidate_id: string;
+          author_id: string;
+          author_role: ProjectMessageAuthorRole;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          candidate_id: string;
+          author_id: string;
+          author_role: ProjectMessageAuthorRole;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          [_ in never]: never;
         };
         Relationships: [];
       };
@@ -566,12 +636,14 @@ export interface Database {
           message: string;
           type: string;
           link_url: string | null;
+          project_id: string | null;
           read: boolean;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
+          project_id?: string | null;
           title: string;
           message: string;
           type?: string;
@@ -650,6 +722,29 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      create_company_with_owner: {
+        Args: {
+          company_name: string;
+          company_website?: string | null;
+          company_description?: string | null;
+          company_industry?: string | null;
+          company_size?: string | null;
+          company_location?: string | null;
+        };
+        Returns: string;
+      };
+      claim_signup_role: {
+        Args: { requested_role: string };
+        Returns: UserRole;
+      };
+      withdraw_application: {
+        Args: { target_application_id: string };
+        Returns: undefined;
+      };
+      candidate_github_username: {
+        Args: { target_candidate_id: string };
+        Returns: string | null;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -658,6 +753,7 @@ export interface Database {
       submission_status: SubmissionStatus;
       project_outcome_type: ProjectOutcomeType;
       payment_status: PaymentStatus;
+      project_work_mode: ProjectWorkMode;
     };
     CompositeTypes: {
       [_ in never]: never;

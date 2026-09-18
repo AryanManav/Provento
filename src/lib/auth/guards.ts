@@ -1,6 +1,7 @@
 ﻿import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { UserRole } from "@/lib/types/database.types";
+import { resolveUserRole } from "@/lib/constants";
 
 export interface CurrentUser {
   id: string;
@@ -34,11 +35,12 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   if (profileError || !userProfile) {
     // Return fallback info from auth metadata if DB record is syncing
-    const fallbackRole = (authUser.user_metadata?.role as UserRole) || "candidate";
+    const fallbackRole = resolveUserRole(null, authUser.user_metadata?.role);
     return {
       id: authUser.id,
       email: authUser.email || "",
-      fullName: authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "User",
+      fullName:
+        authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "User",
       role: fallbackRole,
       avatarUrl: authUser.user_metadata?.avatar_url || null,
       emailVerified: !!authUser.email_confirmed_at,

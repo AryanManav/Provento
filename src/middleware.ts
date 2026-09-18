@@ -1,6 +1,7 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { UserRole } from "@/lib/types/database.types";
+import { resolveUserRole } from "@/lib/constants";
 
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user, supabase } = await updateSession(request);
@@ -31,21 +32,15 @@ export async function middleware(request: NextRequest) {
 
   // If user is authenticated, check role for route isolation and auth page redirects
   if (user) {
-    let role: UserRole = "candidate";
-
-    // Attempt to read role from user metadata or public.users
-    if (user.user_metadata?.role) {
-      role = user.user_metadata.role as UserRole;
-    } else {
-      const { data: dbUser } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (dbUser?.role) {
-        role = dbUser.role as UserRole;
-      }
-    }
+    const { data: dbUser } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    const role = resolveUserRole(
+      dbUser?.role as UserRole | undefined,
+      user.user_metadata?.role
+    );
 
     // Redirect away from login/signup if already logged in
     if (isAuthPage) {
