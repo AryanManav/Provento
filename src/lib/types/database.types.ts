@@ -741,6 +741,10 @@ export interface Database {
         Args: { target_application_id: string };
         Returns: undefined;
       };
+      has_applied_to_project: {
+        Args: { target_project_id: string };
+        Returns: boolean;
+      };
       candidate_github_username: {
         Args: { target_candidate_id: string };
         Returns: string | null;

@@ -88,6 +88,7 @@ export interface ApplicationSummaryView {
     id: string;
     slug: string;
     title: string;
+    status: ProjectStatus;
     paymentAmount: number;
     currency: string;
     companyName: string | null;
@@ -106,6 +107,7 @@ export interface ApplicantView {
 
 export interface VerifiedTrialView {
   id: string;
+  projectId: string;
   projectTitle: string;
   companyName: string;
   completedAt: string;

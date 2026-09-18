@@ -9,9 +9,9 @@ import type {
   CandidateSkillView,
   VerifiedTrialView,
 } from "@/lib/types/domain";
-import type { ApplicationStatus } from "@/lib/types/database.types";
+import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
 import type { SkillLevel } from "@/lib/constants";
-import { DEFAULT_CURRENCY } from "@/lib/constants";
+import { CLOSED_PROJECT_STATUSES, DEFAULT_CURRENCY } from "@/lib/constants";
 
 const PROFILE_COLUMNS =
   "id, user_id, headline, bio, location, education, graduation_year, resume_url, github_url, portfolio_url, linkedin_url, banner_url, availability";
@@ -24,6 +24,7 @@ interface RawApplicationProject {
   id: string;
   slug: string;
   title: string;
+  status: ProjectStatus;
   payment_amount: number;
   currency: string;
   companies: RawCompany | RawCompany[] | null;
@@ -173,7 +174,7 @@ export async function getCandidateApplications(
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, cover_message, created_at, projects(id, slug, title, payment_amount, currency, companies(name))"
+      "id, status, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, companies(name))"
     )
     .eq("candidate_id", candidateId)
     .order("created_at", { ascending: false });
@@ -192,6 +193,7 @@ export async function getCandidateApplications(
             id: project.id,
             slug: project.slug,
             title: project.title,
+            status: project.status,
             paymentAmount: project.payment_amount,
             currency: project.currency || DEFAULT_CURRENCY,
             companyName: one(project.companies)?.name ?? null,
@@ -232,6 +234,7 @@ export async function getCandidateVerifiedTrials(
     const project = one(row.projects);
     return {
       id: row.id,
+      projectId: row.project_id,
       projectTitle: project?.title ?? "Evaluation Project",
       companyName: one(row.companies)?.name ?? "Startup Partner",
       completedAt: row.created_at,
@@ -292,11 +295,13 @@ export async function getCandidateDashboardStats(
       .from("candidate_skills")
       .select("*", { count: "exact", head: true })
       .eq("candidate_id", profile.id),
+    // Counts trials still in flight; finished ones (see CLOSED_PROJECT_STATUSES)
+    // are no longer "active" even though the selection row stays.
     supabase
       .from("project_selections")
-      .select("*", { count: "exact", head: true })
+      .select("project_id, projects!inner(status)", { count: "exact", head: true })
       .eq("candidate_id", profile.id)
-      .eq("status", "active"),
+      .not("projects.status", "in", `(${CLOSED_PROJECT_STATUSES.join(",")})`),
     supabase
       .from("project_feedback")
       .select("*", { count: "exact", head: true })

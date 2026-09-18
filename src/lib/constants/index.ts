@@ -213,3 +213,12 @@ export const NOTIFICATION_POLL_MS = 30_000;
 
 /** Polled by open tabs for the current user's notification summary. */
 export const NOTIFICATIONS_API_PATH = "/api/notifications";
+
+/**
+ * A trial is over once its project reaches one of these: it leaves Trial
+ * Projects and shows as finished in My Applications.
+ */
+export const CLOSED_PROJECT_STATUSES = [
+  "completed",
+  "cancelled",
+] as const satisfies readonly ProjectStatus[];

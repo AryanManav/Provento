@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarClock, FileCheck2, GitBranch, Laptop, Send } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  FileCheck2,
+  GitBranch,
+  Laptop,
+  Send,
+} from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
-import { getCandidateProfileId } from "@/lib/data/candidate";
+import { getCandidateProfileId, getCandidateVerifiedTrials } from "@/lib/data/candidate";
+import { isClosedProject } from "@/lib/applications";
 import { getCandidateTrial } from "@/lib/data/trial";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { getProjectThread } from "@/lib/data/thread";
@@ -52,11 +60,14 @@ export default async function CandidateTrialWorkspacePage({
   const candidateId = await getCandidateProfileId(user.id);
   if (!candidateId) notFound();
 
-  const [trial, messages] = await Promise.all([
+  const [trial, messages, verified] = await Promise.all([
     getCandidateTrial(candidateId, id),
     getProjectThread(id, candidateId, user.id),
+    getCandidateVerifiedTrials(candidateId),
   ]);
   if (!trial) notFound();
+  const closed = isClosedProject(trial.status);
+  const evaluation = verified.find((item) => item.projectId === trial.projectId);
 
   const latest = trial.submissions[0];
   const mode = WORK_MODES[trial.workMode];
@@ -99,6 +110,51 @@ export default async function CandidateTrialWorkspacePage({
         </div>
       </section>
 
+      {closed && (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-fib6">
+          <div className="flex items-start gap-fib4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <div className="min-w-0 space-y-fib3">
+              <h2 className="font-bold text-emerald-900">
+                {trial.status === "completed" ? "Project completed" : "Project cancelled"}
+              </h2>
+              {evaluation ? (
+                <>
+                  <p className="text-sm text-emerald-900">
+                    Requirements{" "}
+                    {evaluation.requirementsCompleted
+                      ? "completed"
+                      : "not fully completed"}{" "}
+                    · Technical quality:{" "}
+                    <span className="font-semibold capitalize">
+                      {evaluation.technicalQuality.replaceAll("_", " ")}
+                    </span>
+                    {evaluation.outcome && (
+                      <>
+                        {" "}
+                        · Outcome:{" "}
+                        <span className="font-semibold capitalize">
+                          {evaluation.outcome.replaceAll("_", " ")}
+                        </span>
+                      </>
+                    )}
+                  </p>
+                  <p className="whitespace-pre-wrap text-sm text-emerald-900/80">
+                    {evaluation.writtenFeedback}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-emerald-900/80">
+                  {trial.status === "completed"
+                    ? "Your work was accepted. The startup's written feedback will appear here once they record it."
+                    : "The startup closed this project. Your submissions stay below for reference."}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       <div className="grid items-start gap-fib6 lg:grid-cols-3">
         <div className="space-y-fib6 lg:col-span-2">
           <SectionCard title="The brief" icon={FileCheck2}>
@@ -124,26 +180,28 @@ export default async function CandidateTrialWorkspacePage({
             </div>
           </SectionCard>
 
-          <SectionCard
-            title={latest ? "Submit a revision" : "Submit your work"}
-            icon={Send}
-          >
-            {trial.canSubmit ? (
-              <SubmitWorkForm
-                projectId={trial.projectId}
-                userId={user.id}
-                isResubmission={Boolean(latest)}
-              />
-            ) : (
-              <p className="text-sm text-ink-500">
-                This project isn&rsquo;t accepting submissions right now — its status is{" "}
-                <span className="font-medium capitalize">
-                  {trial.status.replaceAll("_", " ")}
-                </span>
-                .
-              </p>
-            )}
-          </SectionCard>
+          {!closed && (
+            <SectionCard
+              title={latest ? "Submit a revision" : "Submit your work"}
+              icon={Send}
+            >
+              {trial.canSubmit ? (
+                <SubmitWorkForm
+                  projectId={trial.projectId}
+                  userId={user.id}
+                  isResubmission={Boolean(latest)}
+                />
+              ) : (
+                <p className="text-sm text-ink-500">
+                  This project isn&rsquo;t accepting submissions right now — its status is{" "}
+                  <span className="font-medium capitalize">
+                    {trial.status.replaceAll("_", " ")}
+                  </span>
+                  .
+                </p>
+              )}
+            </SectionCard>
+          )}
 
           {trial.submissions.length > 0 && (
             <SectionCard

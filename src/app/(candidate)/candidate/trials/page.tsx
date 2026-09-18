@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { CountBadge } from "@/components/notifications/count-badge";
 import { getNotificationSummary } from "@/lib/data/notifications";
 import { unreadByProject } from "@/lib/notifications";
+import { isClosedProject } from "@/lib/applications";
 import { cn, formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,14 @@ export const dynamic = "force-dynamic";
 export default async function CandidateTrialsPage() {
   const user = await requireCandidate();
   const candidateId = await getCandidateProfileId(user.id);
-  const [trials, notifications] = await Promise.all([
+  const [allTrials, notifications] = await Promise.all([
     candidateId ? getCandidateTrials(candidateId) : Promise.resolve([]),
     getNotificationSummary(user.id),
   ]);
   const updates = unreadByProject(notifications.unread);
+  // Finished trials move to My Applications ("Completed & closed").
+  const trials = allTrials.filter((trial) => !isClosedProject(trial.status));
+  const finishedCount = allTrials.length - trials.length;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
@@ -33,8 +37,12 @@ export default async function CandidateTrialsPage() {
 
       {trials.length === 0 ? (
         <EmptyState
-          title="No trial projects yet"
-          description="Once a startup selects you from your applications, the project appears here with its brief and a submission form."
+          title={finishedCount > 0 ? "No active trial projects" : "No trial projects yet"}
+          description={
+            finishedCount > 0
+              ? "Your finished projects, with their feedback, are under Completed & closed in My Applications."
+              : "Once a startup selects you from your applications, the project appears here with its brief and a submission form."
+          }
           actionText="View My Applications"
           actionHref="/candidate/applications"
         />
@@ -99,6 +107,18 @@ export default async function CandidateTrialsPage() {
             );
           })}
         </div>
+      )}
+
+      {trials.length > 0 && finishedCount > 0 && (
+        <p className="text-center text-sm text-ink-500">
+          {finishedCount} finished project{finishedCount === 1 ? "" : "s"} —{" "}
+          <Link
+            href="/candidate/applications"
+            className="font-semibold text-brand-600 hover:underline"
+          >
+            see results in My Applications
+          </Link>
+        </p>
       )}
     </div>
   );

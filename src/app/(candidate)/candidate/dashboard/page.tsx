@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BriefcaseBusiness,
+  ChevronRight,
   Clock,
   Hammer,
   IndianRupee,
@@ -23,6 +24,8 @@ import { ActivityStreak } from "@/components/candidate/activity-streak";
 import { GitHubConnect } from "@/components/candidate/github-connect";
 import { GithubLinkBanner } from "@/components/candidate/github-link-banner";
 import { ProfileStrengthCard } from "@/components/candidate/profile-strength-card";
+import { ApplicationStageBadge } from "@/components/candidate/application-stage-badge";
+import { applicationHref, applicationStage } from "@/lib/applications";
 import { UpdatesPanel } from "@/components/notifications/updates-panel";
 import { getUnreadNotifications } from "@/lib/data/notifications";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -124,25 +127,47 @@ export default async function CandidateDashboardPage({
               />
             ) : (
               <div className="space-y-fib4">
-                {applications.slice(0, 4).map((application) => (
-                  <article
-                    key={application.id}
-                    className="flex flex-col justify-between gap-fib4 rounded-2xl border border-line bg-white p-fib6 shadow-xs sm:flex-row sm:items-center"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-ink-900">
-                        {application.project?.title ?? "Project"}
-                      </p>
-                      <p className="mt-fib2 text-xs text-ink-400">
-                        {application.project?.companyName ?? "Startup"} · Applied{" "}
-                        {formatDate(application.createdAt)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-ink-100 px-fib5 py-fib3 text-xs font-semibold capitalize text-ink-700">
-                      {application.status.replaceAll("_", " ")}
-                    </span>
-                  </article>
-                ))}
+                {applications.slice(0, 4).map((application) => {
+                  const stage = applicationStage(
+                    application.status,
+                    application.project?.status
+                  );
+                  const href = applicationHref(application);
+                  const body = (
+                    <>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-ink-900">
+                          {application.project?.title ?? "Project"}
+                        </p>
+                        <p className="mt-fib2 text-xs text-ink-400">
+                          {application.project?.companyName ?? "Startup"} · Applied{" "}
+                          {formatDate(application.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-fib4">
+                        <ApplicationStageBadge stage={stage} />
+                        {href && (
+                          <ChevronRight className="h-4 w-4 text-ink-300 transition-colors group-hover:text-brand-600" />
+                        )}
+                      </div>
+                    </>
+                  );
+                  const cardClass =
+                    "group flex flex-col justify-between gap-fib4 rounded-2xl border border-line bg-white p-fib6 shadow-xs sm:flex-row sm:items-center";
+                  return href ? (
+                    <Link
+                      key={application.id}
+                      href={href}
+                      className={`${cardClass} transition-colors hover:border-brand-300`}
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <article key={application.id} className={cardClass}>
+                      {body}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
