@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import {
   Card,
   CardHeader,
@@ -13,11 +13,19 @@ import { getOpenProjects } from "@/lib/data/project";
 import { formatCurrency } from "@/lib/utils";
 import { Clock, Banknote, Building, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
+import { getCurrentUser } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsDirectoryPage() {
-  const projects = await getOpenProjects();
+  const [projects, user] = await Promise.all([getOpenProjects(), getCurrentUser()]);
+  // Posting is for startups and visitors; candidates only browse here.
+  const postHref =
+    user?.role === "company" || user?.role === "admin"
+      ? "/company/projects/create"
+      : user
+        ? null
+        : "/signup?role=company";
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-8">
@@ -31,17 +39,17 @@ export default async function ProjectsDirectoryPage() {
             engineers.
           </p>
         </div>
-        <Link href="/signup?role=company">
-          <Button variant="outline">Post an Evaluation Project</Button>
-        </Link>
+        {postHref && (
+          <Link href={postHref}>
+            <Button variant="outline">Post an Evaluation Project</Button>
+          </Link>
+        )}
       </div>
 
       {projects.length === 0 ? (
         <EmptyState
           title="No open projects right now"
-          description="Companies post new standardized trial projects regularly. Sign up to get notified when a project matching your stack is published."
-          actionText="Join as Candidate"
-          actionHref="/signup?role=candidate"
+          description="Startups post new paid trial projects regularly. Check back soon — every open project is listed here."
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
