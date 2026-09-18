@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalNote } from "./application";
 import {
   HIRE_RECOMMENDATIONS,
   QUALITY_LEVELS,
@@ -22,12 +23,19 @@ export const submitWorkSchema = z.object({
 
 export type SubmitWorkInput = z.infer<typeof submitWorkSchema>;
 
-export const reviewSubmissionSchema = z.object({
-  submissionId: z.string().uuid("Invalid submission ID"),
-  decision: z.enum(["accepted", "revision_requested", "rejected"], {
-    errorMap: () => ({ message: "Unsupported review decision" }),
-  }),
-});
+export const reviewSubmissionSchema = z
+  .object({
+    submissionId: z.string().uuid("Invalid submission ID"),
+    decision: z.enum(["accepted", "revision_requested", "rejected"], {
+      errorMap: () => ({ message: "Unsupported review decision" }),
+    }),
+    /** Shown to the candidate with the decision. */
+    reviewNote: optionalNote(2000),
+  })
+  .refine((value) => value.decision !== "revision_requested" || !!value.reviewNote, {
+    message: "Tell the candidate what to change when you request a revision",
+    path: ["reviewNote"],
+  });
 
 export type ReviewSubmissionInput = z.infer<typeof reviewSubmissionSchema>;
 

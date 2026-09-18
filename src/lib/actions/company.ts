@@ -186,6 +186,7 @@ export async function updateApplicationStatusAction(formData: FormData) {
   const validated = updateApplicationStatusSchema.safeParse({
     applicationId: formData.get("applicationId"),
     status: formData.get("status"),
+    decisionNote: formData.get("decisionNote"),
   });
   if (!validated.success) {
     redirectWithError("/company/projects", validated.error.errors[0].message);
@@ -224,7 +225,13 @@ export async function updateApplicationStatusAction(formData: FormData) {
   // allows one selection per project, and creates that selection atomically.
   const { error } = await supabase
     .from("applications")
-    .update({ status: validated.data.status })
+    .update({
+      status: validated.data.status,
+      // A message only belongs with a final decision.
+      ...(validated.data.status === "reviewing"
+        ? {}
+        : { decision_note: validated.data.decisionNote ?? null }),
+    })
     .eq("id", validated.data.applicationId);
 
   if (error) {

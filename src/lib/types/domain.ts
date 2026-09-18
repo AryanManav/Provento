@@ -107,6 +107,8 @@ export interface ProjectDetailView extends BrowseProjectView {
 export interface ApplicationSummaryView {
   id: string;
   status: ApplicationStatus;
+  /** The company's message with a Selected / Rejected decision. */
+  decisionNote: string | null;
   coverMessage: string;
   createdAt: string;
   project: {
@@ -177,6 +179,9 @@ export interface SubmissionView {
   submissionNotes: string;
   submittedAt: string;
   status: SubmissionStatus;
+  /** The company's message with its decision, and when it decided. */
+  reviewNote: string | null;
+  reviewedAt: string | null;
   attachments: AttachmentView[];
 }
 

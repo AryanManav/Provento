@@ -145,9 +145,19 @@ export default async function ProjectReviewPage({
                   submission.status === "under_review" ? (
                     <ReviewSubmissionForm submissionId={submission.id} />
                   ) : (
-                    <p className="border-t border-slate-100 pt-3 text-xs font-semibold text-slate-500">
-                      Decision recorded: {humanize(submission.status)} · final
-                    </p>
+                    <div className="space-y-1 border-t border-slate-100 pt-3">
+                      <p className="text-xs font-semibold text-slate-500">
+                        Decision recorded: {humanize(submission.status)} · final
+                        {submission.reviewedAt &&
+                          ` · ${formatDate(submission.reviewedAt)}`}
+                      </p>
+                      {submission.reviewNote && (
+                        <p className="whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                          <span className="font-semibold">Your message: </span>
+                          {submission.reviewNote}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </article>
               ))

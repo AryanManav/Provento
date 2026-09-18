@@ -394,6 +394,7 @@ export interface Database {
           cover_message: string;
           relevant_experience: string | null;
           status: ApplicationStatus;
+          decision_note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -404,6 +405,7 @@ export interface Database {
           cover_message: string;
           relevant_experience?: string | null;
           status?: ApplicationStatus;
+          decision_note?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -411,6 +413,7 @@ export interface Database {
           cover_message?: string;
           relevant_experience?: string | null;
           status?: ApplicationStatus;
+          decision_note?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -447,6 +450,8 @@ export interface Database {
           submission_notes: string;
           submitted_at: string;
           status: SubmissionStatus;
+          review_note: string | null;
+          reviewed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -457,12 +462,16 @@ export interface Database {
           submission_notes: string;
           submitted_at?: string;
           status?: SubmissionStatus;
+          review_note?: string | null;
+          reviewed_at?: string | null;
         };
         Update: {
           repository_url?: string;
           deployment_url?: string | null;
           submission_notes?: string;
           status?: SubmissionStatus;
+          review_note?: string | null;
+          reviewed_at?: string | null;
         };
         Relationships: [];
       };

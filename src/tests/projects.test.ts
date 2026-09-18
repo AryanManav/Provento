@@ -102,3 +102,45 @@ describe("applicant limit", () => {
     }
   });
 });
+
+describe("decision messages", () => {
+  const submissionId = "9f59a967-7782-4975-bac4-1ff6cc8e765d";
+
+  it("requires a message when asking for a revision", async () => {
+    const { reviewSubmissionSchema } = await import("../lib/validations/evaluation");
+    expect(
+      reviewSubmissionSchema.safeParse({
+        submissionId,
+        decision: "revision_requested",
+        reviewNote: "  ",
+      }).success
+    ).toBe(false);
+    expect(
+      reviewSubmissionSchema.safeParse({
+        submissionId,
+        decision: "revision_requested",
+        reviewNote: "Add tests for the auth routes.",
+      }).success
+    ).toBe(true);
+  });
+
+  it("keeps the message optional for accept and reject, and trims blanks to null", async () => {
+    const { reviewSubmissionSchema } = await import("../lib/validations/evaluation");
+    const parsed = reviewSubmissionSchema.safeParse({
+      submissionId,
+      decision: "accepted",
+      reviewNote: "   ",
+    });
+    expect(parsed.success && parsed.data.reviewNote).toBe(null);
+  });
+
+  it("caps an application decision message at 1000 characters", () => {
+    expect(
+      updateApplicationStatusSchema.safeParse({
+        applicationId: submissionId,
+        status: "rejected",
+        decisionNote: "a".repeat(1001),
+      }).success
+    ).toBe(false);
+  });
+});

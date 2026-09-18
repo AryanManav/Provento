@@ -105,6 +105,24 @@ export function ApplicationStatusForm({
       )}
 
       {isFinal && confirming && (
+        <label className="block basis-full space-y-fib2 text-left">
+          <span className="text-xs font-semibold text-ink-600">
+            Message to the candidate (optional)
+          </span>
+          <textarea
+            name="decisionNote"
+            rows={3}
+            maxLength={1000}
+            placeholder={
+              choice === "selected"
+                ? "Welcome aboard! A few things to know before you start…"
+                : "Thanks for applying. Here's why we went another way…"
+            }
+            className="w-full rounded-lg border border-line p-fib4 text-sm"
+          />
+        </label>
+      )}
+      {isFinal && confirming && (
         <p className="flex basis-full items-center justify-end gap-fib2 text-xs text-amber-700">
           <Lock className="h-3.5 w-3.5" />
           This decision is final and can&apos;t be changed.

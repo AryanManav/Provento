@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import {
   CalendarClock,
   CheckCircle2,
+  Hourglass,
+  MessagesSquare,
+  RotateCcw,
+  XCircle,
   FileCheck2,
   GitBranch,
   Laptop,
@@ -19,7 +23,8 @@ import { ProjectThread } from "@/components/common/project-thread";
 import { SectionCard } from "@/components/common/section-card";
 import { AttachmentList } from "@/components/common/attachment-list";
 import { WORK_MODES, companyProfilePath } from "@/lib/constants";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import type { SubmissionView } from "@/lib/types/domain";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +53,111 @@ const LOCAL_STEPS = [
   { icon: FileCheck2, text: "Ask below if anything in the brief is unclear." },
   { icon: Send, text: "Submit the repository, plus any files a repo can't hold." },
 ];
+
+const DECISION_STYLE: Record<
+  SubmissionView["status"],
+  { label: string; chip: string; panel: string; icon: typeof CheckCircle2 }
+> = {
+  submitted: {
+    label: "Waiting for review",
+    chip: "bg-ink-100 text-ink-700",
+    panel: "border-line bg-white",
+    icon: Hourglass,
+  },
+  under_review: {
+    label: "Under review",
+    chip: "bg-amber-50 text-amber-700",
+    panel: "border-amber-200 bg-amber-50",
+    icon: Hourglass,
+  },
+  accepted: {
+    label: "Accepted",
+    chip: "bg-emerald-50 text-emerald-700",
+    panel: "border-emerald-200 bg-emerald-50",
+    icon: CheckCircle2,
+  },
+  revision_requested: {
+    label: "Revision requested",
+    chip: "bg-amber-50 text-amber-800",
+    panel: "border-amber-300 bg-amber-50",
+    icon: RotateCcw,
+  },
+  rejected: {
+    label: "Not accepted",
+    chip: "bg-rose-50 text-rose-700",
+    panel: "border-rose-200 bg-rose-50",
+    icon: XCircle,
+  },
+};
+
+/**
+ * The startup's latest decision, pinned above everything else so the student
+ * never has to hunt for it — with the message, and a way to reply.
+ */
+function DecisionPanel({
+  submission,
+  companyName,
+  canResubmit,
+}: {
+  submission: SubmissionView;
+  companyName: string;
+  canResubmit: boolean;
+}) {
+  const style = DECISION_STYLE[submission.status];
+  const Icon = style.icon;
+  const decided = submission.reviewedAt !== null;
+
+  return (
+    <section
+      aria-label="Startup's decision"
+      className={cn("rounded-2xl border p-fib6 shadow-xs", style.panel)}
+    >
+      <div className="flex items-start gap-fib4">
+        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-ink-700" />
+        <div className="min-w-0 flex-1 space-y-fib3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+            {decided ? `${companyName}'s decision` : "Your latest submission"}
+          </p>
+          <h2 className="text-lg font-bold text-ink-900">
+            {decided ? style.label : "Submitted — waiting for the startup's decision"}
+          </h2>
+          <p className="text-xs text-ink-500">
+            On your submission of {formatDate(submission.submittedAt)}
+            {submission.reviewedAt && ` · decided ${formatDate(submission.reviewedAt)}`}
+          </p>
+          {submission.reviewNote && (
+            <blockquote className="whitespace-pre-wrap rounded-xl bg-white/70 px-fib5 py-fib4 text-sm text-ink-800">
+              {submission.reviewNote}
+            </blockquote>
+          )}
+          {!decided && (
+            <p className="text-sm text-ink-600">
+              You&apos;ll get a notification the moment they decide.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-fib4 pt-fib2">
+            <a
+              href="#clarifications"
+              className="inline-flex items-center gap-fib2 rounded-full bg-ink-900 px-fib5 py-fib3 text-sm font-semibold text-white hover:bg-ink-700"
+            >
+              <MessagesSquare className="h-4 w-4" />
+              {decided ? `Reply to ${companyName}` : "Message the startup"}
+            </a>
+            {submission.status === "revision_requested" && canResubmit && (
+              <a
+                href="#submit-work"
+                className="inline-flex items-center gap-fib2 rounded-full border border-ink-900 px-fib5 py-fib3 text-sm font-semibold text-ink-900 hover:bg-white"
+              >
+                <Send className="h-4 w-4" />
+                Submit a revision
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default async function CandidateTrialWorkspacePage({
   params,
@@ -112,6 +222,14 @@ export default async function CandidateTrialWorkspacePage({
           </div>
         </div>
       </section>
+
+      {latest && (
+        <DecisionPanel
+          submission={latest}
+          companyName={trial.companyName || "The startup"}
+          canResubmit={trial.canSubmit}
+        />
+      )}
 
       {closed && (
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-fib6">
@@ -185,6 +303,7 @@ export default async function CandidateTrialWorkspacePage({
 
           {!closed && (
             <SectionCard
+              id="submit-work"
               title={latest ? "Submit a revision" : "Submit your work"}
               icon={Send}
             >
@@ -222,8 +341,13 @@ export default async function CandidateTrialWorkspacePage({
                       <span className="text-xs text-ink-400">
                         Submitted {formatDate(submission.submittedAt)}
                       </span>
-                      <span className="rounded-full bg-ink-100 px-fib4 py-fib1 text-xs font-semibold capitalize text-ink-700">
-                        {submission.status.replaceAll("_", " ")}
+                      <span
+                        className={cn(
+                          "rounded-full px-fib4 py-fib1 text-xs font-semibold",
+                          DECISION_STYLE[submission.status].chip
+                        )}
+                      >
+                        {DECISION_STYLE[submission.status].label}
                       </span>
                     </div>
                     <a
@@ -238,6 +362,18 @@ export default async function CandidateTrialWorkspacePage({
                       {submission.submissionNotes}
                     </p>
                     <AttachmentList attachments={submission.attachments} />
+                    {submission.reviewNote && (
+                      <div className="rounded-lg border border-line bg-surface-muted px-fib5 py-fib4">
+                        <p className="text-xs font-semibold text-ink-500">
+                          {trial.companyName || "The startup"}&apos;s message
+                          {submission.reviewedAt &&
+                            ` · ${formatDate(submission.reviewedAt)}`}
+                        </p>
+                        <p className="mt-fib2 whitespace-pre-wrap text-sm text-ink-800">
+                          {submission.reviewNote}
+                        </p>
+                      </div>
+                    )}
                   </article>
                 ))}
               </div>

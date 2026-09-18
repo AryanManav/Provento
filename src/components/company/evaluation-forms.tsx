@@ -94,6 +94,28 @@ export function ReviewSubmissionForm({ submissionId }: { submissionId: string })
         )}
       </div>
       {confirming && (
+        <label className="block space-y-1">
+          <span className="text-xs font-semibold text-slate-700">
+            Message to the candidate
+            {decision === "revision_requested" ? " (required)" : " (optional)"}
+          </span>
+          <textarea
+            name="reviewNote"
+            rows={4}
+            maxLength={2000}
+            required={decision === "revision_requested"}
+            placeholder={
+              decision === "revision_requested"
+                ? "What should they change before resubmitting?"
+                : decision === "accepted"
+                  ? "What stood out in the work?"
+                  : "What was missing, so they can learn from it?"
+            }
+            className="w-full rounded-lg border border-slate-300 p-2.5 text-sm"
+          />
+        </label>
+      )}
+      {confirming && (
         <p className="text-xs text-amber-700">
           This decision is final for this submission.
           {decision === "revision_requested"

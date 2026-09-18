@@ -64,6 +64,8 @@ interface RawSubmission {
   submission_notes: string;
   submitted_at: string;
   status: SubmissionStatus;
+  review_note: string | null;
+  reviewed_at: string | null;
   submission_attachments: RawAttachment[] | null;
 }
 
@@ -106,6 +108,8 @@ function toSubmission(row: RawSubmission, urls: Map<string, string>): Submission
     submissionNotes: row.submission_notes,
     submittedAt: row.submitted_at,
     status: row.status,
+    reviewNote: row.review_note,
+    reviewedAt: row.reviewed_at,
     attachments,
   };
 }
@@ -171,7 +175,7 @@ export async function getSubmissions(
   const { data } = await supabase
     .from("project_submissions")
     .select(
-      "id, repository_url, deployment_url, submission_notes, submitted_at, status, submission_attachments(id, storage_path, file_name, size_bytes)"
+      "id, repository_url, deployment_url, submission_notes, submitted_at, status, review_note, reviewed_at, submission_attachments(id, storage_path, file_name, size_bytes)"
     )
     .eq("project_id", projectId)
     .eq("candidate_id", candidateId)

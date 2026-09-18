@@ -49,7 +49,12 @@ export function ProjectThread({
   const otherParty = viewer === "candidate" ? "The company" : "The candidate";
 
   return (
-    <SectionCard title="Clarifications" icon={MessagesSquare} count={messages.length}>
+    <SectionCard
+      id="clarifications"
+      title="Clarifications"
+      icon={MessagesSquare}
+      count={messages.length}
+    >
       <div className="space-y-fib6">
         {messages.length === 0 ? (
           <p className="text-sm text-ink-400">

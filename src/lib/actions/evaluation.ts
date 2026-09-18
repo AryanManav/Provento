@@ -138,6 +138,7 @@ export async function reviewSubmissionAction(
   const validated = reviewSubmissionSchema.safeParse({
     submissionId: formData.get("submissionId"),
     decision: formData.get("decision"),
+    reviewNote: formData.get("reviewNote"),
   });
   if (!validated.success) return { error: validated.error.errors[0].message };
 
@@ -161,7 +162,10 @@ export async function reviewSubmissionAction(
   // the project on: accepted/rejected → completed, revision → reopened.
   const { error } = await supabase
     .from("project_submissions")
-    .update({ status: validated.data.decision })
+    .update({
+      status: validated.data.decision,
+      review_note: validated.data.reviewNote ?? null,
+    })
     .eq("id", validated.data.submissionId);
 
   if (error?.code === "P0001") return { error: error.message };

@@ -34,6 +34,7 @@ interface RawApplicationProject {
 interface RawApplication {
   id: string;
   status: ApplicationStatus;
+  decision_note: string | null;
   cover_message: string;
   created_at: string;
   projects: RawApplicationProject | RawApplicationProject[] | null;
@@ -175,7 +176,7 @@ export async function getCandidateApplications(
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, companies(name))"
+      "id, status, decision_note, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, companies(name))"
     )
     .eq("candidate_id", candidateId)
     .order("created_at", { ascending: false });
@@ -187,6 +188,7 @@ export async function getCandidateApplications(
     return {
       id: row.id,
       status: row.status,
+      decisionNote: row.decision_note,
       coverMessage: row.cover_message,
       createdAt: row.created_at,
       project: project

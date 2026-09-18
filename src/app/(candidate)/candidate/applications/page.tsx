@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building } from "lucide-react";
+import { ArrowRight, Building, MessageSquareQuote } from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
 import { getCandidateApplications, getCandidateProfileId } from "@/lib/data/candidate";
 import { cn, formatDate, formatCurrency } from "@/lib/utils";
@@ -34,8 +34,10 @@ const CLOSED_STAGES: ApplicationStage[] = [
 
 /** What the candidate should know or do next, for the stages that need a line. */
 const STAGE_NOTE: Partial<Record<ApplicationStage, string>> = {
-  building: "You were selected. The brief and submission form are in your workspace.",
-  awaiting_review: "Your work is with the startup. You'll be notified when they respond.",
+  building:
+    "You were selected! Open the workspace for the brief, the submission form and the clarification thread.",
+  awaiting_review:
+    "Your work is with the startup. Their decision and message will appear in the workspace, and you'll get a notification.",
   revision_requested: "The startup asked for changes. Open the workspace to resubmit.",
   completed: "Evaluation complete. Your feedback and outcome are in the workspace.",
 };
@@ -53,11 +55,15 @@ function ApplicationCard({
   const canWithdraw = (
     WITHDRAWABLE_APPLICATION_STATUSES as readonly ApplicationStatus[]
   ).includes(application.status);
+  const companyName = application.project?.companyName || "the startup";
 
   return (
+    // The title link stretches over the whole card (after:inset-0), so the card
+    // opens the project; the few controls inside sit above it (relative z-10).
     <article
       className={cn(
-        "space-y-fib5 rounded-2xl border bg-white p-fib6 shadow-xs transition-colors",
+        "group relative space-y-fib5 rounded-2xl border bg-white p-fib6 shadow-xs transition-all",
+        href && "hover:border-brand-300 hover:shadow-md",
         changed ? "border-brand-300 ring-2 ring-brand-100" : "border-line"
       )}
     >
@@ -67,12 +73,14 @@ function ApplicationCard({
             {href ? (
               <Link
                 href={href}
-                className="text-base font-bold text-ink-900 hover:text-brand-600 hover:underline"
+                className="text-base font-bold text-ink-900 after:absolute after:inset-0 after:rounded-2xl hover:text-brand-600"
               >
                 {application.project?.title ?? "Evaluation project"}
               </Link>
             ) : (
-              <h3 className="text-base font-bold text-ink-900">Evaluation project</h3>
+              <h3 className="text-base font-bold text-ink-900">
+                {application.project?.title ?? "Evaluation project"}
+              </h3>
             )}
             {changed && (
               <span className="rounded-full bg-rose-50 px-fib3 py-0.5 text-[11px] font-semibold text-rose-600">
@@ -84,7 +92,7 @@ function ApplicationCard({
             {application.project ? (
               <Link
                 href={companyProfilePath(application.project.companyId)}
-                className="flex items-center gap-fib2 font-medium text-ink-700 hover:text-brand-600 hover:underline"
+                className="relative z-10 flex items-center gap-fib2 font-medium text-ink-700 hover:text-brand-600 hover:underline"
               >
                 <Building className="h-3.5 w-3.5" />
                 {application.project.companyName || "Startup"}
@@ -109,6 +117,18 @@ function ApplicationCard({
         <ApplicationStageBadge stage={stage} />
       </div>
 
+      {application.decisionNote && (
+        <div className="rounded-xl border border-brand-100 bg-brand-50/60 px-fib5 py-fib4">
+          <p className="flex items-center gap-fib2 text-xs font-semibold text-brand-700">
+            <MessageSquareQuote className="h-3.5 w-3.5" />
+            Message from {companyName}
+          </p>
+          <p className="mt-fib2 whitespace-pre-wrap text-sm text-ink-800">
+            {application.decisionNote}
+          </p>
+        </div>
+      )}
+
       {note && (
         <p className="rounded-lg border border-line bg-surface-muted px-fib5 py-fib4 text-sm text-ink-700">
           {note}
@@ -117,18 +137,25 @@ function ApplicationCard({
 
       <div className="flex flex-wrap items-center justify-between gap-fib4 border-t border-line pt-fib5">
         {canWithdraw ? (
-          <WithdrawApplicationButton applicationId={application.id} />
+          <div className="relative z-10">
+            <WithdrawApplicationButton applicationId={application.id} />
+          </div>
         ) : (
           <span />
         )}
         {href && (
-          <Link
-            href={href}
-            className="inline-flex items-center gap-fib2 text-sm font-semibold text-brand-600 hover:underline"
+          <span
+            aria-hidden="true"
+            className={cn(
+              "inline-flex items-center gap-fib2 rounded-full px-fib6 py-fib3 text-sm font-semibold transition-colors",
+              application.status === "selected"
+                ? "bg-brand-600 text-white group-hover:bg-brand-700"
+                : "bg-brand-50 text-brand-700"
+            )}
           >
             {STAGE_DISPLAY[stage].action}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </span>
         )}
       </div>
     </article>

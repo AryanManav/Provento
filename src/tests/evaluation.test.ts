@@ -59,6 +59,8 @@ describe("Evaluation loop schemas", () => {
         const result = reviewSubmissionSchema.safeParse({
           submissionId: PROJECT_ID,
           decision,
+          // A revision request must say what to change.
+          reviewNote: "Please add tests for the API routes.",
         });
         expect(result.success).toBe(true);
       }
