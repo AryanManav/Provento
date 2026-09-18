@@ -1,7 +1,7 @@
-﻿import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { UserRole } from "@/lib/types/database.types";
-import { resolveUserRole } from "@/lib/constants";
+import { dashboardFor, resolveUserRole } from "@/lib/constants";
 
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user, supabase } = await updateSession(request);
@@ -30,8 +30,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is authenticated, check role for route isolation and auth page redirects
-  if (user) {
+  // Signed-in users don't need the login or signup pages. This is the only
+  // place middleware reads the role: route-level role checks live in each
+  // layout's requireRole, which runs anyway and redirects to the right
+  // dashboard, so querying here on every navigation only added latency.
+  if (user && isAuthPage) {
     const { data: dbUser } = await supabase
       .from("users")
       .select("role")
@@ -39,32 +42,9 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
     const role = resolveUserRole(
       dbUser?.role as UserRole | undefined,
-      user.user_metadata?.role
+      user.userMetadata.role
     );
-
-    // Redirect away from login/signup if already logged in
-    if (isAuthPage) {
-      if (role === "admin") {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      } else if (role === "company") {
-        return NextResponse.redirect(new URL("/company/dashboard", request.url));
-      } else {
-        return NextResponse.redirect(new URL("/candidate/dashboard", request.url));
-      }
-    }
-
-    // Role-based boundary checks
-    if (isAdminRoute && role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    if (isCompanyRoute && role !== "company" && role !== "admin") {
-      return NextResponse.redirect(new URL("/candidate/dashboard", request.url));
-    }
-
-    if (isCandidateRoute && role !== "candidate" && role !== "admin") {
-      return NextResponse.redirect(new URL("/company/dashboard", request.url));
-    }
+    return NextResponse.redirect(new URL(dashboardFor(role), request.url));
   }
 
   return supabaseResponse;

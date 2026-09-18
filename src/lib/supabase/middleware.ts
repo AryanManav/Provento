@@ -32,9 +32,12 @@ export async function updateSession(request: NextRequest) {
     },
   }) as unknown as SupabaseClient<Database>;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refreshes an expiring session (writing new cookies above) and verifies the
+  // JWT locally against the project's signing keys — no Auth round trip.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub
+    ? { id: data.claims.sub, userMetadata: data.claims.user_metadata ?? {} }
+    : null;
 
   return { supabaseResponse, user, supabase };
 }
