@@ -10,5 +10,5 @@ const ITEMS: SidebarNavItem[] = [
 ];
 
 export function AdminNav() {
-  return <SidebarNav items={ITEMS} eyebrow="System Admin" tone="dark" />;
+  return <SidebarNav items={ITEMS} eyebrow="System Admin" />;
 }

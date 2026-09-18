@@ -21,21 +21,11 @@ export interface SidebarNavItem {
 
 const NO_NOTIFICATIONS: NotificationSummary = { unreadCount: 0, recent: [], unread: [] };
 
-const TONES = {
-  light: {
-    shell: "bg-white border-line",
-    eyebrow: "text-ink-400",
-    divider: "border-line",
-    item: "text-ink-700 hover:bg-ink-50 hover:text-brand-600",
-    itemActive: "bg-brand-50 text-brand-700",
-  },
-  dark: {
-    shell: "bg-ink-900 border-ink-800 text-ink-100",
-    eyebrow: "text-brand-400",
-    divider: "border-ink-800",
-    item: "text-ink-300 hover:bg-ink-800 hover:text-white",
-    itemActive: "bg-ink-800 text-white",
-  },
+const STYLES = {
+  shell: "bg-white border-line",
+  eyebrow: "text-ink-400",
+  item: "text-ink-700 hover:bg-ink-50 hover:text-brand-600",
+  itemActive: "bg-brand-50 text-brand-700",
 } as const;
 
 /**
@@ -45,17 +35,15 @@ const TONES = {
 export function SidebarNav({
   items,
   eyebrow,
-  tone = "light",
   notifications = NO_NOTIFICATIONS,
 }: {
   items: SidebarNavItem[];
   eyebrow: string;
-  tone?: keyof typeof TONES;
   notifications?: NotificationSummary;
 }) {
   const pathname = usePathname();
   const { unread } = useNotificationSummary(notifications);
-  const styles = TONES[tone];
+  const styles = STYLES;
 
   const isActive = (item: SidebarNavItem) =>
     item.match === "prefix"
@@ -65,7 +53,8 @@ export function SidebarNav({
   return (
     <aside
       className={cn(
-        "shrink-0 border-b md:w-64 md:min-h-[calc(100vh-4rem)] md:border-b-0 md:border-r md:p-fib5",
+        // Sticks under the navbar: a bar on mobile, a full-height rail on desktop.
+        "sticky top-16 z-30 shrink-0 border-b md:h-[calc(100vh-4rem)] md:w-64 md:self-start md:overflow-y-auto md:border-b-0 md:border-r md:p-fib5",
         styles.shell
       )}
     >
