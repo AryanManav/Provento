@@ -66,6 +66,12 @@ export interface CompanyProjectView extends ProjectSummaryView {
   awaitingReview: number;
 }
 
+/** Who did a finished project and what the company decided. */
+export interface CompanyProjectResult {
+  candidateName: string | null;
+  outcome: ProjectOutcomeType | null;
+}
+
 export interface ProjectDetailView extends ProjectSummaryView {
   workMode: ProjectWorkMode;
   companyLocation: string | null;

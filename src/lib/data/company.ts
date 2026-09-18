@@ -10,10 +10,15 @@ import { DEFAULT_CURRENCY, OPEN_PROJECT_STATUSES } from "@/lib/constants";
 import type {
   ApplicantProfileView,
   ApplicantView,
+  CompanyProjectResult,
   CompanyProjectView,
   CompanyView,
 } from "@/lib/types/domain";
-import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
+import type {
+  ApplicationStatus,
+  ProjectOutcomeType,
+  ProjectStatus,
+} from "@/lib/types/database.types";
 
 interface RawCompanyRow {
   id: string;
@@ -143,6 +148,55 @@ export async function getCompanyProjects(
     companyName: null,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
+}
+
+interface RawSelectionResult {
+  project_id: string;
+  candidate_profiles:
+    | { users: { full_name: string } | { full_name: string }[] | null }
+    | { users: { full_name: string } | { full_name: string }[] | null }[]
+    | null;
+}
+
+/**
+ * For finished projects: the selected candidate and the recorded outcome, keyed
+ * by project. Callers pass ids already scoped to the company.
+ */
+export async function getCompanyProjectResults(
+  projectIds: string[]
+): Promise<Map<string, CompanyProjectResult>> {
+  const results = new Map<string, CompanyProjectResult>();
+  if (projectIds.length === 0) return results;
+
+  const supabase = await createClient();
+  const [selections, outcomes] = await Promise.all([
+    supabase
+      .from("project_selections")
+      .select("project_id, candidate_profiles(users(full_name))")
+      .in("project_id", projectIds),
+    supabase
+      .from("project_outcomes")
+      .select("project_id, outcome, created_at")
+      .in("project_id", projectIds)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  for (const row of (selections.data ?? []) as unknown as RawSelectionResult[]) {
+    const user = one(one(row.candidate_profiles)?.users);
+    results.set(row.project_id, {
+      candidateName: user?.full_name ?? null,
+      outcome: null,
+    });
+  }
+  // Oldest first, so the latest recorded outcome wins.
+  for (const row of outcomes.data ?? []) {
+    const current = results.get(row.project_id) ?? { candidateName: null, outcome: null };
+    results.set(row.project_id, {
+      ...current,
+      outcome: row.outcome as ProjectOutcomeType,
+    });
+  }
+  return results;
 }
 
 export async function getProjectApplicants(projectId: string): Promise<ApplicantView[]> {
