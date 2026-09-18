@@ -1,36 +1,147 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { addCandidateProjectAction, deleteCandidateProjectAction } from "@/app/(candidate)/candidate/actions";
+import {
+  Code2,
+  ExternalLink,
+  FolderGit2,
+  Github,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import {
+  addCandidateProjectAction,
+  deleteCandidateProjectAction,
+  updateCandidateProjectAction,
+} from "@/lib/actions/candidate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Github, ExternalLink, Trash2, X, Loader2, Code2, FolderGit2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/ui/form-field";
+import { Modal } from "@/components/common/modal";
+import { SectionCard } from "@/components/common/section-card";
+import { StatusBanner } from "@/components/common/status-banner";
+import type { CandidateProjectView } from "@/lib/types/domain";
+import type { ActionResponse } from "@/lib/types/actions";
 
-interface ProjectItem {
-  id: string;
-  title: string;
-  description: string;
-  technologies: string[];
-  repository_url: string | null;
-  live_url: string | null;
+/** One form for both adding and editing; `project` switches it to edit mode. */
+function ProjectFormModal({
+  project,
+  onClose,
+}: {
+  project: CandidateProjectView | null;
+  onClose: () => void;
+}) {
+  const [state, formAction, isPending] = useActionState(
+    async (prev: ActionResponse | null, formData: FormData) => {
+      const result = project
+        ? await updateCandidateProjectAction(prev, formData)
+        : await addCandidateProjectAction(prev, formData);
+      if (result.success) onClose();
+      return result;
+    },
+    null
+  );
+
+  return (
+    <Modal title={project ? "Edit project" : "Add a project"} onClose={onClose} size="lg">
+      <form action={formAction} className="space-y-fib6">
+        {project && <input type="hidden" name="projectId" value={project.id} />}
+        {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
+
+        <FormField label="Title">
+          {(id) => (
+            <Input
+              id={id}
+              name="title"
+              defaultValue={project?.title}
+              placeholder="Distributed task queue, e-commerce REST API…"
+              required
+            />
+          )}
+        </FormField>
+
+        <FormField label="What you built">
+          {(id) => (
+            <Textarea
+              id={id}
+              name="description"
+              rows={3}
+              defaultValue={project?.description}
+              placeholder="The problem it solved, the key architecture choices, and how the data is structured."
+              required
+            />
+          )}
+        </FormField>
+
+        <FormField label="Technologies" hint="Comma-separated.">
+          {(id) => (
+            <Input
+              id={id}
+              name="technologies"
+              defaultValue={project?.technologies.join(", ")}
+              placeholder="Node.js, PostgreSQL, Redis, Jest, Docker"
+              required
+            />
+          )}
+        </FormField>
+
+        <div className="grid gap-fib5 sm:grid-cols-2">
+          <FormField label="Repository" icon={Github}>
+            {(id) => (
+              <Input
+                id={id}
+                name="repositoryUrl"
+                type="url"
+                defaultValue={project?.repositoryUrl || ""}
+                placeholder="https://github.com/…"
+              />
+            )}
+          </FormField>
+          <FormField label="Live demo" icon={ExternalLink}>
+            {(id) => (
+              <Input
+                id={id}
+                name="liveUrl"
+                type="url"
+                defaultValue={project?.liveUrl || ""}
+                placeholder="https://myproject.app"
+              />
+            )}
+          </FormField>
+        </div>
+
+        <div className="flex justify-end gap-fib4 border-t border-line pt-fib6">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : project ? (
+              "Save project"
+            ) : (
+              "Add project"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
-interface FeaturedProjectsCardProps {
-  projects: ProjectItem[];
-}
-
-export function FeaturedProjectsCard({ projects }: FeaturedProjectsCardProps) {
-  const [isAdding, setIsAdding] = useState(false);
+export function FeaturedProjectsCard({
+  projects,
+  readOnly = false,
+}: {
+  projects: CandidateProjectView[];
+  readOnly?: boolean;
+}) {
+  // undefined: closed · null: adding · a project: editing that project
+  const [editing, setEditing] = useState<CandidateProjectView | null | undefined>();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const [state, formAction, isPending] = useActionState(async (prev: any, formData: FormData) => {
-    const res = await addCandidateProjectAction(prev, formData);
-    if (res.success) {
-      setIsAdding(false);
-    }
-    return res;
-  }, null);
 
   const handleDelete = async (projectId: string) => {
     setDeletingId(projectId);
@@ -39,75 +150,83 @@ export function FeaturedProjectsCard({ projects }: FeaturedProjectsCardProps) {
   };
 
   return (
-    <div className="rounded-xl border border-[#e0dfdc] bg-white shadow-sm p-6 space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2">
-          <FolderGit2 className="h-5 w-5 text-[#0a66c2]" />
-          <h2 className="text-lg font-bold text-[#191919]">Featured Projects & Code</h2>
-          <span className="text-xs text-slate-500 font-normal">({projects.length})</span>
-        </div>
-        <Button
-          onClick={() => setIsAdding(true)}
-          size="sm"
-          variant="outline"
-          className="rounded-full gap-1.5 text-xs h-8"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>Add Project</span>
-        </Button>
-      </div>
-
-      {projects.length === 0 ? (
-        <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-          <Code2 className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-600">No projects showcased yet</p>
-          <p className="text-xs text-slate-400 mt-0.5 max-w-sm mx-auto">
-            Showcase personal or academic projects with GitHub repositories or live deployments to prove your ability.
-          </p>
+    <SectionCard
+      id="projects"
+      title="Featured projects"
+      icon={FolderGit2}
+      count={projects.length}
+      action={
+        readOnly ? undefined : (
           <Button
-            onClick={() => setIsAdding(true)}
             size="sm"
-            className="mt-3 rounded-full text-xs"
+            variant="outline"
+            onClick={() => setEditing(null)}
+            className="gap-fib2"
           >
-            Add First Project
+            <Plus className="h-3.5 w-3.5" />
+            Add project
           </Button>
+        )
+      }
+    >
+      {projects.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-line bg-ink-50 px-fib6 py-fib7 text-center">
+          <Code2 className="mx-auto h-8 w-8 text-ink-300" />
+          <p className="mt-fib4 text-sm font-semibold text-ink-700">No projects yet</p>
+          <p className="mx-auto mt-fib2 max-w-sm text-xs text-ink-400">
+            Personal or academic work with a repository or live demo — the first thing a
+            startup opens after your evaluations.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+        <div className="grid gap-fib5 sm:grid-cols-2">
           {projects.map((item) => (
-            <div
+            <article
               key={item.id}
-              className="flex flex-col justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:border-[#0a66c2] hover:bg-white transition-all shadow-xs group"
+              className="flex flex-col justify-between rounded-xl border border-line p-fib6 transition-colors hover:border-brand-300"
             >
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-sm text-[#191919] group-hover:text-[#0a66c2] transition-colors">
-                    {item.title}
-                  </h3>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    disabled={deletingId === item.id}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded transition-opacity"
-                    title="Delete project"
-                  >
-                    {deletingId === item.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
+              <div className="space-y-fib4">
+                <div className="flex items-start justify-between gap-fib3">
+                  <h3 className="font-bold text-ink-900">{item.title}</h3>
+                  <div className="flex shrink-0 items-center">
+                    {!readOnly && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditing(item)}
+                          aria-label={`Edit ${item.title}`}
+                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deletingId === item.id}
+                          aria-label={`Delete ${item.title}`}
+                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          {deletingId === item.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </>
                     )}
-                  </button>
+                  </div>
                 </div>
 
-                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                <p className="line-clamp-3 text-sm leading-relaxed text-ink-500">
                   {item.description}
                 </p>
 
-                {item.technologies && item.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1">
+                {item.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-fib3">
                     {item.technologies.map((tech) => (
                       <span
                         key={tech}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-white text-slate-700 border border-slate-200"
+                        className="rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-medium text-ink-700"
                       >
                         {tech}
                       </span>
@@ -116,131 +235,40 @@ export function FeaturedProjectsCard({ projects }: FeaturedProjectsCardProps) {
                 )}
               </div>
 
-              <div className="flex items-center gap-3 pt-3 mt-3 border-t border-slate-200/60 text-xs">
-                {item.repository_url && (
-                  <a
-                    href={item.repository_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-slate-700 hover:text-[#0a66c2] font-semibold"
-                  >
-                    <Github className="h-3.5 w-3.5" />
-                    <span>Code</span>
-                  </a>
-                )}
-                {item.live_url && (
-                  <a
-                    href={item.live_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[#0a66c2] hover:underline font-semibold"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    <span>Demo</span>
-                  </a>
-                )}
-              </div>
-            </div>
+              {(item.repositoryUrl || item.liveUrl) && (
+                <div className="mt-fib5 flex items-center gap-fib5 border-t border-line pt-fib5 text-sm">
+                  {item.repositoryUrl && (
+                    <a
+                      href={item.repositoryUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-fib2 font-semibold text-ink-700 hover:text-brand-600"
+                    >
+                      <Github className="h-4 w-4" />
+                      Code
+                    </a>
+                  )}
+                  {item.liveUrl && (
+                    <a
+                      href={item.liveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-fib2 font-semibold text-brand-600 hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Demo
+                    </a>
+                  )}
+                </div>
+              )}
+            </article>
           ))}
         </div>
       )}
 
-      {/* Add Project Modal */}
-      {isAdding && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Add Technical Project</h3>
-              <button
-                onClick={() => setIsAdding(false)}
-                className="p-1 rounded-full hover:bg-slate-200 text-slate-500"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form action={formAction} className="p-6 space-y-4">
-              {state?.error && (
-                <div className="p-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
-                  {state.error}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Project Title
-                </label>
-                <Input
-                  name="title"
-                  placeholder="e.g. Distributed Task Queue or E-Commerce REST API"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Description & What You Built
-                </label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  placeholder="Explain what problem it solved, key architecture choices, and database structure..."
-                  required
-                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0a66c2]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Technologies Used (Comma-separated)
-                </label>
-                <Input
-                  name="technologies"
-                  placeholder="Node.js, PostgreSQL, Redis, Jest, Docker"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
-                    <Github className="h-3.5 w-3.5" /> Repository URL
-                  </label>
-                  <Input
-                    name="repositoryUrl"
-                    placeholder="https://github.com/..."
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
-                    <ExternalLink className="h-3.5 w-3.5" /> Live Demo URL
-                  </label>
-                  <Input
-                    name="liveUrl"
-                    placeholder="https://myproject.app"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAdding(false)}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={isPending} className="rounded-full">
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Project"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {!readOnly && editing !== undefined && (
+        <ProjectFormModal project={editing} onClose={() => setEditing(undefined)} />
       )}
-    </div>
+    </SectionCard>
   );
 }

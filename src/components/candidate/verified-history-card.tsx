@@ -1,90 +1,101 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, CheckCircle2, Award, Building, Calendar } from "lucide-react";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { Award, Building, Calendar, CheckCircle2, ShieldCheck } from "lucide-react";
+import { SectionCard } from "@/components/common/section-card";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import type { VerifiedTrialView } from "@/lib/types/domain";
 
-interface VerifiedTrialItem {
-  id: string;
-  projectTitle: string;
-  companyName: string;
-  completedAt: string;
-  paymentAmount: number;
-  currency: string;
-  requirementsCompleted: boolean;
-  technicalQuality: string;
-  writtenFeedback: string;
-  outcome: string | null;
+const OUTCOME_LABEL: Partial<Record<NonNullable<VerifiedTrialView["outcome"]>, string>> =
+  {
+    hire: "Hired",
+    interview: "Interview offered",
+    talent_pool: "Added to talent pool",
+  };
+
+function humanize(value: string): string {
+  return value.replaceAll("_", " ");
 }
 
-interface VerifiedHistoryCardProps {
-  trials: VerifiedTrialItem[];
-}
-
-export function VerifiedHistoryCard({ trials }: VerifiedHistoryCardProps) {
+export function VerifiedHistoryCard({
+  trials,
+  readOnly = false,
+}: {
+  trials: VerifiedTrialView[];
+  readOnly?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-[#e0dfdc] bg-white shadow-sm p-6 space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-emerald-600" />
-          <h2 className="text-lg font-bold text-[#191919]">Verified Work History</h2>
-          <span className="text-xs text-slate-500 font-normal">({trials.length})</span>
-        </div>
-        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-none font-medium text-xs">
-          Guaranteed Paid Trials
-        </Badge>
-      </div>
-
+    <SectionCard title="Verified work history" icon={ShieldCheck} count={trials.length}>
       {trials.length === 0 ? (
-        <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-          <Award className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-600">No verified trial projects yet</p>
-          <p className="text-xs text-slate-400 mt-0.5 max-w-sm mx-auto">
-            When you complete a paid project for a startup on Provento, their technical evaluation and feedback will appear here as permanent verified proof.
+        <div className="rounded-xl border border-dashed border-line bg-ink-50 px-fib6 py-fib7 text-center">
+          <Award className="mx-auto h-8 w-8 text-ink-300" />
+          <p className="mt-fib4 text-sm font-semibold text-ink-700">
+            No verified projects yet
+          </p>
+          <p className="mx-auto mt-fib2 max-w-sm text-xs text-ink-400">
+            {readOnly
+              ? "This candidate hasn't completed a paid project on Provento yet."
+              : "Complete a paid project for a startup and their evaluation appears here — evidence written by the people who reviewed your work."}
           </p>
         </div>
       ) : (
-        <div className="space-y-4 pt-1">
-          {trials.map((trial) => (
-            <div
-              key={trial.id}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <div>
-                  <h3 className="font-bold text-sm text-[#191919]">{trial.projectTitle}</h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                    <span className="font-medium text-slate-700 flex items-center gap-1">
-                      <Building className="h-3 w-3" /> {trial.companyName}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" /> {formatDate(trial.completedAt)}
-                    </span>
+        <div className="space-y-fib5">
+          {trials.map((trial) => {
+            const outcome = trial.outcome ? OUTCOME_LABEL[trial.outcome] : undefined;
+            return (
+              <article
+                key={trial.id}
+                className="space-y-fib5 rounded-xl border border-line p-fib6"
+              >
+                <div className="flex flex-col justify-between gap-fib4 sm:flex-row sm:items-start">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-ink-900">{trial.projectTitle}</h3>
+                    <p className="mt-fib2 flex flex-wrap items-center gap-x-fib5 gap-y-fib2 text-xs text-ink-400">
+                      <span className="flex items-center gap-fib2 font-medium text-ink-600">
+                        <Building className="h-3.5 w-3.5" />
+                        {trial.companyName}
+                      </span>
+                      <span className="flex items-center gap-fib2">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(trial.completedAt)}
+                      </span>
+                      <span>
+                        {formatCurrency(trial.paymentAmount, trial.currency)} project
+                      </span>
+                    </p>
                   </div>
+                  {outcome && (
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700">
+                      {outcome}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-600">
-                    {formatCurrency(trial.paymentAmount, trial.currency)} Paid
+                <div className="flex flex-wrap gap-fib4 text-xs">
+                  <span className="inline-flex items-center gap-fib2 rounded-full bg-ink-100 px-fib5 py-fib2 font-medium text-ink-700">
+                    <CheckCircle2
+                      className={
+                        trial.requirementsCompleted
+                          ? "h-3.5 w-3.5 text-emerald-600"
+                          : "h-3.5 w-3.5 text-ink-400"
+                      }
+                    />
+                    {trial.requirementsCompleted
+                      ? "All requirements met"
+                      : "Some requirements open"}
                   </span>
-                  {trial.outcome === "hire" && (
-                    <Badge variant="success" className="text-[10px]">Hired</Badge>
-                  )}
-                  {trial.outcome === "interview" && (
-                    <Badge variant="default" className="text-[10px]">Interview Extended</Badge>
-                  )}
+                  <span className="rounded-full bg-ink-100 px-fib5 py-fib2 font-medium capitalize text-ink-700">
+                    Technical: {humanize(trial.technicalQuality)}
+                  </span>
                 </div>
-              </div>
 
-              {trial.writtenFeedback && (
-                <div className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-slate-200/80 italic">
-                  &ldquo;{trial.writtenFeedback}&rdquo;
-                </div>
-              )}
-            </div>
-          ))}
+                {trial.writtenFeedback && (
+                  <blockquote className="rounded-lg border-l-4 border-brand-200 bg-ink-50 px-fib5 py-fib4 text-sm leading-relaxed text-ink-700">
+                    &ldquo;{trial.writtenFeedback}&rdquo;
+                  </blockquote>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
-    </div>
+    </SectionCard>
   );
 }

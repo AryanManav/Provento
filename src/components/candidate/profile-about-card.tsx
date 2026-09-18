@@ -1,16 +1,24 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { UserRound } from "lucide-react";
+import { SectionCard } from "@/components/common/section-card";
 
-export function ProfileAboutCard({ bio }: { bio: string | null }) {
+export function ProfileAboutCard({
+  bio,
+  readOnly = false,
+}: {
+  bio: string | null;
+  readOnly?: boolean;
+}) {
   return (
-    <Card className="rounded-xl border border-[#e0dfdc] bg-white shadow-sm p-6 space-y-3">
-      <h2 className="text-lg font-bold text-[#191919]">About</h2>
+    <SectionCard title="About" icon={UserRound}>
       {bio ? (
-        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{bio}</p>
+        <p className="whitespace-pre-line text-sm leading-relaxed text-ink-700">{bio}</p>
       ) : (
-        <p className="text-sm text-slate-400 italic">
-          No bio added yet. Write a brief overview of your technical background and what you are looking to build.
+        <p className="text-sm text-ink-400">
+          {readOnly
+            ? "No bio added."
+            : "No bio yet. Use Edit profile to describe your technical background and what you want to build."}
         </p>
       )}
-    </Card>
+    </SectionCard>
   );
 }

@@ -1,94 +1,67 @@
 import { requireCandidate } from "@/lib/auth/guards";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getCandidateDashboardStats,
+  getCandidateProfile,
+  getCandidateProjects,
+  getCandidateSkills,
+  getCandidateVerifiedTrials,
+  getGithubIdentity,
+} from "@/lib/data/candidate";
 import { ProfileIntroCard } from "@/components/candidate/profile-intro-card";
 import { ProfileAboutCard } from "@/components/candidate/profile-about-card";
 import { SkillsCard } from "@/components/candidate/skills-card";
 import { FeaturedProjectsCard } from "@/components/candidate/featured-projects-card";
 import { VerifiedHistoryCard } from "@/components/candidate/verified-history-card";
+import { ProfileStrengthCard } from "@/components/candidate/profile-strength-card";
+import { GitHubConnect } from "@/components/candidate/github-connect";
+import { GithubLinkBanner } from "@/components/candidate/github-link-banner";
 
 export const dynamic = "force-dynamic";
 
-export default async function CandidateProfilePage() {
+export default async function CandidateProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ github?: string }>;
+}) {
   const user = await requireCandidate();
-  const supabase = await createClient();
+  const { github } = await searchParams;
+  const profile = await getCandidateProfile(user.id);
 
-  // 1. Fetch candidate profile
-  const { data: profile } = await supabase
-    .from("candidate_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  // 2. Fetch skills
-  let skills: any[] = [];
-  if (profile?.id) {
-    const { data: skillsData } = await supabase
-      .from("candidate_skills")
-      .select("id, skill_name, skill_level, years_experience")
-      .eq("candidate_id", profile.id)
-      .order("created_at", { ascending: true });
-    if (skillsData) skills = skillsData;
-  }
-
-  // 3. Fetch past projects
-  let projects: any[] = [];
-  if (profile?.id) {
-    const { data: projectsData } = await supabase
-      .from("candidate_projects")
-      .select("id, title, description, technologies, repository_url, live_url")
-      .eq("candidate_id", profile.id)
-      .order("created_at", { ascending: false });
-    if (projectsData) projects = projectsData;
-  }
-
-  // 4. Fetch verified completed trials & feedback
-  let verifiedTrials: any[] = [];
-  if (profile?.id) {
-    const { data: feedbackData } = await supabase
-      .from("project_feedback")
-      .select(`
-        id,
-        requirements_completed,
-        technical_quality,
-        written_feedback,
-        created_at,
-        projects (title, payment_amount, currency),
-        companies (name)
-      `)
-      .eq("candidate_id", profile.id);
-
-    if (feedbackData) {
-      verifiedTrials = feedbackData.map((f: any) => ({
-        id: f.id,
-        projectTitle: f.projects?.title || "Evaluation Project",
-        companyName: f.companies?.name || "Startup Partner",
-        completedAt: f.created_at,
-        paymentAmount: f.projects?.payment_amount || 0,
-        currency: f.projects?.currency || "INR",
-        requirementsCompleted: f.requirements_completed,
-        technicalQuality: f.technical_quality,
-        writtenFeedback: f.written_feedback,
-        outcome: null,
-      }));
-    }
-  }
+  const [skills, projects, verifiedTrials, stats, githubUsername] = await Promise.all([
+    profile ? getCandidateSkills(profile.id) : [],
+    profile ? getCandidateProjects(profile.id) : [],
+    profile ? getCandidateVerifiedTrials(profile.id) : [],
+    getCandidateDashboardStats(profile),
+    getGithubIdentity(),
+  ]);
 
   return (
-    <div className="space-y-6 pb-12 max-w-4xl mx-auto">
-      {/* 1. Main LinkedIn Banner & Intro Card */}
-      <ProfileIntroCard user={user} profile={profile} />
+    <div className="space-y-fib6 pb-fib8">
+      <GithubLinkBanner status={github} />
 
-      {/* 2. About Narrative Card */}
-      <ProfileAboutCard bio={profile?.bio || null} />
+      <ProfileIntroCard
+        user={user}
+        profile={profile}
+        verifiedCount={verifiedTrials.length}
+      />
 
-      {/* 3. Featured Technical Projects Card */}
-      <FeaturedProjectsCard projects={projects} />
+      <div className="grid items-start gap-fib6 lg:grid-cols-3">
+        {/* Evidence first: it is the part of the profile a startup actually trusts. */}
+        <div className="space-y-fib6 lg:col-span-2">
+          <VerifiedHistoryCard trials={verifiedTrials} />
+          <ProfileAboutCard bio={profile?.bio || null} />
+          <FeaturedProjectsCard projects={projects} />
+        </div>
 
-      {/* 4. Skills & Technical Stack Card */}
-      <SkillsCard skills={skills} />
-
-      {/* 5. Verified Provento Work History */}
-      <VerifiedHistoryCard trials={verifiedTrials} />
+        <div className="space-y-fib6">
+          <ProfileStrengthCard value={stats.profileStrength} />
+          <SkillsCard skills={skills} />
+          <GitHubConnect
+            verifiedUsername={githubUsername}
+            reportedUrl={profile?.githubUrl ?? null}
+          />
+        </div>
+      </div>
     </div>
   );
 }

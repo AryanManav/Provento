@@ -1,344 +1,369 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { updateCandidateProfileAction } from "@/app/(candidate)/candidate/actions";
+import {
+  BadgeCheck,
+  Camera,
+  FileText,
+  Github,
+  Globe,
+  GraduationCap,
+  ImagePlus,
+  Linkedin,
+  Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { updateCandidateProfileAction } from "@/lib/actions/candidate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/ui/form-field";
+import { Modal } from "@/components/common/modal";
+import { StatusBanner } from "@/components/common/status-banner";
+import { Avatar } from "@/components/common/avatar";
 import {
-  MapPin,
-  GraduationCap,
-  Github,
-  Linkedin,
-  Globe,
-  FileText,
-  Pencil,
-  CheckCircle,
-  X,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
+  ProfileImageRemove,
+  ProfileImageUpload,
+} from "@/components/candidate/profile-image-upload";
+import type { CandidateProfileView } from "@/lib/types/domain";
+import type { ActionResponse } from "@/lib/types/actions";
 
-interface ProfileIntroCardProps {
-  user: {
-    fullName: string;
-    email: string;
-  };
-  profile: {
-    headline: string | null;
-    bio: string | null;
-    location: string | null;
-    education: string | null;
-    graduation_year: number | null;
-    resume_url: string | null;
-    github_url: string | null;
-    portfolio_url: string | null;
-    linkedin_url: string | null;
-    availability: string;
-  } | null;
-}
+const LINK_FIELDS = [
+  {
+    name: "githubUrl",
+    label: "GitHub profile URL",
+    icon: Github,
+    placeholder: "https://github.com/yourhandle",
+  },
+  {
+    name: "linkedinUrl",
+    label: "LinkedIn profile URL",
+    icon: Linkedin,
+    placeholder: "https://linkedin.com/in/yourhandle",
+  },
+  {
+    name: "portfolioUrl",
+    label: "Portfolio or website",
+    icon: Globe,
+    placeholder: "https://myportfolio.dev",
+  },
+  {
+    name: "resumeUrl",
+    label: "Resume URL",
+    icon: FileText,
+    placeholder: "https://drive.google.com/file/d/…/view",
+  },
+] as const;
 
-export function ProfileIntroCard({ user, profile }: ProfileIntroCardProps) {
+export function ProfileIntroCard({
+  user,
+  profile,
+  verifiedCount,
+  verifiedGithub = null,
+  readOnly = false,
+}: {
+  user: { id: string; fullName: string; email: string; avatarUrl: string | null };
+  profile: CandidateProfileView | null;
+  /** Completed projects with a recorded evaluation — the only basis for "verified". */
+  verifiedCount: number;
+  /** GitHub username proven by a linked account, not the typed URL. */
+  verifiedGithub?: string | null;
+  /** A company reviewing an applicant: no editing or uploading. */
+  readOnly?: boolean;
+}) {
   const [isEditing, setIsEditing] = useState(false);
-  const [state, formAction, isPending] = useActionState(async (prev: any, formData: FormData) => {
-    const res = await updateCandidateProfileAction(prev, formData);
-    if (res.success) {
-      setIsEditing(false);
-    }
-    return res;
-  }, null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [state, formAction, isPending] = useActionState(
+    async (prev: ActionResponse | null, formData: FormData) => {
+      const result = await updateCandidateProfileAction(prev, formData);
+      if (result.success) setIsEditing(false);
+      return result;
+    },
+    null
+  );
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-  };
+  const links = [
+    { href: profile?.githubUrl, label: "GitHub", icon: Github },
+    { href: profile?.linkedinUrl, label: "LinkedIn", icon: Linkedin },
+    { href: profile?.portfolioUrl, label: "Portfolio", icon: Globe },
+    { href: profile?.resumeUrl, label: "Resume", icon: FileText },
+  ].filter((link): link is typeof link & { href: string } => Boolean(link.href));
 
   return (
-    <div className="rounded-xl border border-[#e0dfdc] bg-white shadow-sm overflow-hidden">
-      {/* LinkedIn-style Cover Banner */}
-      <div className="h-36 sm:h-44 w-full bg-gradient-to-r from-[#004182] via-[#0a66c2] to-[#3880c8] relative">
-        <div className="absolute top-3 right-3">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-2 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-sm transition-all"
-            title="Edit intro"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-        </div>
+    <section className="overflow-hidden rounded-2xl border border-line bg-white shadow-xs">
+      <div className="relative h-32 border-b border-line bg-brand-50 sm:h-44">
+        {profile?.bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={profile.bannerUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="bg-dot-grid absolute inset-0 opacity-70" />
+        )}
+
+        {!readOnly && (
+          <div className="absolute right-fib5 top-fib5 flex gap-fib3">
+            <ProfileImageUpload
+              kind="banner"
+              userId={user.id}
+              label="Change banner"
+              onError={setMediaError}
+              className="inline-flex items-center gap-fib3 rounded-lg bg-white/90 px-fib5 py-fib3 text-xs font-semibold text-ink-700 shadow-sm backdrop-blur transition-colors hover:bg-white"
+            >
+              <ImagePlus className="h-4 w-4" />
+              {profile?.bannerUrl ? "Change banner" : "Add banner"}
+            </ProfileImageUpload>
+            {profile?.bannerUrl && (
+              <ProfileImageRemove
+                kind="banner"
+                label="Remove banner"
+                onError={setMediaError}
+                className="inline-flex items-center rounded-lg bg-white/90 px-fib4 py-fib3 text-ink-500 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-rose-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </ProfileImageRemove>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Main Profile Info Header */}
-      <div className="px-6 pb-6 pt-0 relative">
-        {/* Avatar Bubble */}
-        <div className="-mt-16 sm:-mt-20 mb-4 flex items-end justify-between">
+      <div className="px-fib6 pb-fib7 sm:px-fib7">
+        {/* relative z-10: the banner above is positioned, and would otherwise
+            paint over the part of the avatar that overlaps it. */}
+        <div className="relative z-10 -mt-12 flex flex-wrap items-end justify-between gap-fib5">
           <div className="relative">
-            <div className="h-28 w-28 sm:h-36 sm:w-36 rounded-full border-4 border-white bg-slate-900 text-white flex items-center justify-center text-3xl sm:text-4xl font-bold shadow-md ring-1 ring-black/5">
-              {getInitials(user.fullName)}
-            </div>
-            <span
-              className="absolute bottom-1 right-2 h-5 w-5 rounded-full bg-emerald-500 border-2 border-white"
-              title="Available for evaluation projects"
+            <Avatar
+              name={user.fullName}
+              src={user.avatarUrl}
+              className="h-24 w-24 rounded-2xl border-4 border-white text-2xl shadow-md"
             />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setIsEditing(true)}
-              variant="outline"
-              size="sm"
-              className="rounded-full gap-1.5"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              <span>Edit Profile</span>
-            </Button>
-            {profile?.resume_url && (
-              <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" className="rounded-full gap-1.5">
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>Resume</span>
-                </Button>
-              </a>
+            {!readOnly && (
+              <ProfileImageUpload
+                kind="avatar"
+                userId={user.id}
+                label={user.avatarUrl ? "Change profile photo" : "Add profile photo"}
+                onError={setMediaError}
+                className="absolute -bottom-fib3 -right-fib3 grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-brand-600 text-white shadow-md transition-colors hover:bg-brand-700"
+              >
+                <Camera className="h-4 w-4" />
+              </ProfileImageUpload>
             )}
           </div>
+
+          {!readOnly && (
+            <div className="flex items-center gap-fib3">
+              {user.avatarUrl && (
+                <ProfileImageRemove
+                  kind="avatar"
+                  onError={setMediaError}
+                  className="text-xs font-semibold text-ink-400 transition-colors hover:text-rose-600"
+                >
+                  Remove photo
+                </ProfileImageRemove>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="gap-fib3"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit profile
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Identity & Headline */}
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#191919]">{user.fullName}</h1>
-            <Badge variant="secondary" className="bg-[#ebf4fd] text-[#0a66c2] border-none font-medium">
-              Verified Candidate
-            </Badge>
-          </div>
+        {mediaError && (
+          <StatusBanner tone="error" className="mt-fib5">
+            {mediaError}
+          </StatusBanner>
+        )}
 
-          <p className="text-base text-slate-700 max-w-2xl">
-            {profile?.headline || (
-              <span className="text-slate-400 italic">
-                Add a headline (e.g. Junior Backend Engineer | Node.js, PostgreSQL, Docker)
-              </span>
-            )}
-          </p>
+        <div className="mt-fib6 flex flex-wrap items-center gap-fib4">
+          <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{user.fullName}</h1>
+          {verifiedCount > 0 && (
+            <span className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700">
+              <BadgeCheck className="h-3.5 w-3.5" />
+              {verifiedCount} verified project{verifiedCount === 1 ? "" : "s"}
+            </span>
+          )}
+          {verifiedGithub && (
+            <a
+              href={`https://github.com/${verifiedGithub}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-fib2 rounded-full bg-ink-900 px-fib5 py-fib2 text-xs font-semibold text-white hover:bg-ink-700"
+            >
+              <Github className="h-3.5 w-3.5" />
+              Verified @{verifiedGithub}
+            </a>
+          )}
+        </div>
 
-          {/* Location, Education & Links row */}
-          <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-slate-500 pt-1">
-            {profile?.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+        {profile?.headline ? (
+          <p className="mt-fib3 max-w-2xl text-ink-600">{profile.headline}</p>
+        ) : readOnly ? null : (
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="mt-fib4 flex items-center gap-fib3 rounded-lg border border-dashed border-ink-300 px-fib5 py-fib3 text-sm font-medium text-ink-500 transition-colors hover:border-brand-400 hover:text-brand-600"
+          >
+            <Plus className="h-4 w-4" />
+            Add a headline — e.g. Junior Backend Engineer · Node.js, PostgreSQL
+          </button>
+        )}
+
+        {(profile?.location || profile?.education) && (
+          <div className="mt-fib5 flex flex-wrap gap-fib4">
+            {profile.location && (
+              <span className="inline-flex items-center gap-fib3 rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
+                <MapPin className="h-3.5 w-3.5" />
                 {profile.location}
               </span>
             )}
-            {profile?.education && (
-              <span className="flex items-center gap-1">
-                <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
-                {profile.education} {profile.graduation_year ? `(${profile.graduation_year})` : ""}
+            {profile.education && (
+              <span className="inline-flex items-center gap-fib3 rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
+                <GraduationCap className="h-3.5 w-3.5" />
+                {profile.education}
+                {profile.graduationYear ? ` · ${profile.graduationYear}` : ""}
               </span>
             )}
-            <span className="flex items-center gap-1 text-[#0a66c2] font-semibold">
-              <Sparkles className="h-3.5 w-3.5" />
-              Open to Paid Trial Projects
-            </span>
           </div>
+        )}
 
-          {/* Social / Portfolio Links */}
-          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
-            {profile?.github_url ? (
-              <a
-                href={profile.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-[#0a66c2] transition-colors"
-              >
-                <Github className="h-4 w-4" />
-                <span>GitHub</span>
-              </a>
-            ) : null}
-
-            {profile?.linkedin_url ? (
-              <a
-                href={profile.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#0a66c2] hover:underline"
-              >
-                <Linkedin className="h-4 w-4" />
-                <span>LinkedIn</span>
-              </a>
-            ) : null}
-
-            {profile?.portfolio_url ? (
-              <a
-                href={profile.portfolio_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-[#0a66c2] transition-colors"
-              >
-                <Globe className="h-4 w-4" />
-                <span>Portfolio</span>
-              </a>
-            ) : null}
-
-            {!profile?.github_url && !profile?.linkedin_url && !profile?.portfolio_url && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="text-xs text-[#0a66c2] font-semibold hover:underline"
-              >
-                + Add your GitHub and portfolio links
-              </button>
-            )}
-          </div>
+        <div className="mt-fib6 flex flex-wrap items-center gap-fib4 border-t border-line pt-fib6">
+          {links.length > 0 ? (
+            links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-fib3 rounded-lg border border-line px-fib5 py-fib3 text-sm font-medium text-ink-700 transition-colors hover:border-brand-300 hover:text-brand-600"
+                >
+                  <Icon className="h-4 w-4" />
+                  {link.label}
+                </a>
+              );
+            })
+          ) : readOnly ? (
+            <p className="text-sm text-ink-400">No links added.</p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="text-sm font-semibold text-brand-600 hover:underline"
+            >
+              + Add your GitHub, LinkedIn and portfolio links
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {isEditing && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-8">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
-              <h2 className="text-lg font-bold text-slate-900">Edit Introduction & Details</h2>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {isEditing && !readOnly && (
+        <Modal title="Edit profile" onClose={() => setIsEditing(false)} size="lg">
+          <form action={formAction} className="space-y-fib6">
+            {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
 
-            <form action={formAction} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              {state?.error && (
-                <div className="p-3 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
-                  {state.error}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Headline
-                </label>
+            <FormField
+              label="Headline"
+              hint="Shown to hiring managers in applicant lists."
+            >
+              {(id) => (
                 <Input
+                  id={id}
                   name="headline"
                   defaultValue={profile?.headline || ""}
-                  placeholder="e.g. Junior Backend Engineer | Node.js, PostgreSQL, Docker"
+                  placeholder="Junior Backend Engineer · Node.js, PostgreSQL, Docker"
                 />
-                <p className="text-[11px] text-slate-500">
-                  Visible to hiring managers in search and evaluation lists.
-                </p>
-              </div>
+              )}
+            </FormField>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 uppercase">
-                    Location
-                  </label>
+            <div className="grid gap-fib5 sm:grid-cols-2">
+              <FormField label="Location">
+                {(id) => (
                   <Input
+                    id={id}
                     name="location"
                     defaultValue={profile?.location || ""}
-                    placeholder="e.g. Bengaluru, India / Remote"
+                    placeholder="Bengaluru / Remote"
                   />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 uppercase">
-                    Graduation Year
-                  </label>
+                )}
+              </FormField>
+              <FormField label="Graduation year">
+                {(id) => (
                   <Input
+                    id={id}
                     name="graduationYear"
                     type="number"
-                    defaultValue={profile?.graduation_year || ""}
-                    placeholder="e.g. 2025"
+                    defaultValue={profile?.graduationYear || ""}
+                    placeholder="2025"
                   />
-                </div>
-              </div>
+                )}
+              </FormField>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Education / Degree
-                </label>
+            <FormField label="Education">
+              {(id) => (
                 <Input
+                  id={id}
                   name="education"
                   defaultValue={profile?.education || ""}
-                  placeholder="e.g. B.Tech Computer Science - NIT Karnataka"
+                  placeholder="B.Tech Computer Science — NIT Karnataka"
                 />
-              </div>
+              )}
+            </FormField>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1.5">
-                  <Github className="h-3.5 w-3.5" /> GitHub Profile URL
-                </label>
-                <Input
-                  name="githubUrl"
-                  defaultValue={profile?.github_url || ""}
-                  placeholder="https://github.com/yourhandle"
-                />
-              </div>
+            {LINK_FIELDS.map((field) => (
+              <FormField key={field.name} label={field.label} icon={field.icon}>
+                {(id) => (
+                  <Input
+                    id={id}
+                    name={field.name}
+                    type="url"
+                    defaultValue={profile?.[field.name] || ""}
+                    placeholder={field.placeholder}
+                  />
+                )}
+              </FormField>
+            ))}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1.5">
-                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn Profile URL
-                </label>
-                <Input
-                  name="linkedinUrl"
-                  defaultValue={profile?.linkedin_url || ""}
-                  placeholder="https://linkedin.com/in/yourhandle"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5" /> Portfolio or Personal Website
-                </label>
-                <Input
-                  name="portfolioUrl"
-                  defaultValue={profile?.portfolio_url || ""}
-                  placeholder="https://myportfolio.dev"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5" /> Resume URL (Google Drive / Hosted PDF)
-                </label>
-                <Input
-                  name="resumeUrl"
-                  defaultValue={profile?.resume_url || ""}
-                  placeholder="https://drive.google.com/file/d/.../view"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Bio / Summary
-                </label>
-                <textarea
+            <FormField label="Bio">
+              {(id) => (
+                <Textarea
+                  id={id}
                   name="bio"
                   rows={4}
                   defaultValue={profile?.bio || ""}
-                  placeholder="Briefly describe what you enjoy building, technical achievements, or problems you like solving..."
-                  className="w-full rounded-lg border border-slate-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0a66c2]"
+                  placeholder="What you enjoy building, and the problems you like solving."
                 />
-              </div>
+              )}
+            </FormField>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsEditing(false)}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending} className="rounded-full">
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="flex items-center justify-end gap-fib4 border-t border-line pt-fib6">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsEditing(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Save changes"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
-    </div>
+    </section>
   );
 }

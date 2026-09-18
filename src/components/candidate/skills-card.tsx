@@ -1,34 +1,128 @@
 "use client";
 
-import { useState, useActionState } from "react";
-import { addCandidateSkillAction, deleteCandidateSkillAction } from "@/app/(candidate)/candidate/actions";
+import { useId, useState, useActionState } from "react";
+import { Award, Cpu, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  addCandidateSkillAction,
+  deleteCandidateSkillAction,
+  updateCandidateSkillAction,
+} from "@/lib/actions/candidate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, X, Loader2, Award, Cpu } from "lucide-react";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/common/modal";
+import { SectionCard } from "@/components/common/section-card";
+import { StatusBanner } from "@/components/common/status-banner";
+import { SKILL_LEVELS, type SkillLevel } from "@/lib/constants";
+import type { CandidateSkillView } from "@/lib/types/domain";
+import type { ActionResponse } from "@/lib/types/actions";
 
-interface SkillItem {
-  id: string;
-  skill_name: string;
-  skill_level: string;
-  years_experience: number;
+const LEVEL_HINT: Record<SkillLevel, string> = {
+  beginner: "Beginner — familiar, still learning",
+  intermediate: "Intermediate — comfortable building",
+  advanced: "Advanced — deep experience",
+};
+
+/** One form for both adding and editing; `skill` switches it to edit mode. */
+function SkillFormModal({
+  skill,
+  onClose,
+}: {
+  skill: CandidateSkillView | null;
+  onClose: () => void;
+}) {
+  const nameId = useId();
+  const levelId = useId();
+  const yearsId = useId();
+
+  const [state, formAction, isPending] = useActionState(
+    async (prev: ActionResponse | null, formData: FormData) => {
+      const result = skill
+        ? await updateCandidateSkillAction(prev, formData)
+        : await addCandidateSkillAction(prev, formData);
+      if (result.success) onClose();
+      return result;
+    },
+    null
+  );
+
+  return (
+    <Modal title={skill ? "Edit skill" : "Add a skill"} onClose={onClose}>
+      <form action={formAction} className="space-y-fib6">
+        {skill && <input type="hidden" name="skillId" value={skill.id} />}
+        {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
+
+        <div className="space-y-fib3">
+          <Label htmlFor={nameId}>Skill</Label>
+          <Input
+            id={nameId}
+            name="skillName"
+            defaultValue={skill?.skillName}
+            placeholder="Node.js, PostgreSQL, React, Docker…"
+            required
+          />
+        </div>
+
+        <div className="space-y-fib3">
+          <Label htmlFor={levelId}>Proficiency</Label>
+          <Select
+            id={levelId}
+            name="skillLevel"
+            defaultValue={skill?.skillLevel ?? "intermediate"}
+            className="normal-case"
+          >
+            {SKILL_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {LEVEL_HINT[level]}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="space-y-fib3">
+          <Label htmlFor={yearsId}>Years of experience</Label>
+          <Input
+            id={yearsId}
+            name="yearsExperience"
+            type="number"
+            step="0.5"
+            min="0"
+            max="20"
+            defaultValue={skill?.yearsExperience ?? 1}
+            required
+          />
+        </div>
+
+        <div className="flex justify-end gap-fib4 border-t border-line pt-fib6">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : skill ? (
+              "Save skill"
+            ) : (
+              "Add skill"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
-interface SkillsCardProps {
-  skills: SkillItem[];
-}
-
-export function SkillsCard({ skills }: SkillsCardProps) {
-  const [isAdding, setIsAdding] = useState(false);
+export function SkillsCard({
+  skills,
+  readOnly = false,
+}: {
+  skills: CandidateSkillView[];
+  readOnly?: boolean;
+}) {
+  // undefined: closed · null: adding · a skill: editing that skill
+  const [editing, setEditing] = useState<CandidateSkillView | null | undefined>();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const [state, formAction, isPending] = useActionState(async (prev: any, formData: FormData) => {
-    const res = await addCandidateSkillAction(prev, formData);
-    if (res.success) {
-      setIsAdding(false);
-    }
-    return res;
-  }, null);
 
   const handleDelete = async (skillId: string) => {
     setDeletingId(skillId);
@@ -36,164 +130,84 @@ export function SkillsCard({ skills }: SkillsCardProps) {
     setDeletingId(null);
   };
 
-  const getLevelBadgeVariant = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "advanced":
-        return "success";
-      case "intermediate":
-        return "default";
-      default:
-        return "secondary";
-    }
-  };
-
   return (
-    <div className="rounded-xl border border-[#e0dfdc] bg-white shadow-sm p-6 space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2">
-          <Cpu className="h-5 w-5 text-[#0a66c2]" />
-          <h2 className="text-lg font-bold text-[#191919]">Skills & Technical Stack</h2>
-          <span className="text-xs text-slate-500 font-normal">({skills.length})</span>
-        </div>
-        <Button
-          onClick={() => setIsAdding(true)}
-          size="sm"
-          variant="outline"
-          className="rounded-full gap-1.5 text-xs h-8"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>Add Skill</span>
-        </Button>
-      </div>
-
-      {skills.length === 0 ? (
-        <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-          <Award className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-600">No skills added yet</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Add core languages, frameworks, or databases you know (e.g. Node.js, React, PostgreSQL).
-          </p>
+    <SectionCard
+      id="skills"
+      title="Skills"
+      icon={Cpu}
+      count={skills.length}
+      action={
+        readOnly ? undefined : (
           <Button
-            onClick={() => setIsAdding(true)}
             size="sm"
-            className="mt-3 rounded-full text-xs"
+            variant="outline"
+            onClick={() => setEditing(null)}
+            className="gap-fib2"
           >
-            Add First Skill
+            <Plus className="h-3.5 w-3.5" />
+            Add
           </Button>
+        )
+      }
+    >
+      {skills.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-line bg-ink-50 px-fib5 py-fib6 text-center">
+          <Award className="mx-auto h-7 w-7 text-ink-300" />
+          <p className="mt-fib3 text-sm font-semibold text-ink-700">No skills yet</p>
+          <p className="mt-fib2 text-xs text-ink-400">
+            Languages, frameworks and databases you can build with.
+          </p>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2.5 pt-1">
+        <ul className="space-y-fib3">
           {skills.map((skill) => (
-            <div
+            <li
               key={skill.id}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 group hover:border-[#0a66c2] transition-colors"
+              className="flex items-center gap-fib4 rounded-lg border border-line px-fib5 py-fib4"
             >
-              <div className="flex flex-col">
-                <span className="font-semibold text-xs text-slate-900">{skill.skill_name}</span>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                  <span className="capitalize">{skill.skill_level}</span>
-                  {skill.years_experience > 0 && (
-                    <span>• {skill.years_experience} yr{skill.years_experience > 1 ? "s" : ""}</span>
-                  )}
-                </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-ink-900">
+                  {skill.skillName}
+                </p>
+                <p className="text-xs capitalize text-ink-400">
+                  {skill.skillLevel}
+                  {skill.yearsExperience > 0 &&
+                    ` · ${skill.yearsExperience} yr${skill.yearsExperience === 1 ? "" : "s"}`}
+                </p>
               </div>
-
-              <button
-                onClick={() => handleDelete(skill.id)}
-                disabled={deletingId === skill.id}
-                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded transition-opacity"
-                title="Remove skill"
-              >
-                {deletingId === skill.id ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3 w-3" />
-                )}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add Skill Modal */}
-      {isAdding && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Add Technical Skill</h3>
-              <button
-                onClick={() => setIsAdding(false)}
-                className="p-1 rounded-full hover:bg-slate-200 text-slate-500"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form action={formAction} className="p-6 space-y-4">
-              {state?.error && (
-                <div className="p-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
-                  {state.error}
-                </div>
+              {!readOnly && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(skill)}
+                    aria-label={`Edit ${skill.skillName}`}
+                    className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(skill.id)}
+                    disabled={deletingId === skill.id}
+                    aria-label={`Remove ${skill.skillName}`}
+                    className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                  >
+                    {deletingId === skill.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </>
               )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Skill Name
-                </label>
-                <Input
-                  name="skillName"
-                  placeholder="e.g. Node.js, PostgreSQL, React, Docker"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Proficiency Level
-                </label>
-                <select
-                  name="skillLevel"
-                  defaultValue="intermediate"
-                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0a66c2]"
-                >
-                  <option value="beginner">Beginner (Familiar / Learning)</option>
-                  <option value="intermediate">Intermediate (Comfortable building)</option>
-                  <option value="advanced">Advanced (Deep experience)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 uppercase">
-                  Years of Experience
-                </label>
-                <Input
-                  name="yearsExperience"
-                  type="number"
-                  step="0.5"
-                  defaultValue="1"
-                  min="0"
-                  max="20"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAdding(false)}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={isPending} className="rounded-full">
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Skill"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+
+      {!readOnly && editing !== undefined && (
+        <SkillFormModal skill={editing} onClose={() => setEditing(undefined)} />
+      )}
+    </SectionCard>
   );
 }
