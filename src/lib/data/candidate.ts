@@ -25,6 +25,7 @@ interface RawApplicationProject {
   slug: string;
   title: string;
   status: ProjectStatus;
+  company_id: string;
   payment_amount: number;
   currency: string;
   companies: RawCompany | RawCompany[] | null;
@@ -174,7 +175,7 @@ export async function getCandidateApplications(
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, companies(name))"
+      "id, status, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, companies(name))"
     )
     .eq("candidate_id", candidateId)
     .order("created_at", { ascending: false });
@@ -196,6 +197,7 @@ export async function getCandidateApplications(
             status: project.status,
             paymentAmount: project.payment_amount,
             currency: project.currency || DEFAULT_CURRENCY,
+            companyId: project.company_id,
             companyName: one(project.companies)?.name ?? null,
           }
         : null,

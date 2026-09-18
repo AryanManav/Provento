@@ -18,7 +18,7 @@ import { SubmitWorkForm } from "@/components/candidate/submit-work-form";
 import { ProjectThread } from "@/components/common/project-thread";
 import { SectionCard } from "@/components/common/section-card";
 import { AttachmentList } from "@/components/common/attachment-list";
-import { WORK_MODES } from "@/lib/constants";
+import { WORK_MODES, companyProfilePath } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -94,9 +94,12 @@ export default async function CandidateTrialWorkspacePage({
               </span>
             </div>
             <h1 className="mt-fib4 text-2xl font-bold text-ink-900">{trial.title}</h1>
-            <p className="mt-fib2 text-sm text-ink-500">
+            <Link
+              href={companyProfilePath(trial.companyId)}
+              className="mt-fib2 inline-block text-sm text-ink-500 hover:text-brand-600 hover:underline"
+            >
               {trial.companyName || "Startup"}
-            </p>
+            </Link>
           </div>
           <div className="shrink-0 space-y-fib2 text-left sm:text-right">
             <p className="text-2xl font-bold text-emerald-600">

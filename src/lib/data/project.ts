@@ -5,7 +5,7 @@ import type { ProjectDetailView, ProjectSummaryView } from "@/lib/types/domain";
 import type { ProjectStatus, ProjectWorkMode } from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, companies(name)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, companies(name)";
 
 interface RawProjectSummary {
   id: string;
@@ -17,6 +17,7 @@ interface RawProjectSummary {
   payment_amount: number;
   currency: string;
   application_deadline: string;
+  company_id: string;
   companies: { name: string | null } | { name: string | null }[] | null;
 }
 
@@ -31,12 +32,16 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     paymentAmount: row.payment_amount,
     currency: row.currency || DEFAULT_CURRENCY,
     applicationDeadline: row.application_deadline,
+    companyId: row.company_id,
     companyName: one(row.companies)?.name ?? null,
   };
 }
 
 /** Projects visible in the public directory and candidate recommendations. */
-export async function getOpenProjects(limit?: number): Promise<ProjectSummaryView[]> {
+export async function getOpenProjects(
+  limit?: number,
+  companyId?: string
+): Promise<ProjectSummaryView[]> {
   const supabase = await createClient();
   let query = supabase
     .from("projects")
@@ -44,6 +49,7 @@ export async function getOpenProjects(limit?: number): Promise<ProjectSummaryVie
     .in("status", [...OPEN_PROJECT_STATUSES])
     .order("created_at", { ascending: false });
 
+  if (companyId) query = query.eq("company_id", companyId);
   if (limit) query = query.limit(limit);
 
   const { data } = await query;
@@ -82,7 +88,7 @@ export async function getOpenProjectBySlug(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
     .in("status", [...OPEN_PROJECT_STATUSES])

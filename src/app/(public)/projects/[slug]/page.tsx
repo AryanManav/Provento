@@ -5,9 +5,9 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ApplicationForm } from "@/components/candidate/application-form";
 import { Badge } from "@/components/ui/badge";
-import { WORK_MODES } from "@/lib/constants";
+import { WORK_MODES, companyProfilePath } from "@/lib/constants";
 import { Avatar } from "@/components/common/avatar";
-import { BadgeCheck, Globe } from "lucide-react";
+import { BadgeCheck, Building2, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,12 @@ export default async function ProjectDetailPage({
         <div className="flex justify-between gap-4">
           <div>
             <p className="text-sm text-slate-500">
-              {project.companyName || "Startup"}
+              <Link
+                href={companyProfilePath(project.companyId)}
+                className="font-medium hover:text-brand-600 hover:underline"
+              >
+                {project.companyName || "Startup"}
+              </Link>
               {project.companyLocation ? ` · ${project.companyLocation}` : ""}
             </p>
             <h1 className="text-3xl font-bold text-slate-900 mt-1">{project.title}</h1>
@@ -89,6 +94,13 @@ export default async function ProjectDetailPage({
               {project.company.description}
             </p>
           )}
+          <Link
+            href={companyProfilePath(project.companyId)}
+            className="mr-fib5 inline-flex items-center gap-fib2 text-sm font-semibold text-brand-600 hover:underline"
+          >
+            <Building2 className="h-4 w-4" />
+            Company profile &amp; track record
+          </Link>
           {project.company.website && (
             <a
               href={project.company.website}

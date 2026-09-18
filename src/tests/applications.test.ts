@@ -22,6 +22,7 @@ const application = (
     status: projectStatus,
     paymentAmount: 3000,
     currency: "INR",
+    companyId: "c1",
     companyName: "Acme",
   },
 });

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
+import { getOpenProjects } from "@/lib/data/project";
 import {
   getCandidateProfileById,
   getCandidateProjects,
@@ -12,6 +13,7 @@ import type {
   ApplicantView,
   CompanyProjectResult,
   CompanyProjectView,
+  CompanyPublicView,
   CompanyView,
 } from "@/lib/types/domain";
 import type {
@@ -145,6 +147,7 @@ export async function getCompanyProjects(
     paymentAmount: row.payment_amount,
     currency: row.currency || DEFAULT_CURRENCY,
     applicationDeadline: row.application_deadline,
+    companyId,
     companyName: null,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
@@ -367,5 +370,50 @@ export async function getApplicantProfile(
     projects,
     verifiedTrials,
     githubUsername: githubUsername ?? null,
+  };
+}
+
+/**
+ * A company as candidates see it: the profile, an aggregate track record
+ * (company_track_record returns counts only) and its open projects.
+ */
+export async function getCompanyPublicProfile(
+  companyId: string
+): Promise<CompanyPublicView | null> {
+  const supabase = await createClient();
+  const [{ data: company }, { data: record }, openProjects] = await Promise.all([
+    supabase
+      .from("companies")
+      .select(
+        "id, name, description, website, industry, company_size, location, logo_url, verified, created_at"
+      )
+      .eq("id", companyId)
+      .maybeSingle(),
+    supabase.rpc("company_track_record", { target_company_id: companyId }),
+    getOpenProjects(undefined, companyId),
+  ]);
+  if (!company) return null;
+
+  // Before the migration runs the function is missing; show zeros, not an error.
+  const counts = record?.[0];
+  return {
+    id: company.id,
+    name: company.name,
+    description: company.description,
+    website: company.website,
+    industry: company.industry,
+    size: company.company_size,
+    location: company.location,
+    logoUrl: company.logo_url,
+    verified: company.verified,
+    memberSince: company.created_at,
+    trackRecord: {
+      openProjects: counts?.open_projects ?? openProjects.length,
+      completedEvaluations: counts?.completed_evaluations ?? 0,
+      hires: counts?.hires ?? 0,
+      interviews: counts?.interviews ?? 0,
+      cancelledProjects: counts?.cancelled_projects ?? 0,
+    },
+    openProjects,
   };
 }

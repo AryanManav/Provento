@@ -58,6 +58,7 @@ export interface ProjectSummaryView {
   paymentAmount: number;
   currency: string;
   applicationDeadline: string;
+  companyId: string;
   companyName: string | null;
 }
 
@@ -106,6 +107,7 @@ export interface ApplicationSummaryView {
     status: ProjectStatus;
     paymentAmount: number;
     currency: string;
+    companyId: string;
     companyName: string | null;
   } | null;
 }
@@ -210,6 +212,7 @@ export interface ApplicantProfileView {
 /** A project the candidate was selected for — their side of the evaluation. */
 export interface TrialView {
   projectId: string;
+  companyId: string;
   title: string;
   slug: string;
   companyName: string | null;
@@ -301,4 +304,26 @@ export interface NotificationSummary {
   unreadCount: number;
   recent: NotificationView[];
   unread: UnreadMarker[];
+}
+
+/** What a candidate sees about a company before deciding to work for it. */
+export interface CompanyPublicView {
+  id: string;
+  name: string;
+  description: string | null;
+  website: string | null;
+  industry: string | null;
+  size: string | null;
+  location: string | null;
+  logoUrl: string | null;
+  verified: boolean;
+  memberSince: string;
+  trackRecord: {
+    openProjects: number;
+    completedEvaluations: number;
+    hires: number;
+    interviews: number;
+    cancelledProjects: number;
+  };
+  openProjects: ProjectSummaryView[];
 }

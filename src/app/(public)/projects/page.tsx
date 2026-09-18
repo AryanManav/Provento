@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Clock, Banknote, Building, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { companyProfilePath } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,12 @@ export default async function ProjectsDirectoryPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     <Building className="h-3.5 w-3.5" />
-                    <span>{project.companyName || "Verified Startup"}</span>
+                    <Link
+                      href={companyProfilePath(project.companyId)}
+                      className="hover:text-brand-600 hover:underline"
+                    >
+                      {project.companyName || "Startup"}
+                    </Link>
                   </div>
                   <Badge variant="success">Applications Open</Badge>
                 </div>

@@ -745,6 +745,16 @@ export interface Database {
         Args: { target_project_id: string };
         Returns: boolean;
       };
+      company_track_record: {
+        Args: { target_company_id: string };
+        Returns: {
+          open_projects: number;
+          completed_evaluations: number;
+          hires: number;
+          interviews: number;
+          cancelled_projects: number;
+        }[];
+      };
       candidate_github_username: {
         Args: { target_candidate_id: string };
         Returns: string | null;

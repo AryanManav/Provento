@@ -14,7 +14,11 @@ import {
   applicationStage,
   type ApplicationStage,
 } from "@/lib/applications";
-import { DEFAULT_CURRENCY, WITHDRAWABLE_APPLICATION_STATUSES } from "@/lib/constants";
+import {
+  DEFAULT_CURRENCY,
+  WITHDRAWABLE_APPLICATION_STATUSES,
+  companyProfilePath,
+} from "@/lib/constants";
 import type { ApplicationStatus } from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
 
@@ -77,10 +81,20 @@ function ApplicationCard({
             )}
           </div>
           <p className="mt-fib2 flex flex-wrap items-center gap-x-fib3 text-xs text-ink-500">
-            <span className="flex items-center gap-fib2 font-medium text-ink-700">
-              <Building className="h-3.5 w-3.5" />
-              {application.project?.companyName || "Startup"}
-            </span>
+            {application.project ? (
+              <Link
+                href={companyProfilePath(application.project.companyId)}
+                className="flex items-center gap-fib2 font-medium text-ink-700 hover:text-brand-600 hover:underline"
+              >
+                <Building className="h-3.5 w-3.5" />
+                {application.project.companyName || "Startup"}
+              </Link>
+            ) : (
+              <span className="flex items-center gap-fib2 font-medium text-ink-700">
+                <Building className="h-3.5 w-3.5" />
+                Startup
+              </span>
+            )}
             <span>·</span>
             <span>Applied {formatDate(application.createdAt)}</span>
             <span>·</span>

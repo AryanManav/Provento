@@ -26,6 +26,7 @@ interface RawTrialProject {
   currency: string;
   expected_hours: number;
   project_deadline: string;
+  company_id: string;
   companies: { name: string | null } | { name: string | null }[] | null;
 }
 
@@ -70,13 +71,14 @@ interface RawSubmission {
 const ATTACHMENT_URL_TTL_SECONDS = 60 * 15;
 
 const TRIAL_PROJECT_COLUMNS =
-  "id, slug, title, status, payment_amount, currency, expected_hours, project_deadline, companies(name)";
+  "id, slug, title, status, payment_amount, currency, expected_hours, project_deadline, company_id, companies(name)";
 
 function toTrial(selectedAt: string, project: RawTrialProject): TrialView {
   return {
     projectId: project.id,
     title: project.title,
     slug: project.slug,
+    companyId: project.company_id,
     companyName: one(project.companies)?.name ?? null,
     status: project.status,
     paymentAmount: project.payment_amount,
