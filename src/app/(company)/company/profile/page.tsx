@@ -1,78 +1,82 @@
-﻿import { requireRole } from "@/lib/auth/guards";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { requireRole } from "@/lib/auth/guards";
+import { getCompanyForUser } from "@/lib/data/company";
+import { saveCompanyProfileAction } from "@/lib/actions/company";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, Globe, MapPin, Users } from "lucide-react";
+import { StatusBanner } from "@/components/common/status-banner";
 
-export default async function CompanyProfilePage() {
+export const dynamic = "force-dynamic";
+
+export default async function CompanyProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
   const user = await requireRole(["company", "admin"]);
+  const params = await searchParams;
+  const company = await getCompanyForUser(user.id);
 
   return (
-    <div className="space-y-8 max-w-3xl">
-      <div className="border-b border-slate-200 pb-5">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Company & Startup Profile
-        </h1>
+    <div className="max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Company profile</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Provide company information visible to prospective candidates when applying to your evaluation projects.
+          This is visible to candidates evaluating your paid projects.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Company Information</CardTitle>
-          <CardDescription>Legal or operating brand name, industry, and location.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 uppercase">Startup / Company Name</label>
-            <Input placeholder="e.g. HyperLogistics Tech" />
-          </div>
+      {params.error && <StatusBanner tone="error">{params.error}</StatusBanner>}
+      {params.saved && <StatusBanner tone="success">Company profile saved.</StatusBanner>}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5" /> Website
-              </label>
-              <Input placeholder="https://yourstartup.com" />
-            </div>
+      <form
+        action={saveCompanyProfileAction}
+        className="rounded-xl border bg-white p-6 space-y-4"
+      >
+        <Input
+          name="name"
+          defaultValue={company?.name || ""}
+          placeholder="Company name"
+          required
+        />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" /> Location
-              </label>
-              <Input placeholder="e.g. Bengaluru / Remote (India)" />
-            </div>
-          </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            name="website"
+            defaultValue={company?.website || ""}
+            placeholder="https://company.com"
+          />
+          <Input
+            name="location"
+            defaultValue={company?.location || ""}
+            placeholder="Location"
+          />
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase">Industry</label>
-              <Input placeholder="e.g. B2B SaaS / FinTech" />
-            </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Input
+            name="industry"
+            defaultValue={company?.industry || ""}
+            placeholder="Industry"
+          />
+          <Input
+            name="companySize"
+            defaultValue={company?.companySize || ""}
+            placeholder="Company size"
+          />
+        </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" /> Company Size
-              </label>
-              <Input placeholder="e.g. 10–50 employees" />
-            </div>
-          </div>
+        <textarea
+          name="description"
+          defaultValue={company?.description || ""}
+          rows={5}
+          className="w-full rounded-lg border border-slate-300 p-3 text-sm"
+          placeholder="What does your company build?"
+        />
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 uppercase">Company Description</label>
-            <textarea
-              rows={3}
-              className="w-full rounded-lg border border-slate-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="What does your company build and what is your engineering culture?"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end">
-        <Button className="bg-indigo-600 hover:bg-indigo-700">Save Company Profile</Button>
-      </div>
+        <div className="flex justify-end">
+          <Button type="submit">Save company profile</Button>
+        </div>
+      </form>
     </div>
   );
 }

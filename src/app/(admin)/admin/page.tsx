@@ -1,16 +1,25 @@
 ﻿import { requireAdmin } from "@/lib/auth/guards";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Building, FileText, CheckCircle2, DollarSign, AlertTriangle } from "lucide-react";
+import { Users, Building, FileText, CheckCircle2 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
-  const user = await requireAdmin();
+  await requireAdmin();
 
   return (
     <div className="space-y-8">
       <div className="border-b border-slate-300 pb-5">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+          <Badge
+            variant="outline"
+            className="bg-indigo-50 text-indigo-700 border-indigo-200"
+          >
             System Administration
           </Badge>
         </div>
@@ -18,7 +27,8 @@ export default async function AdminOverviewPage() {
           Platform Governance & Metrics
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          Monitor marketplace integrity, company verifications, project moderation, and evaluation outcomes.
+          Monitor marketplace integrity, company verifications, project moderation, and
+          evaluation outcomes.
         </p>
       </div>
 
@@ -67,7 +77,8 @@ export default async function AdminOverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">Pending Project Moderation</CardTitle>
             <CardDescription>
-              Review new trial projects submitted by companies to maintain quality standards.
+              Review new trial projects submitted by companies to maintain quality
+              standards.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-slate-500">
@@ -79,7 +90,8 @@ export default async function AdminOverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">Disputes & Escalations</CardTitle>
             <CardDescription>
-              Monitor project deadline extensions, review non-responsive parties, or milestone issues.
+              Monitor project deadline extensions, review non-responsive parties, or
+              milestone issues.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-slate-500">

@@ -1,9 +1,9 @@
 ﻿import { requireAdmin } from "@/lib/auth/guards";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+
 import { EmptyState } from "@/components/common/empty-state";
 
 export default async function AdminCompaniesPage() {
-  const user = await requireAdmin();
+  await requireAdmin();
 
   return (
     <div className="space-y-8">

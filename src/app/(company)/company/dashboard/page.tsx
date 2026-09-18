@@ -1,66 +1,109 @@
-﻿import { requireRole } from "@/lib/auth/guards";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Building2, Users, CheckSquare, ArrowRight } from "lucide-react";
+import { BriefcaseBusiness, PlusCircle, Trophy, UserCheck, Users } from "lucide-react";
+import { requireRole } from "@/lib/auth/guards";
+import { getCompanyDashboardStats, getCompanyIdForUser } from "@/lib/data/company";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/common/stat-card";
 import { EmptyState } from "@/components/common/empty-state";
+import { UpdatesPanel } from "@/components/notifications/updates-panel";
+import { getUnreadNotifications } from "@/lib/data/notifications";
+
+export const dynamic = "force-dynamic";
 
 export default async function CompanyDashboardPage() {
   const user = await requireRole(["company", "admin"]);
+  const [companyId, updates] = await Promise.all([
+    getCompanyIdForUser(user.id),
+    getUnreadNotifications(user.id),
+  ]);
+  const stats = companyId
+    ? await getCompanyDashboardStats(companyId)
+    : {
+        totalProjects: 0,
+        activeProjects: 0,
+        applicants: 0,
+        inProgress: 0,
+        hires: 0,
+        awaitingReview: 0,
+      };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="space-y-fib7">
+      <div className="flex flex-col justify-between gap-fib5 border-b border-line pb-fib6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Startup Hiring Dashboard
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Evaluate emerging technical talent through standardized paid work before hiring.
+          <h1 className="text-2xl font-bold text-ink-900">Hiring dashboard</h1>
+          <p className="mt-fib2 text-sm text-ink-500">
+            Evaluate emerging technical talent through paid work before hiring.
           </p>
         </div>
         <Link href="/company/projects/create">
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button className="gap-fib3">
             <PlusCircle className="h-4 w-4" />
-            <span>Create Trial Project</span>
+            <span>Create trial project</span>
           </Button>
         </Link>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Active Projects</div>
-          <div className="text-2xl font-bold text-slate-900 mt-1">0</div>
-          <div className="text-xs text-slate-400 mt-1">Accepting applications</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Applicants</div>
-          <div className="text-2xl font-bold text-slate-900 mt-1">0</div>
-          <div className="text-xs text-slate-400 mt-1">Across all projects</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs font-semibold text-slate-500 uppercase">In Progress</div>
-          <div className="text-2xl font-bold text-slate-900 mt-1">0</div>
-          <div className="text-xs text-slate-400 mt-1">Being completed by candidate</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Hires Made</div>
-          <div className="text-2xl font-bold text-emerald-600 mt-1">0</div>
-          <div className="text-xs text-slate-400 mt-1">From project evaluations</div>
-        </Card>
-      </div>
-
-      {/* Evaluation Funnel Overview */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">Active Evaluation Funnel</h2>
-        <EmptyState
-          title="No evaluation projects created yet"
-          description="Create a standardized 5–10 hour project (e.g. ₹5,000 budget) linked to an open junior technical role."
-          actionText="Create First Evaluation Project"
-          actionHref="/company/projects/create"
+      <div className="grid grid-cols-1 gap-fib5 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Active projects"
+          value={stats.activeProjects}
+          hint="Accepting applications"
+          icon={BriefcaseBusiness}
+        />
+        <StatCard
+          label="Awaiting review"
+          value={stats.awaitingReview}
+          hint={`${stats.applicants} applicant${stats.applicants === 1 ? "" : "s"} in total`}
+          icon={Users}
+        />
+        <StatCard
+          label="In progress"
+          value={stats.inProgress}
+          hint="Being completed by a candidate"
+          icon={UserCheck}
+        />
+        <StatCard
+          label="Hires made"
+          value={stats.hires}
+          hint="From project evaluations"
+          icon={Trophy}
+          tone="positive"
         />
       </div>
+
+      <UpdatesPanel
+        items={updates}
+        emptyText="New applicants, questions from your candidate and submitted work show up here."
+      />
+
+      <section className="space-y-fib5">
+        <h2 className="text-lg font-bold text-ink-900">Evaluation funnel</h2>
+
+        {stats.totalProjects === 0 ? (
+          <EmptyState
+            title="No evaluation projects yet"
+            description="Create a standardized 5–10 hour project with a real budget, linked to an open junior technical role."
+            actionText="Create your first project"
+            actionHref="/company/projects/create"
+          />
+        ) : (
+          <div className="rounded-2xl border border-line bg-white p-fib7">
+            <p className="text-sm text-ink-500">
+              You have {stats.totalProjects} project
+              {stats.totalProjects === 1 ? "" : "s"}, {stats.applicants} applicant
+              {stats.applicants === 1 ? "" : "s"}, and {stats.inProgress} evaluation
+              {stats.inProgress === 1 ? "" : "s"} in flight.
+            </p>
+            <Link
+              href="/company/projects"
+              className="mt-fib5 inline-flex text-sm font-semibold text-brand-600 hover:underline"
+            >
+              Manage projects →
+            </Link>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
