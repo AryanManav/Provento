@@ -14,6 +14,7 @@ import {
   PROFILE_MEDIA_TYPES,
   type ProfileMediaKind,
 } from "@/lib/constants";
+import type { ActionResponse } from "@/lib/types/actions";
 
 function describeStorageError(message: string): string {
   if (/bucket not found/i.test(message)) {
@@ -36,6 +37,7 @@ export function ProfileImageUpload({
   className,
   label,
   onError,
+  save = () => saveProfileImageAction(kind),
   children,
 }: {
   kind: ProfileMediaKind;
@@ -43,6 +45,8 @@ export function ProfileImageUpload({
   className?: string;
   label: string;
   onError: (message: string | null) => void;
+  /** Records the uploaded file. Defaults to the candidate's avatar/banner. */
+  save?: () => Promise<ActionResponse>;
   children: ReactNode;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +79,7 @@ export function ProfileImageUpload({
     if (error) {
       onError(describeStorageError(error.message));
     } else {
-      const result = await saveProfileImageAction(kind);
+      const result = await save();
       if (result.error) onError(result.error);
       else router.refresh();
     }
@@ -115,12 +119,14 @@ export function ProfileImageRemove({
   className,
   label,
   onError,
+  remove = () => removeProfileImageAction(kind),
   children,
 }: {
   kind: ProfileMediaKind;
   className?: string;
   label?: string;
   onError: (message: string | null) => void;
+  remove?: () => Promise<ActionResponse>;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -135,7 +141,7 @@ export function ProfileImageRemove({
       onClick={async () => {
         setPending(true);
         onError(null);
-        const result = await removeProfileImageAction(kind);
+        const result = await remove();
         if (result.error) onError(result.error);
         else router.refresh();
         setPending(false);

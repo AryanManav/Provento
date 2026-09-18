@@ -25,7 +25,11 @@ import { GitHubConnect } from "@/components/candidate/github-connect";
 import { GithubLinkBanner } from "@/components/candidate/github-link-banner";
 import { ProfileStrengthCard } from "@/components/candidate/profile-strength-card";
 import { ApplicationStageBadge } from "@/components/candidate/application-stage-badge";
-import { applicationHref, applicationStage } from "@/lib/applications";
+import {
+  applicationHref,
+  applicationStage,
+  summarizeApplications,
+} from "@/lib/applications";
 import { UpdatesPanel } from "@/components/notifications/updates-panel";
 import { getUnreadNotifications } from "@/lib/data/notifications";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -52,6 +56,8 @@ export default async function CandidateDashboardPage({
       getUnreadNotifications(user.id),
     ]);
 
+  const summary = summarizeApplications(applications);
+
   return (
     <div className="space-y-fib7">
       <GithubLinkBanner status={github} />
@@ -74,27 +80,27 @@ export default async function CandidateDashboardPage({
 
       <div className="grid grid-cols-1 gap-fib5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Active trials"
-          value={stats.activeTrials}
-          hint="Projects you were selected for"
-          icon={Hammer}
-        />
-        <StatCard
-          label="Applications sent"
-          value={applications.length}
-          hint="Across all projects"
+          label="Pending applications"
+          value={summary.pending}
+          hint={`Awaiting a decision · ${summary.total} sent in total`}
           icon={Clock}
         />
         <StatCard
-          label="Verified completed"
-          value={stats.completedProjects}
-          hint="With a recorded evaluation"
+          label="Active trials"
+          value={summary.activeTrials}
+          hint="Selected and in progress"
+          icon={Hammer}
+        />
+        <StatCard
+          label="Completed projects"
+          value={summary.completed}
+          hint="Work accepted by the startup"
           icon={ShieldCheck}
         />
         <StatCard
-          label="Guaranteed earnings"
-          value={formatCurrency(stats.earnings, DEFAULT_CURRENCY)}
-          hint="From completed projects"
+          label="Completed project value"
+          value={formatCurrency(summary.completedValue, DEFAULT_CURRENCY)}
+          hint="Agreed fees of completed projects"
           icon={IndianRupee}
           tone="positive"
         />

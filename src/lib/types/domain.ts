@@ -69,6 +69,15 @@ export interface CompanyProjectView extends ProjectSummaryView {
 export interface ProjectDetailView extends ProjectSummaryView {
   workMode: ProjectWorkMode;
   companyLocation: string | null;
+  /** From the company profile, for the brief's "About" section. */
+  company: {
+    description: string | null;
+    website: string | null;
+    industry: string | null;
+    size: string | null;
+    logoUrl: string | null;
+    verified: boolean;
+  };
   problemStatement: string;
   context: string;
   requirements: string[];
@@ -121,9 +130,6 @@ export interface VerifiedTrialView {
 
 export interface CandidateDashboardStats {
   skillsCount: number;
-  activeTrials: number;
-  completedProjects: number;
-  earnings: number;
   profileStrength: number;
 }
 

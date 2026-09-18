@@ -10,7 +10,8 @@ import {
   createProjectSchema,
   updateApplicationStatusSchema,
 } from "@/lib/validations";
-import { DEFAULT_CURRENCY } from "@/lib/constants";
+import { DEFAULT_CURRENCY, PROFILE_MEDIA_BUCKET } from "@/lib/constants";
+import type { ActionResponse } from "@/lib/types/actions";
 
 /** Company forms post without JS, so errors surface via the query string. */
 function redirectWithError(path: string, message: string): never {
@@ -243,4 +244,50 @@ export async function updateApplicationStatusAction(formData: FormData) {
   revalidatePath(projectPath);
   revalidatePath(destination);
   redirect(`${destination}?updated=${encodeURIComponent(validated.data.status)}`);
+}
+
+/**
+ * Records the logo the browser just uploaded to `profile-media/<uid>/logo`.
+ * Storage policies confine the upload to the member's own folder; this checks
+ * it landed, then points the company at it.
+ */
+export async function saveCompanyLogoAction(): Promise<ActionResponse> {
+  const user = await requireRole(["company", "admin"]);
+  const companyId = await getCompanyIdForUser(user.id);
+  if (!companyId) return { error: "Save your company profile before adding a logo." };
+
+  const supabase = await createClient();
+  const bucket = supabase.storage.from(PROFILE_MEDIA_BUCKET);
+  const { data: files } = await bucket.list(user.id, { search: "logo" });
+  if (!files?.some((file) => file.name === "logo")) {
+    return { error: "Upload didn't finish. Please try again." };
+  }
+
+  // Same path on every upload, so the version stamp is what busts caches.
+  const url = `${bucket.getPublicUrl(`${user.id}/logo`).data.publicUrl}?v=${Date.now()}`;
+  const { error } = await supabase
+    .from("companies")
+    .update({ logo_url: url })
+    .eq("id", companyId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/company/profile");
+  return { success: true };
+}
+
+export async function removeCompanyLogoAction(): Promise<ActionResponse> {
+  const user = await requireRole(["company", "admin"]);
+  const companyId = await getCompanyIdForUser(user.id);
+  if (!companyId) return { error: "No company profile yet." };
+
+  const supabase = await createClient();
+  await supabase.storage.from(PROFILE_MEDIA_BUCKET).remove([`${user.id}/logo`]);
+  const { error } = await supabase
+    .from("companies")
+    .update({ logo_url: null })
+    .eq("id", companyId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/company/profile");
+  return { success: true };
 }

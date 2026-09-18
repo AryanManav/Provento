@@ -6,6 +6,8 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { ApplicationForm } from "@/components/candidate/application-form";
 import { Badge } from "@/components/ui/badge";
 import { WORK_MODES } from "@/lib/constants";
+import { Avatar } from "@/components/common/avatar";
+import { BadgeCheck, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,52 @@ export default async function ProjectDetailPage({
           </span>
           <span>{project.expectedHours} hours estimated</span>
           <span>Apply by {formatDate(project.applicationDeadline)}</span>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-fib5 rounded-xl border border-slate-200 bg-white p-6 sm:flex-row">
+        <Avatar
+          name={project.companyName || "Startup"}
+          src={project.company.logoUrl}
+          className="h-14 w-14 rounded-xl text-lg"
+        />
+        <div className="min-w-0 space-y-fib3">
+          <div className="flex flex-wrap items-center gap-fib3">
+            <h2 className="text-lg font-bold text-ink-900">
+              About {project.companyName || "the startup"}
+            </h2>
+            {project.company.verified && (
+              <span className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib4 py-fib1 text-xs font-semibold text-emerald-700">
+                <BadgeCheck className="h-3.5 w-3.5" />
+                Verified
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-ink-500">
+            {[
+              project.company.industry,
+              project.company.size && `${project.company.size} people`,
+              project.companyLocation,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Early-stage startup"}
+          </p>
+          {project.company.description && (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+              {project.company.description}
+            </p>
+          )}
+          {project.company.website && (
+            <a
+              href={project.company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-fib2 text-sm font-semibold text-brand-600 hover:underline"
+            >
+              <Globe className="h-4 w-4" />
+              Visit website
+            </a>
+          )}
         </div>
       </section>
 

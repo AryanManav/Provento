@@ -1,4 +1,4 @@
-import { CLOSED_PROJECT_STATUSES } from "@/lib/constants";
+import { CLOSED_PROJECT_STATUSES, OPEN_PROJECT_STATUSES } from "@/lib/constants";
 import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
 
@@ -51,12 +51,18 @@ export function applicationStage(
   }
 }
 
-/** Selected candidates go to their workspace; everyone else to the brief. */
+/**
+ * Selected candidates go to their workspace. Everyone else goes to the public
+ * brief — which only exists while the project is open, so once it closes there
+ * is nothing to link to.
+ */
 export function applicationHref(application: ApplicationSummaryView): string | null {
-  if (!application.project) return null;
-  return application.status === "selected"
-    ? `/candidate/trials/${application.project.id}`
-    : `/projects/${application.project.slug}`;
+  const project = application.project;
+  if (!project) return null;
+  if (application.status === "selected") return `/candidate/trials/${project.id}`;
+  return (OPEN_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
+    ? `/projects/${project.slug}`
+    : null;
 }
 
 export const STAGE_DISPLAY: Record<
@@ -86,3 +92,50 @@ export const STAGE_DISPLAY: Record<
   not_selected: { label: "Not selected", tone: "neutral", action: "View brief" },
   withdrawn: { label: "Withdrawn", tone: "neutral", action: "View brief" },
 };
+
+const PENDING_STAGES: ApplicationStage[] = ["applied", "reviewing", "shortlisted"];
+const ACTIVE_TRIAL_STAGES: ApplicationStage[] = [
+  "building",
+  "awaiting_review",
+  "revision_requested",
+];
+
+export interface ApplicationSummary {
+  /** Every application ever sent, withdrawn ones included. */
+  total: number;
+  /** Waiting on the startup's decision. */
+  pending: number;
+  /** Selected and not yet finished — the Trial Projects list. */
+  activeTrials: number;
+  /** Accepted by the startup — "Project completed" in My Applications. */
+  completed: number;
+  /** Sum of the agreed fees of completed projects. */
+  completedValue: number;
+}
+
+/**
+ * Dashboard counts, derived from the same list and the same stage rules as
+ * My Applications and Trial Projects, so the numbers always agree and move
+ * as statuses change.
+ */
+export function summarizeApplications(
+  applications: ApplicationSummaryView[]
+): ApplicationSummary {
+  const summary: ApplicationSummary = {
+    total: applications.length,
+    pending: 0,
+    activeTrials: 0,
+    completed: 0,
+    completedValue: 0,
+  };
+  for (const application of applications) {
+    const stage = applicationStage(application.status, application.project?.status);
+    if (PENDING_STAGES.includes(stage)) summary.pending += 1;
+    if (ACTIVE_TRIAL_STAGES.includes(stage)) summary.activeTrials += 1;
+    if (stage === "completed") {
+      summary.completed += 1;
+      summary.completedValue += application.project?.paymentAmount ?? 0;
+    }
+  }
+  return summary;
+}

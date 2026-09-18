@@ -59,11 +59,19 @@ interface RawProjectDetail extends RawProjectSummary {
   acceptance_criteria: string[];
   evaluation_criteria: string[];
   project_deadline: string;
-  companies:
-    | { name: string | null; location?: string | null }
-    | { name: string | null; location?: string | null }[]
-    | null;
+  companies: RawDetailCompany | RawDetailCompany[] | null;
   project_skills: { skill_name: string; is_required: boolean }[] | null;
+}
+
+interface RawDetailCompany {
+  name: string | null;
+  location: string | null;
+  description: string | null;
+  website: string | null;
+  industry: string | null;
+  company_size: string | null;
+  logo_url: string | null;
+  verified: boolean | null;
 }
 
 /** Full public project page, restricted to projects that are open for applications. */
@@ -74,7 +82,7 @@ export async function getOpenProjectBySlug(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
     .in("status", [...OPEN_PROJECT_STATUSES])
@@ -89,6 +97,14 @@ export async function getOpenProjectBySlug(
     ...toSummary(row),
     workMode: row.work_mode ?? "local",
     companyLocation: company?.location ?? null,
+    company: {
+      description: company?.description ?? null,
+      website: company?.website ?? null,
+      industry: company?.industry ?? null,
+      size: company?.company_size ?? null,
+      logoUrl: company?.logo_url ?? null,
+      verified: company?.verified === true,
+    },
     problemStatement: row.problem_statement,
     context: row.context,
     requirements: row.requirements ?? [],

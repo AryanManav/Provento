@@ -145,6 +145,7 @@ export const PROFILE_MEDIA_BUCKET = "profile-media";
 export const PROFILE_MEDIA = {
   avatar: { maxBytes: 2 * 1024 * 1024, label: "Profile photo" },
   banner: { maxBytes: 5 * 1024 * 1024, label: "Banner" },
+  logo: { maxBytes: 2 * 1024 * 1024, label: "Company logo" },
 } as const;
 
 export type ProfileMediaKind = keyof typeof PROFILE_MEDIA;
@@ -222,3 +223,6 @@ export const CLOSED_PROJECT_STATUSES = [
   "completed",
   "cancelled",
 ] as const satisfies readonly ProjectStatus[];
+
+/** Headcount bands offered on the company profile. */
+export const COMPANY_SIZES = ["1–10", "11–50", "51–200", "201–500", "500+"] as const;

@@ -11,7 +11,7 @@ import type {
 } from "@/lib/types/domain";
 import type { ApplicationStatus, ProjectStatus } from "@/lib/types/database.types";
 import type { SkillLevel } from "@/lib/constants";
-import { CLOSED_PROJECT_STATUSES, DEFAULT_CURRENCY } from "@/lib/constants";
+import { DEFAULT_CURRENCY } from "@/lib/constants";
 
 const PROFILE_COLUMNS =
   "id, user_id, headline, bio, location, education, graduation_year, resume_url, github_url, portfolio_url, linkedin_url, banner_url, availability";
@@ -280,49 +280,20 @@ export async function getCandidateDashboardStats(
   profile: CandidateProfileView | null
 ): Promise<CandidateDashboardStats> {
   if (!profile) {
-    return {
-      skillsCount: 0,
-      activeTrials: 0,
-      completedProjects: 0,
-      earnings: 0,
-      profileStrength: calculateProfileStrength(null, 0),
-    };
+    return { skillsCount: 0, profileStrength: calculateProfileStrength(null, 0) };
   }
 
+  // Application and trial counts are derived from the applications list itself
+  // (see summarizeApplications) so the dashboard always matches My Applications
+  // and Trial Projects.
   const supabase = await createClient();
-  const [skills, active, completed, payments] = await Promise.all([
-    supabase
-      .from("candidate_skills")
-      .select("*", { count: "exact", head: true })
-      .eq("candidate_id", profile.id),
-    // Counts trials still in flight; finished ones (see CLOSED_PROJECT_STATUSES)
-    // are no longer "active" even though the selection row stays.
-    supabase
-      .from("project_selections")
-      .select("project_id, projects!inner(status)", { count: "exact", head: true })
-      .eq("candidate_id", profile.id)
-      .not("projects.status", "in", `(${CLOSED_PROJECT_STATUSES.join(",")})`),
-    supabase
-      .from("project_feedback")
-      .select("*", { count: "exact", head: true })
-      .eq("candidate_id", profile.id),
-    supabase
-      .from("payments")
-      .select("amount")
-      .eq("candidate_id", profile.id)
-      .in("status", ["paid", "completed"]),
-  ]);
+  const { count } = await supabase
+    .from("candidate_skills")
+    .select("*", { count: "exact", head: true })
+    .eq("candidate_id", profile.id);
 
-  const skillsCount = skills.count ?? 0;
-
-  return {
-    skillsCount,
-    activeTrials: active.count ?? 0,
-    completedProjects: completed.count ?? 0,
-    earnings:
-      payments.data?.reduce((total, payment) => total + Number(payment.amount), 0) ?? 0,
-    profileStrength: calculateProfileStrength(profile, skillsCount),
-  };
+  const skillsCount = count ?? 0;
+  return { skillsCount, profileStrength: calculateProfileStrength(profile, skillsCount) };
 }
 
 /**
