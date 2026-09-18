@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { githubUsernameOf } from "@/lib/data/candidate";
 import { recordActivity } from "@/lib/data/activity";
-import { CANDIDATE_ACTIVITY_TYPES, dashboardFor, resolveUserRole } from "@/lib/constants";
+import {
+  CANDIDATE_ACTIVITY_TYPES,
+  OAUTH_INTENT_COOKIE,
+  dashboardFor,
+  resolveUserRole,
+} from "@/lib/constants";
 import type { UserRole } from "@/lib/types/database.types";
 
 /** Only same-origin paths may be used as the post-callback destination. */
@@ -22,15 +27,45 @@ function withParam(path: string, key: string, value: string): string {
  * (intent=login|signup), GitHub account linking (github=1), and email
  * confirmation links (no extra params).
  */
+/** The sign-up role and destination the OAuth buttons stored before leaving. */
+function readIntentCookie(request: NextRequest): {
+  intent?: string;
+  role?: string;
+  next?: string;
+} {
+  const raw = request.cookies.get(OAUTH_INTENT_COOKIE)?.value;
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(decodeURIComponent(raw));
+    if (!parsed || typeof parsed !== "object") return {};
+    const { intent, role, next } = parsed as Record<string, unknown>;
+    return {
+      intent: typeof intent === "string" ? intent : undefined,
+      role: typeof role === "string" ? role : undefined,
+      next: typeof next === "string" ? next : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
+  const stored = readIntentCookie(request);
   const code = searchParams.get("code");
-  const next = safeNext(searchParams.get("next"));
-  const intent = searchParams.get("intent");
-  const requestedRole = searchParams.get("role") === "company" ? "company" : "candidate";
+  // Query params win (older links, GitHub linking); the cookie covers OAuth.
+  const next = safeNext(searchParams.get("next") ?? stored.next ?? null);
+  const intent = searchParams.get("intent") ?? stored.intent ?? null;
+  const requestedRole =
+    (searchParams.get("role") ?? stored.role) === "company" ? "company" : "candidate";
   const linkingGithub = searchParams.get("github") === "1";
 
-  const go = (path: string) => NextResponse.redirect(`${origin}${path}`);
+  // Every response clears the one-shot intent cookie.
+  const go = (path: string) => {
+    const response = NextResponse.redirect(`${origin}${path}`);
+    response.cookies.delete(OAUTH_INTENT_COOKIE);
+    return response;
+  };
 
   // Send each flow back to where it started rather than to a generic error.
   const fail = () => {

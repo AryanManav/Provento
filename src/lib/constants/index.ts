@@ -231,3 +231,12 @@ export const COMPANY_SIZES = ["1–10", "11–50", "51–200", "201–500", "500
 export function companyProfilePath(companyId: string): string {
   return `/companies/${companyId}`;
 }
+
+/**
+ * Short-lived cookie carrying the sign-up role and post-login destination
+ * across an OAuth round trip. The redirect URL can't carry them reliably:
+ * Supabase drops a redirect_to that isn't on its allow list (falling back to
+ * the Site URL), and query strings rarely match the list exactly.
+ */
+export const OAUTH_INTENT_COOKIE = "trialent_oauth_intent";
+export const OAUTH_INTENT_MAX_AGE_SECONDS = 600;

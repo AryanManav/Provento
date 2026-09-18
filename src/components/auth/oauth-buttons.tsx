@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Github, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { OAUTH_PROVIDERS, type OAuthProviderId } from "@/lib/constants";
+import {
+  OAUTH_INTENT_COOKIE,
+  OAUTH_INTENT_MAX_AGE_SECONDS,
+  OAUTH_PROVIDERS,
+  type OAuthProviderId,
+} from "@/lib/constants";
 import type { OAuthProviderStatus } from "@/lib/auth/oauth-providers";
 import { cn } from "@/lib/utils";
 
@@ -36,8 +41,9 @@ const ICONS: Record<OAuthProviderId, () => React.ReactNode> = {
 };
 
 /**
- * Social sign-in. On sign-up the chosen role travels through the callback URL,
- * because OAuth cannot carry sign-up metadata the way the email form does.
+ * Social sign-in. OAuth cannot carry sign-up metadata the way the email form
+ * does, so the chosen role (and where to go afterwards) rides in a short-lived
+ * cookie that /auth/callback reads — see OAUTH_INTENT_COOKIE.
  */
 export function OAuthButtons({
   status,
@@ -59,14 +65,16 @@ export function OAuthButtons({
     setPending(provider);
     onError(null);
 
-    const params = new URLSearchParams();
-    if (role) params.set("role", role);
-    if (next) params.set("next", next);
-    params.set("intent", role ? "signup" : "login");
+    const intent = { intent: role ? "signup" : "login", role, next };
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${OAUTH_INTENT_COOKIE}=${encodeURIComponent(
+      JSON.stringify(intent)
+    )}; Path=/; Max-Age=${OAUTH_INTENT_MAX_AGE_SECONDS}; SameSite=Lax${secure}`;
 
     const { error } = await createClient().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback?${params}` },
+      // No query string: an exact `/auth/callback` allow-list entry matches.
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
 
     // On success the browser is already navigating away.
