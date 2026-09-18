@@ -13,7 +13,10 @@ import {
   Send,
 } from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
-import { getCandidateProfileId, getCandidateVerifiedTrials } from "@/lib/data/candidate";
+import {
+  getCandidateProfileId,
+  getCandidateProjectEvaluation,
+} from "@/lib/data/candidate";
 import { isClosedWork } from "@/lib/applications";
 import { getCandidateTrial } from "@/lib/data/trial";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
@@ -170,15 +173,22 @@ export default async function CandidateTrialWorkspacePage({
   const candidateId = await getCandidateProfileId(user.id);
   if (!candidateId) notFound();
 
-  const [trial, messages, verified] = await Promise.all([
+  const [trial, messages, recorded] = await Promise.all([
     getCandidateTrial(candidateId, id),
     getProjectThread(id, candidateId, user.id),
-    getCandidateVerifiedTrials(candidateId),
+    getCandidateProjectEvaluation(candidateId, id),
   ]);
   if (!trial) notFound();
   const closed = isClosedWork(trial);
   const cancelled = trial.status === "cancelled" || trial.workStatus === "cancelled";
-  const evaluation = verified.find((item) => item.projectId === trial.projectId);
+  const evaluation = recorded.feedback
+    ? { ...recorded.feedback, outcome: recorded.outcome }
+    : null;
+  // The last decided submission says whether the work was accepted.
+  const finalDecision = trial.submissions.find(
+    (submission) => submission.status === "accepted" || submission.status === "rejected"
+  );
+  const accepted = finalDecision?.status === "accepted";
 
   const latest = trial.submissions[0];
   const mode = WORK_MODES[trial.workMode];
@@ -238,7 +248,11 @@ export default async function CandidateTrialWorkspacePage({
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
             <div className="min-w-0 space-y-fib3">
               <h2 className="font-bold text-emerald-900">
-                {cancelled ? "Project cancelled" : "Project completed"}
+                {cancelled
+                  ? "Project cancelled"
+                  : accepted
+                    ? "Project completed — work accepted"
+                    : "Project completed — work not accepted"}
               </h2>
               {evaluation ? (
                 <>
@@ -267,9 +281,11 @@ export default async function CandidateTrialWorkspacePage({
                 </>
               ) : (
                 <p className="text-sm text-emerald-900/80">
-                  {!cancelled
-                    ? "Your work was accepted. The startup's written feedback will appear here once they record it."
-                    : "The startup closed this project. Your submissions stay below for reference."}
+                  {cancelled
+                    ? "The startup closed this project. Your submissions stay below for reference."
+                    : accepted
+                      ? "Your work was accepted and is now on your profile's verified work history. The startup's written feedback will appear here if they record it."
+                      : "The startup didn't accept this submission. Their message is on it below — use it for your next project."}
                 </p>
               )}
             </div>

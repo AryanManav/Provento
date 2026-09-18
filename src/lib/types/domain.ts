@@ -142,6 +142,11 @@ export interface ApplicantView {
   candidateEmail: string | null;
 }
 
+/**
+ * A finished project whose delivered work the startup accepted — the evidence on
+ * a candidate's profile. Written feedback and an outcome are added when the
+ * startup recorded them; acceptance alone is enough to appear.
+ */
 export interface VerifiedTrialView {
   id: string;
   projectId: string;
@@ -150,9 +155,13 @@ export interface VerifiedTrialView {
   completedAt: string;
   paymentAmount: number;
   currency: string;
-  requirementsCompleted: boolean;
-  technicalQuality: string;
-  writtenFeedback: string;
+  /** The startup's message when it accepted the work. */
+  acceptanceNote: string | null;
+  feedback: {
+    requirementsCompleted: boolean;
+    technicalQuality: string;
+    writtenFeedback: string;
+  } | null;
   outcome: ProjectOutcomeType | null;
 }
 

@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
+  ProjectOutcomeType,
   ProjectStatus,
   SelectionWorkStatus,
 } from "@/lib/types/database.types";
@@ -49,17 +50,6 @@ interface RawFeedbackProject {
   title: string;
   payment_amount: number;
   currency: string;
-}
-
-interface RawFeedback {
-  id: string;
-  project_id: string;
-  requirements_completed: boolean;
-  technical_quality: string;
-  written_feedback: string;
-  created_at: string;
-  projects: RawFeedbackProject | RawFeedbackProject[] | null;
-  companies: RawCompany | RawCompany[] | null;
 }
 
 type RawProfileRow = {
@@ -221,49 +211,139 @@ export async function getCandidateApplications(
   });
 }
 
+interface RawCompletedSelection {
+  project_id: string;
+  projects:
+    | (RawFeedbackProject & { companies: RawCompany | RawCompany[] | null })
+    | (RawFeedbackProject & { companies: RawCompany | RawCompany[] | null })[]
+    | null;
+}
+
+/**
+ * The candidate's verified work: every project where their work cycle is
+ * complete and the startup's final decision was to accept it. Built from the
+ * selection and submission records — not from written feedback, which is an
+ * optional extra step a startup may never take.
+ */
 export async function getCandidateVerifiedTrials(
   candidateId: string
 ): Promise<VerifiedTrialView[]> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("project_feedback")
-    .select(
-      "id, project_id, requirements_completed, technical_quality, written_feedback, created_at, projects(id, title, payment_amount, currency), companies(name)"
-    )
-    .eq("candidate_id", candidateId);
-
-  const rows = (data ?? []) as unknown as RawFeedback[];
-  if (rows.length === 0) return [];
-
-  const { data: outcomeRows } = await supabase
-    .from("project_outcomes")
-    .select("project_id, outcome")
+    .from("project_selections")
+    .select("project_id, projects(id, title, payment_amount, currency, companies(name))")
     .eq("candidate_id", candidateId)
-    .in(
-      "project_id",
-      rows.map((row) => row.project_id)
-    );
+    .eq("status", "completed");
 
+  const selections = (data ?? []) as unknown as RawCompletedSelection[];
+  if (selections.length === 0) return [];
+  const projectIds = selections.map((row) => row.project_id);
+
+  const [{ data: decided }, { data: feedbackRows }, { data: outcomeRows }] =
+    await Promise.all([
+      supabase
+        .from("project_submissions")
+        .select("project_id, status, review_note, reviewed_at, submitted_at")
+        .eq("candidate_id", candidateId)
+        .in("project_id", projectIds)
+        .in("status", ["accepted", "rejected"])
+        .order("submitted_at", { ascending: false }),
+      supabase
+        .from("project_feedback")
+        .select("project_id, requirements_completed, technical_quality, written_feedback")
+        .eq("candidate_id", candidateId)
+        .in("project_id", projectIds),
+      supabase
+        .from("project_outcomes")
+        .select("project_id, outcome")
+        .eq("candidate_id", candidateId)
+        .in("project_id", projectIds),
+    ]);
+
+  // The most recent decided submission is the final word on each project.
+  const finalDecision = new Map<
+    string,
+    { accepted: boolean; note: string | null; at: string }
+  >();
+  for (const row of decided ?? []) {
+    if (finalDecision.has(row.project_id)) continue;
+    finalDecision.set(row.project_id, {
+      accepted: row.status === "accepted",
+      note: row.review_note,
+      at: row.reviewed_at ?? row.submitted_at,
+    });
+  }
+  const feedbackByProject = new Map(
+    (feedbackRows ?? []).map((row) => [row.project_id, row])
+  );
   const outcomeByProject = new Map(
-    (outcomeRows ?? []).map((row) => [row.project_id, row.outcome])
+    (outcomeRows ?? []).map((row) => [row.project_id, row.outcome as ProjectOutcomeType])
   );
 
-  return rows.map((row) => {
+  return selections.flatMap((row) => {
+    const decision = finalDecision.get(row.project_id);
+    const feedback = feedbackByProject.get(row.project_id);
+    // Evidence means accepted work. Older projects evaluated before submission
+    // decisions existed still count if the startup wrote feedback.
+    if (!(decision?.accepted || (!decision && feedback))) return [];
+
     const project = one(row.projects);
-    return {
-      id: row.id,
-      projectId: row.project_id,
-      projectTitle: project?.title ?? "Evaluation Project",
-      companyName: one(row.companies)?.name ?? "Startup Partner",
-      completedAt: row.created_at,
-      paymentAmount: project?.payment_amount ?? 0,
-      currency: project?.currency || DEFAULT_CURRENCY,
-      requirementsCompleted: row.requirements_completed,
-      technicalQuality: row.technical_quality,
-      writtenFeedback: row.written_feedback,
-      outcome: outcomeByProject.get(row.project_id) ?? null,
-    };
+    return [
+      {
+        id: row.project_id,
+        projectId: row.project_id,
+        projectTitle: project?.title ?? "Evaluation project",
+        companyName: one(project?.companies)?.name ?? "Startup",
+        completedAt: decision?.at ?? new Date().toISOString(),
+        paymentAmount: project?.payment_amount ?? 0,
+        currency: project?.currency || DEFAULT_CURRENCY,
+        acceptanceNote: decision?.note ?? null,
+        feedback: feedback
+          ? {
+              requirementsCompleted: feedback.requirements_completed,
+              technicalQuality: feedback.technical_quality,
+              writtenFeedback: feedback.written_feedback,
+            }
+          : null,
+        outcome: outcomeByProject.get(row.project_id) ?? null,
+      },
+    ];
   });
+}
+
+/** Written feedback and outcome on one of the candidate's projects, if recorded. */
+export async function getCandidateProjectEvaluation(
+  candidateId: string,
+  projectId: string
+): Promise<{
+  feedback: VerifiedTrialView["feedback"];
+  outcome: ProjectOutcomeType | null;
+}> {
+  const supabase = await createClient();
+  const [{ data: feedback }, { data: outcome }] = await Promise.all([
+    supabase
+      .from("project_feedback")
+      .select("requirements_completed, technical_quality, written_feedback")
+      .eq("candidate_id", candidateId)
+      .eq("project_id", projectId)
+      .maybeSingle(),
+    supabase
+      .from("project_outcomes")
+      .select("outcome")
+      .eq("candidate_id", candidateId)
+      .eq("project_id", projectId)
+      .maybeSingle(),
+  ]);
+  return {
+    feedback: feedback
+      ? {
+          requirementsCompleted: feedback.requirements_completed,
+          technicalQuality: feedback.technical_quality,
+          writtenFeedback: feedback.written_feedback,
+        }
+      : null,
+    outcome: (outcome?.outcome as ProjectOutcomeType | undefined) ?? null,
+  };
 }
 
 export async function getCandidateActivityDates(

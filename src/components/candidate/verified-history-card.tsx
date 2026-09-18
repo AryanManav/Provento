@@ -32,7 +32,7 @@ export function VerifiedHistoryCard({
           <p className="mx-auto mt-fib2 max-w-sm text-xs text-ink-400">
             {readOnly
               ? "This candidate hasn't completed a paid project on Trialent yet."
-              : "Complete a paid project for a startup and their evaluation appears here — evidence written by the people who reviewed your work."}
+              : "When a startup accepts work you delivered, the project appears here — evidence from the people who reviewed it."}
           </p>
         </div>
       ) : (
@@ -69,26 +69,29 @@ export function VerifiedHistoryCard({
                 </div>
 
                 <div className="flex flex-wrap gap-fib4 text-xs">
-                  <span className="inline-flex items-center gap-fib2 rounded-full bg-ink-100 px-fib5 py-fib2 font-medium text-ink-700">
-                    <CheckCircle2
-                      className={
-                        trial.requirementsCompleted
-                          ? "h-3.5 w-3.5 text-emerald-600"
-                          : "h-3.5 w-3.5 text-ink-400"
-                      }
-                    />
-                    {trial.requirementsCompleted
-                      ? "All requirements met"
-                      : "Some requirements open"}
+                  <span className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib5 py-fib2 font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Work accepted
                   </span>
-                  <span className="rounded-full bg-ink-100 px-fib5 py-fib2 font-medium capitalize text-ink-700">
-                    Technical: {humanize(trial.technicalQuality)}
-                  </span>
+                  {trial.feedback && (
+                    <>
+                      <span className="inline-flex items-center gap-fib2 rounded-full bg-ink-100 px-fib5 py-fib2 font-medium text-ink-700">
+                        {trial.feedback.requirementsCompleted
+                          ? "All requirements met"
+                          : "Some requirements open"}
+                      </span>
+                      <span className="rounded-full bg-ink-100 px-fib5 py-fib2 font-medium capitalize text-ink-700">
+                        Technical: {humanize(trial.feedback.technicalQuality)}
+                      </span>
+                    </>
+                  )}
                 </div>
 
-                {trial.writtenFeedback && (
+                {/* The startup's own words: written feedback, else its acceptance message. */}
+                {(trial.feedback?.writtenFeedback || trial.acceptanceNote) && (
                   <blockquote className="rounded-lg border-l-4 border-brand-200 bg-ink-50 px-fib5 py-fib4 text-sm leading-relaxed text-ink-700">
-                    &ldquo;{trial.writtenFeedback}&rdquo;
+                    &ldquo;{trial.feedback?.writtenFeedback || trial.acceptanceNote}
+                    &rdquo;
                   </blockquote>
                 )}
               </article>
