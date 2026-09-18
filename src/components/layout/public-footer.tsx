@@ -13,16 +13,16 @@ export async function PublicFooter() {
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
-                P
+                T
               </div>
-              <span className="font-bold text-ink-900 text-lg">Provento</span>
+              <span className="font-bold text-ink-900 text-lg">Trialent</span>
             </div>
             <p className="text-sm text-ink-500 max-w-sm">
               Try junior technical talent through standardized, paid work before making a
               hiring decision. Evidence before hiring.
             </p>
             <p className="text-xs text-ink-400">
-              © {new Date().getFullYear()} Provento Inc. All rights reserved.
+              © {new Date().getFullYear()} Trialent. All rights reserved.
             </p>
           </div>
 

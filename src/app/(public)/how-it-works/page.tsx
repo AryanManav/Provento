@@ -1,4 +1,4 @@
-﻿import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export default function HowItWorksPage() {
   const steps = [
@@ -33,7 +33,7 @@ export default function HowItWorksPage() {
     <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 space-y-12">
       <div className="text-center space-y-4">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-          The Provento Evaluation Loop
+          The Trialent Evaluation Loop
         </h1>
         <p className="text-slate-600 max-w-xl mx-auto">
           How startups turn hiring uncertainty into high-confidence engineering decisions

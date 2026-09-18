@@ -21,7 +21,7 @@ export function ActivityStreak({ activityDates }: ActivityStreakProps) {
     <section className="rounded-xl border border-line bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-bold text-ink-900">Provento consistency</h2>
+          <h2 className="font-bold text-ink-900">Trialent consistency</h2>
           <p className="text-xs text-slate-500 mt-1">
             Real progress across your profile, applications, and paid work.
           </p>

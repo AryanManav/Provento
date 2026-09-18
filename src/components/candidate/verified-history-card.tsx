@@ -31,7 +31,7 @@ export function VerifiedHistoryCard({
           </p>
           <p className="mx-auto mt-fib2 max-w-sm text-xs text-ink-400">
             {readOnly
-              ? "This candidate hasn't completed a paid project on Provento yet."
+              ? "This candidate hasn't completed a paid project on Trialent yet."
               : "Complete a paid project for a startup and their evaluation appears here — evidence written by the people who reviewed your work."}
           </p>
         </div>

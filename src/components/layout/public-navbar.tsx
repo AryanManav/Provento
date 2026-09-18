@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { primaryNavFor } from "@/lib/constants";
@@ -19,11 +19,11 @@ export async function PublicNavbar() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-              P
+              T
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-slate-900 text-lg leading-tight tracking-tight">
-                Provento
+                Trialent
               </span>
               <span className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">
                 Talent Evaluation

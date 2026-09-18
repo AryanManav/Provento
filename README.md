@@ -1,4 +1,4 @@
-# Provento
+# Trialent
 
 Hire junior engineers on the strength of real work, not résumés.
 

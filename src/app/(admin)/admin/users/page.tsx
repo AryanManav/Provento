@@ -1,4 +1,4 @@
-﻿import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdmin } from "@/lib/auth/guards";
 
 import { EmptyState } from "@/components/common/empty-state";
 
@@ -18,7 +18,7 @@ export default async function AdminUsersPage() {
 
       <EmptyState
         title="No user records loaded"
-        description="Users will appear here as they register on Provento."
+        description="Users will appear here as they register on Trialent."
       />
     </div>
   );

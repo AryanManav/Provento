@@ -115,7 +115,7 @@ export default function LandingPage() {
           chip="The problem"
           title="Resumes and puzzle rounds"
           trailing="tell you almost nothing"
-          subtitle="Traditional hiring guesses. Provento evaluates genuine code and realistic execution."
+          subtitle="Traditional hiring guesses. Trialent evaluates genuine code and realistic execution."
         />
 
         <div className="mt-fib8 grid gap-fib6 md:grid-cols-2">
@@ -145,7 +145,7 @@ export default function LandingPage() {
 
           <article className="rounded-2xl border border-brand-200 bg-brand-50/60 p-fib7 ring-1 ring-brand-500/10">
             <p className="text-xs font-bold uppercase tracking-wider text-brand-700">
-              The Provento model
+              The Trialent model
             </p>
             <h3 className="mt-fib4 text-lg font-bold text-ink-900">
               Evidence before hiring

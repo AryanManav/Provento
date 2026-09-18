@@ -52,7 +52,7 @@ export default async function CompanyPublicProfilePage({
     company.industry && { icon: Building2, text: company.industry },
     company.size && { icon: Users, text: `${company.size} people` },
     company.location && { icon: MapPin, text: company.location },
-    { icon: CalendarDays, text: `On Provento since ${formatDate(company.memberSince)}` },
+    { icon: CalendarDays, text: `On Trialent since ${formatDate(company.memberSince)}` },
   ].filter(Boolean) as { icon: typeof Building2; text: string }[];
 
   return (
@@ -110,7 +110,7 @@ export default async function CompanyPublicProfilePage({
 
       <section className="space-y-fib4">
         <div>
-          <h2 className="text-lg font-bold text-ink-900">Track record on Provento</h2>
+          <h2 className="text-lg font-bold text-ink-900">Track record on Trialent</h2>
           <p className="text-sm text-ink-500">
             How this startup&apos;s past paid evaluations went. Counts only — individual
             results stay private.
@@ -145,7 +145,7 @@ export default async function CompanyPublicProfilePage({
         </div>
         {record.completedEvaluations === 0 && (
           <p className="rounded-xl border border-line bg-surface-muted px-fib5 py-fib4 text-sm text-ink-600">
-            New to Provento — no finished evaluations yet. Use the brief and the
+            New to Trialent — no finished evaluations yet. Use the brief and the
             clarification thread to judge the project before committing your time.
           </p>
         )}

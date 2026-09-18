@@ -18,7 +18,7 @@ const hand = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Provento - Try Talent Through Real Work Before You Hire",
+  title: "Trialent - Try Talent Through Real Work Before You Hire",
   description:
     "A project-based talent discovery and evaluation platform for startups to evaluate emerging technical talent through standardized paid work before hiring.",
 };

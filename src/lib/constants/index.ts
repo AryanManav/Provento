@@ -174,8 +174,8 @@ export const WORK_MODES = {
     available: true,
   },
   in_app: {
-    label: "Build in Provento",
-    description: "The candidate builds inside Provento's editor.",
+    label: "Build in Trialent",
+    description: "The candidate builds inside Trialent's editor.",
     available: false,
   },
 } as const;

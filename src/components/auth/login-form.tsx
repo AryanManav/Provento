@@ -30,7 +30,7 @@ export function LoginForm({ providers }: { providers: OAuthProviderStatus }) {
     <AuthShell
       title="Welcome back"
       subtitle="Pick up where your evaluations left off."
-      switchPrompt="New to Provento?"
+      switchPrompt="New to Trialent?"
       switchLabel="Create an account"
       switchHref="/signup"
       aside={{

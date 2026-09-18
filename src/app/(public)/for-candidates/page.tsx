@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SignedOutCta } from "@/components/layout/signed-out-cta";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ export default function ForCandidatesPage() {
         </h1>
         <p className="text-slate-600 max-w-2xl mx-auto">
           Tired of sending 100+ resumes and being rejected for having &quot;no
-          experience&quot;? Provento gives you a direct path to show your engineering
+          experience&quot;? Trialent gives you a direct path to show your engineering
           skills through real paid projects for real startups.
         </p>
         <div>
@@ -30,7 +30,7 @@ export default function ForCandidatesPage() {
             <CardTitle className="text-lg">Guaranteed Compensation</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-slate-600">
-            Never do unpaid &quot;take-home tests&quot;. On Provento, when a startup
+            Never do unpaid &quot;take-home tests&quot;. On Trialent, when a startup
             selects you for a trial project, the project fee (e.g. ₹5,000) is held
             securely and paid upon completion.
           </CardContent>

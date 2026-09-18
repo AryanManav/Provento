@@ -12,7 +12,7 @@ function describeLinkError(message: string): string {
     return "GitHub verification isn't available yet. You can still add your GitHub link to your profile in the meantime.";
   }
   if (/already (been )?linked|identity_already_exists|already exists/i.test(message)) {
-    return "That GitHub account is already linked to another Provento account.";
+    return "That GitHub account is already linked to another Trialent account.";
   }
   return "We couldn't connect GitHub. Please try again.";
 }
