@@ -4,6 +4,16 @@ import { UserRole } from "@/lib/types/database.types";
 import { dashboardFor, resolveUserRole } from "@/lib/constants";
 
 export async function middleware(request: NextRequest) {
+  // Supabase falls back to the Site URL (the home page) when an OAuth
+  // redirect_to isn't on the project's allow list, leaving `?code=` on "/"
+  // where nothing exchanges it — the user lands home, signed out. Hand the
+  // code to the callback so sign-in still completes.
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const callback = new URL("/auth/callback", request.url);
+    callback.search = request.nextUrl.search;
+    return NextResponse.redirect(callback);
+  }
+
   const { supabaseResponse, user, supabase } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 
