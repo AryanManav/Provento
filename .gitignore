@@ -27,3 +27,10 @@
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# AI assistant config (kept local)
+.claude/
+CLAUDE.md
