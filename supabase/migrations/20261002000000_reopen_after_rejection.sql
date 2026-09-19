@@ -40,7 +40,7 @@ WHERE s.status = 'completed'
       WHERE sub.project_id = s.project_id
         AND sub.candidate_id = s.candidate_id
         AND sub.status IN ('accepted', 'rejected')
-      ORDER BY sub.reviewed_at DESC NULLS LAST, sub.created_at DESC
+      ORDER BY sub.reviewed_at DESC NULLS LAST, sub.submitted_at DESC
       LIMIT 1
   ) = 'rejected';
 
@@ -342,7 +342,9 @@ AS $$
     ) reasons;
 $$;
 
-CREATE OR REPLACE FUNCTION public.company_track_record(target_company_id UUID)
+DROP FUNCTION IF EXISTS public.company_track_record(UUID);
+
+CREATE FUNCTION public.company_track_record(target_company_id UUID)
 RETURNS TABLE (
     open_projects INTEGER,
     completed_evaluations INTEGER,
@@ -372,5 +374,8 @@ AS $$
         (SELECT count(*)::int FROM public.projects p
           WHERE p.company_id = target_company_id AND p.status = 'cancelled');
 $$;
+
+REVOKE ALL ON FUNCTION public.company_track_record(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.company_track_record(UUID) TO authenticated;
 
 COMMIT;
