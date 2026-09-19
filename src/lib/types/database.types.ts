@@ -395,6 +395,7 @@ export interface Database {
           compensation: string | null;
           responsibilities: string[];
           nice_to_have: string[];
+          closed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -926,6 +927,24 @@ export interface Database {
           cancelled_projects: number;
           /** Added by 20261004000000; absent until that migration runs. */
           projects_posted?: number | null;
+        }[];
+      };
+      company_history: {
+        Args: { target_company_id: string };
+        Returns: {
+          project_id: string;
+          slug: string;
+          title: string;
+          opportunity_type: OpportunityType;
+          status: ProjectStatus;
+          openings: number;
+          hired: number;
+          accepted: number;
+          applications: number;
+          payment_amount: number;
+          currency: string;
+          posted_at: string;
+          closed_at: string;
         }[];
       };
       profile_social: {

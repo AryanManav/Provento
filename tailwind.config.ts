@@ -4,12 +4,16 @@ import type { Config } from "tailwindcss";
  * Colours come from CSS variables in src/app/tokens.css, one set for light and
  * one for dark, so every class (bg-ink-50, text-brand-700, …) follows the
  * theme. Each colour has one job so it always means something:
- *   brand (indigo)   — every action: buttons, links, active navigation
- *   money (teal)     — fees, success, accepted work
+ *   brand (blue)     — every action: buttons, links, active navigation
+ *   money (green)    — fees, success, accepted work
  *   accent (orange)  — attention: unread counts, updates, highlights
  *   rose             — danger only (delete, reject, errors)
  *   amber            — waiting (under review)
- *   sky              — information
+ *   sky (teal)       — information, and the HIRE ONLY badge
+ *
+ * The palette is deliberately restrained (GitHub-inspired): neutral surfaces
+ * separated by borders, one blue for action, colour only where it means
+ * something.
  */
 const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
@@ -107,17 +111,17 @@ const config: Config = {
         sm: "0.25rem", // 4
         DEFAULT: "0.375rem", // 6
         md: "0.375rem", // 6
-        lg: "0.5rem", // 8 — controls
-        xl: "0.75rem", // 12 — cards
-        "2xl": "0.75rem", // 12 — cards (legacy name)
-        "3xl": "1rem", // 16 — large surfaces
+        lg: "0.375rem", // 6 — controls
+        xl: "0.5rem", // 8 — cards, panels
+        "2xl": "0.5rem", // 8 — cards (legacy name)
+        "3xl": "0.75rem", // 12 — large surfaces
       },
       boxShadow: {
         xs: "var(--shadow-xs)",
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
-        glow: "0 0 0 1px rgb(var(--brand-600) / 0.12), 0 8px 24px -8px rgb(var(--brand-600) / 0.25)",
+        glow: "0 0 0 1px rgb(var(--brand-600) / 0.12)",
       },
       keyframes: {
         "fade-in": {

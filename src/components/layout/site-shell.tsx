@@ -1,6 +1,9 @@
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { Suspense } from "react";
+import { WorkspaceSidebar } from "@/components/layout/workspace-sidebar";
+import type { NavLink } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 /**
@@ -32,16 +35,43 @@ export async function SiteShell({
   );
 }
 
-/** A signed-in page's content column, on the workspace's grey surface. */
-export function Workspace({ children }: { children: React.ReactNode }) {
+/**
+ * A signed-in page's content column, on the workspace's grey surface. With
+ * `sidebar`, the role's sections run down the left on desktop.
+ */
+export function Workspace({
+  children,
+  sidebar,
+}: {
+  children: React.ReactNode;
+  sidebar?: NavLink[];
+}) {
+  if (!sidebar || sidebar.length === 0) {
+    return (
+      <div className="flex-1 bg-canvas">
+        <main
+          id="main"
+          className="mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6 lg:px-8"
+        >
+          {children}
+        </main>
+      </div>
+    );
+  }
   return (
     <div className="flex-1 bg-canvas">
-      <main
-        id="main"
-        className="mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6 lg:px-8"
-      >
-        {children}
-      </main>
+      <div className="mx-auto flex w-full max-w-[1280px] gap-8 px-4 sm:px-6 lg:px-8">
+        <aside className="hidden w-48 shrink-0 lg:block">
+          <div className="sticky top-14 py-6">
+            <Suspense>
+              <WorkspaceSidebar links={sidebar} />
+            </Suspense>
+          </div>
+        </aside>
+        <main id="main" className="min-w-0 flex-1 pb-12 pt-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

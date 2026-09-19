@@ -10,7 +10,7 @@ export function ProgressBar({
 }: {
   value: number;
   label: string;
-  tone?: "brand" | "success";
+  tone?: "brand" | "success" | "warning";
   size?: "default" | "sm";
   className?: string;
 }) {
@@ -31,7 +31,11 @@ export function ProgressBar({
       <div
         className={cn(
           "h-full rounded-full transition-[width] duration-500 ease-out",
-          tone === "success" ? "bg-emerald-500" : "bg-brand-600"
+          tone === "success"
+            ? "bg-emerald-500"
+            : tone === "warning"
+              ? "bg-amber-500"
+              : "bg-brand-600"
         )}
         style={{ width: `${clamped}%` }}
       />

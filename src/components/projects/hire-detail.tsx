@@ -35,7 +35,7 @@ import type { ProjectDetailView } from "@/lib/types/domain";
 import type { UserRole } from "@/lib/types/database.types";
 
 const CLOSED_NOTE = {
-  full: "This role has reached its application limit.",
+  full: "Applications for this role are currently full. If a candidate withdraws, a place opens and you can apply.",
   selected: "Applications for this role have closed.",
   closed: "Applications for this role have closed.",
 } as const;
@@ -77,8 +77,16 @@ export function HireOpportunityDetail({
         <div className="flex flex-wrap items-center gap-2">
           <OpportunityBadge type="hire" />
           <StatusBadge
-            tone={open ? "success" : "neutral"}
-            label={open ? "Applications open" : "Applications closed"}
+            tone={
+              open ? "success" : project.availability === "full" ? "warning" : "neutral"
+            }
+            label={
+              open
+                ? "Open"
+                : project.availability === "full"
+                  ? "Applications full"
+                  : "Applications closed"
+            }
           />
         </div>
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold text-ink-900">
@@ -311,13 +319,22 @@ export function HireOpportunityDetail({
                     View your application
                   </Button>
                 </Link>
-              ) : (
+              ) : viewerRole !== "candidate" ? (
                 <p className="text-center text-sm text-ink-500">
-                  {viewerRole !== "candidate"
-                    ? "Candidates apply from this page."
-                    : (CLOSED_NOTE[project.availability as keyof typeof CLOSED_NOTE] ??
-                      CLOSED_NOTE.closed)}
+                  Candidates apply from this page.
                 </p>
+              ) : (
+                <div className="space-y-2">
+                  <Button className="w-full" variant="outline" disabled>
+                    {project.availability === "full"
+                      ? "Applications full"
+                      : "Applications closed"}
+                  </Button>
+                  <p className="text-center text-xs text-ink-500">
+                    {CLOSED_NOTE[project.availability as keyof typeof CLOSED_NOTE] ??
+                      CLOSED_NOTE.closed}
+                  </p>
+                </div>
               )}
             </div>
             <p className="mt-3 text-xs text-ink-500">

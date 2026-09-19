@@ -30,6 +30,9 @@ const HIRE_UPDATE_MESSAGES: Record<string, string> = {
   interview: "Candidate moved to interview. They've been notified.",
   selected: "Candidate selected. They've been notified.",
   rejected: "Application rejected. The candidate has been notified.",
+  withdrawn: "Hiring closed. Candidates still in the running were notified.",
+  private: "Role is now private — hidden from Browse, applications paused.",
+  public: "Role is public again and taking applications.",
 };
 
 const PROJECT_UPDATE_MESSAGES: Record<string, string> = {
@@ -85,11 +88,11 @@ export default async function ManageProjectPage({
         <PageHeader
           eyebrow={
             <Link
-              href="/company/projects"
+              href="/company/projects?type=hire"
               className="inline-flex items-center gap-1 hover:text-ink-900"
             >
               <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-              Projects
+              Hiring
             </Link>
           }
           title={project.title}
@@ -108,6 +111,7 @@ export default async function ManageProjectPage({
           projectId={project.id}
           status={project.status}
           applicationCount={applicants.length}
+          kind="hire"
         />
         <HiringPipeline
           project={project}

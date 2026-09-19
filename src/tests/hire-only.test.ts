@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { applicationHref, applicationStage } from "../lib/applications";
-import { inHireTab, pipelineHref, pipelineStage } from "../lib/company";
+import {
+  hiringState,
+  inHireTab,
+  isActiveHiring,
+  pipelineHref,
+  pipelineStage,
+} from "../lib/company";
 import { filterProjects, parseProjectFilters } from "../lib/projects";
 import { createHiringSchema } from "../lib/validations/project";
 import type { ApplicationSummaryView } from "../lib/types/domain";
@@ -161,5 +167,83 @@ describe("the hire-only migration", () => {
     expect(sql.indexOf("ADD VALUE IF NOT EXISTS 'interview'")).toBeLessThan(
       sql.indexOf("BEGIN;")
     );
+  });
+});
+
+describe("a hire-only posting's lifecycle", () => {
+  const now = new Date("2026-09-19T12:00:00Z");
+  const posting = {
+    status: "applications_open" as const,
+    applicationDeadline: "2026-10-01T00:00:00Z",
+    maxApplicants: 100,
+    openings: 5,
+    activeApplications: 73,
+    hired: 0,
+  };
+  type Posting = Parameters<typeof hiringState>[0];
+  const state = (changes: Partial<Posting>) =>
+    hiringState({ ...posting, ...changes }, now);
+
+  it("is open while it takes applications", () => {
+    expect(state({})).toBe("open");
+  });
+
+  it("is full at the limit, and open again after a withdrawal frees a place", () => {
+    expect(state({ activeApplications: 100 })).toBe("applications_full");
+    expect(state({ activeApplications: 99 })).toBe("open");
+  });
+
+  it("is partially filled once some openings are filled", () => {
+    expect(state({ hired: 3 })).toBe("partially_filled");
+  });
+
+  it("is complete when every opening is filled — full or not", () => {
+    expect(state({ hired: 5 })).toBe("completed");
+    expect(state({ hired: 5, activeApplications: 100 })).toBe("completed");
+    expect(state({ status: "completed", hired: 5 })).toBe("completed");
+  });
+
+  it("is closed when the company closes it, however many were hired", () => {
+    expect(state({ status: "cancelled", hired: 2 })).toBe("closed");
+  });
+
+  it("keeps hiring from those received after the deadline", () => {
+    expect(state({ applicationDeadline: "2026-09-01T00:00:00Z" })).toBe("hiring");
+    expect(state({ applicationDeadline: "2026-09-01T00:00:00Z", hired: 1 })).toBe(
+      "partially_filled"
+    );
+  });
+
+  it("is private while hidden", () => {
+    expect(state({ status: "draft" })).toBe("private");
+  });
+
+  it("only stays on the company's desk until it completes or closes", () => {
+    expect(isActiveHiring("applications_full")).toBe(true);
+    expect(isActiveHiring("completed")).toBe(false);
+    expect(isActiveHiring("closed")).toBe(false);
+  });
+});
+
+describe("the lifecycle migration", () => {
+  const sql = readFileSync(
+    join(process.cwd(), "supabase/migrations/20261006000000_hiring_lifecycle.sql"),
+    "utf8"
+  );
+
+  it("stamps closed_at in the database, not from the client", () => {
+    expect(sql).toContain("BEFORE UPDATE ON public.projects");
+    expect(sql).toContain("NEW.closed_at :=");
+  });
+
+  it("never tells a hired candidate their application closed", () => {
+    expect(sql).toContain("a.status::text NOT IN ('selected', 'rejected')");
+  });
+
+  it("keeps who was hired out of the public history", () => {
+    const history = sql.slice(
+      sql.indexOf("CREATE OR REPLACE FUNCTION public.company_history")
+    );
+    expect(history).not.toMatch(/full_name|candidate_id/);
   });
 });

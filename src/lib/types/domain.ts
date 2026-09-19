@@ -86,6 +86,8 @@ export interface ProjectSummaryView {
   jobLocation: string | null;
   experienceLevel: ExperienceLevel | null;
   compensation: string | null;
+  /** When it was posted; absent where a query doesn't select it. */
+  postedAt?: string;
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -97,6 +99,16 @@ export interface BrowseProjectView extends ProjectSummaryView {
 export interface CompanyProjectView extends ProjectSummaryView {
   /** Applications the company has not acted on yet (status still "submitted"). */
   awaitingReview: number;
+  /**
+   * Applications holding a place: not withdrawn (and, for build projects, not
+   * rejected) — the same count the database checks against the limit.
+   */
+  activeApplications: number;
+  /** Hire only: candidates selected for the role. */
+  hired: number;
+  createdAt: string;
+  /** When it completed or was closed; null while live. */
+  closedAt: string | null;
 }
 
 /** Who did a finished project and what the company decided, per candidate. */
@@ -165,6 +177,8 @@ export interface ApplicantView {
   candidateAvatarUrl: string | null;
   candidateSkills: string[];
   appliedAt: string;
+  /** Last change of status — for a selected hire, when they were hired. */
+  updatedAt: string;
 }
 
 /** One application in a company's hiring pipeline, across all its projects. */
@@ -458,6 +472,37 @@ export interface CompanyPublicView {
     projectsPosted: number | null;
   };
   openProjects: BrowseProjectView[];
+  /** Finished opportunities — titles and counts only, no candidate names. */
+  history: CompanyHistoryEntry[];
+}
+
+/**
+ * A finished opportunity, kept after it leaves Browse: a hire-only role that
+ * filled (or was closed), or a build project that completed (or was withdrawn).
+ */
+export interface CompanyHistoryEntry {
+  projectId: string;
+  slug: string;
+  title: string;
+  opportunityType: OpportunityType;
+  /** completed — filled or built; cancelled — closed or withdrawn. */
+  status: ProjectStatus;
+  openings: number;
+  /** Hire only: candidates selected. */
+  hired: number;
+  /** Build only: candidates whose work was accepted. */
+  accepted: number;
+  /** Applications received, withdrawn ones excluded. */
+  applications: number;
+  paymentAmount: number;
+  currency: string;
+  postedAt: string;
+  closedAt: string;
+  /**
+   * Who was hired, or who built it — only on the company's own history; the
+   * public profile never names them.
+   */
+  people: { candidateId: string; name: string; avatarUrl: string | null; at: string }[];
 }
 
 export interface AccountSettingsView {

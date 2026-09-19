@@ -9,7 +9,7 @@ import {
 } from "@/lib/actions/company";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { COMPANY_MANAGEABLE_PROJECT_STATUSES } from "@/lib/constants";
-import type { ProjectStatus } from "@/lib/types/database.types";
+import type { OpportunityType, ProjectStatus } from "@/lib/types/database.types";
 
 /**
  * Visibility, withdraw and delete for one project. Each is only offered while
@@ -20,13 +20,18 @@ export function ProjectControls({
   projectId,
   status,
   applicationCount,
+  kind = "build",
 }: {
   projectId: string;
   status: ProjectStatus;
   /** Every application ever made, withdrawn included — they're on record. */
   applicationCount: number;
+  /** A hire-only role is closed, not withdrawn, and has no work to protect. */
+  kind?: OpportunityType;
 }) {
   const [open, setOpen] = useState<"withdraw" | "delete" | null>(null);
+  const hire = kind === "hire";
+  const noun = hire ? "role" : "project";
 
   const manageable = (
     COMPANY_MANAGEABLE_PROJECT_STATUSES as readonly ProjectStatus[]
@@ -35,10 +40,14 @@ export function ProjectControls({
     return (
       <p className="flex items-center gap-fib2 rounded-xl border border-line bg-surface-muted px-fib5 py-fib4 text-sm text-ink-600">
         <XCircle className="h-4 w-4" />
-        This project was withdrawn. Applicants were notified.
+        {hire
+          ? "Hiring for this role was closed. Candidates still in the running were notified."
+          : "This project was withdrawn. Applicants were notified."}
       </p>
     );
   }
+  // A filled role is finished — the hiring status says so; nothing to control.
+  if (hire && !manageable) return null;
   if (!manageable) {
     return (
       <p className="flex items-center gap-fib2 text-xs text-ink-400">
@@ -105,7 +114,7 @@ export function ProjectControls({
             onClick={() => setOpen(open === "withdraw" ? null : "withdraw")}
             className="rounded-md border border-rose-200 px-fib5 py-fib2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
           >
-            Withdraw
+            {hire ? "Close hiring" : "Withdraw"}
           </button>
           {canDelete && (
             <button
@@ -127,13 +136,16 @@ export function ProjectControls({
         >
           <input type="hidden" name="projectId" value={projectId} />
           <p className="text-sm font-semibold text-rose-900">
-            Withdraw this project for good?
+            {hire ? "Close hiring for this role?" : "Withdraw this project for good?"}
           </p>
           <p className="text-sm text-rose-900/80">
-            It leaves Browse and stops taking applications.{" "}
-            {applicationCount > 0
-              ? `All ${applicationCount} applicant${applicationCount === 1 ? "" : "s"} will be notified and their applications closed.`
-              : "Nobody has applied yet."}{" "}
+            It leaves Browse and stops taking applications
+            {hire ? ", and moves to your history as closed" : ""}.{" "}
+            {applicationCount === 0
+              ? "Nobody has applied yet."
+              : hire
+                ? "Candidates still in the running will be notified. Anyone you've already hired stays hired."
+                : `All ${applicationCount} applicant${applicationCount === 1 ? "" : "s"} will be notified and their applications closed.`}{" "}
             This can&apos;t be undone.
           </p>
           <label className="block space-y-fib2">
@@ -144,13 +156,17 @@ export function ProjectControls({
               name="reason"
               rows={3}
               maxLength={1000}
-              placeholder="e.g. We've filled the role — thank you for applying."
+              placeholder={
+                hire
+                  ? "e.g. We've filled the role — thank you for applying."
+                  : "e.g. Our plans changed — thank you for applying."
+              }
               className="w-full rounded-lg border border-rose-200 bg-surface p-fib4 text-sm"
             />
           </label>
           <div className="flex gap-fib3">
             <SubmitButton size="sm" className="bg-rose-600 hover:bg-rose-700">
-              Withdraw project
+              {hire ? "Close hiring" : "Withdraw project"}
             </SubmitButton>
             <button
               type="button"
@@ -170,7 +186,7 @@ export function ProjectControls({
         >
           <input type="hidden" name="projectId" value={projectId} />
           <p className="text-sm text-rose-900">
-            Delete this project permanently? Nobody has applied, so nothing else is
+            Delete this {noun} permanently? Nobody has applied, so nothing else is
             affected.
           </p>
           <SubmitButton size="sm" className="bg-rose-600 hover:bg-rose-700">
@@ -188,7 +204,8 @@ export function ProjectControls({
 
       {!canDelete && (
         <p className="text-xs text-ink-400">
-          Candidates have applied, so this project can be withdrawn but not deleted.
+          Candidates have applied, so this {noun} can be {hire ? "closed" : "withdrawn"}{" "}
+          but not deleted.
         </p>
       )}
     </div>

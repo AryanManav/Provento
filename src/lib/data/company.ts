@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
-import { getOpenProjects } from "@/lib/data/project";
+import { getBrowseProjects } from "@/lib/data/project";
 import {
   getCandidateProfileById,
   getCandidateProjects,
@@ -16,6 +16,7 @@ import type {
   CompanyProjectView,
   CompanyPublicView,
   CompanyDirectoryEntry,
+  CompanyHistoryEntry,
   CompanyTeamMember,
   CompanyView,
   PipelineEntry,
@@ -95,6 +96,7 @@ interface RawApplicant {
   cover_message: string;
   relevant_experience: string | null;
   created_at: string;
+  updated_at: string;
   candidate_profiles: RawApplicantProfile | RawApplicantProfile[] | null;
 }
 
@@ -136,23 +138,41 @@ export async function getCompanyIdForUser(userId: string): Promise<string | null
 }
 
 /** Applications the company hasn't acted on, per project id. */
-async function awaitingReviewByProject(
+interface ApplicationTally {
+  awaitingReview: number;
+  active: number;
+  activeBuild: number;
+  hired: number;
+}
+
+/** Per project: new, active and hired applications, counted from one read. */
+async function tallyApplications(
   projectIds: string[]
-): Promise<Map<string, number>> {
-  const counts = new Map<string, number>();
-  if (projectIds.length === 0) return counts;
+): Promise<Map<string, ApplicationTally>> {
+  const tallies = new Map<string, ApplicationTally>();
+  if (projectIds.length === 0) return tallies;
 
   const supabase = await createClient();
   const { data } = await supabase
     .from("applications")
-    .select("project_id")
-    .in("project_id", projectIds)
-    .eq("status", "submitted");
+    .select("project_id, status")
+    .in("project_id", projectIds);
 
   for (const row of data ?? []) {
-    counts.set(row.project_id, (counts.get(row.project_id) ?? 0) + 1);
+    const tally = tallies.get(row.project_id) ?? {
+      awaitingReview: 0,
+      active: 0,
+      activeBuild: 0,
+      hired: 0,
+    };
+    const status = row.status as ApplicationStatus;
+    if (status === "submitted") tally.awaitingReview += 1;
+    if (status !== "withdrawn") tally.active += 1;
+    if (status !== "withdrawn" && status !== "rejected") tally.activeBuild += 1;
+    if (status === "selected") tally.hired += 1;
+    tallies.set(row.project_id, tally);
   }
-  return counts;
+  return tallies;
 }
 
 export async function getCompanyProjects(
@@ -162,13 +182,13 @@ export async function getCompanyProjects(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, created_at, closed_at"
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
 
   const rows = data ?? [];
-  const awaiting = await awaitingReviewByProject(rows.map((row) => row.id));
+  const tallies = await tallyApplications(rows.map((row) => row.id));
 
   return rows.map((row) => ({
     id: row.id,
@@ -193,7 +213,14 @@ export async function getCompanyProjects(
     jobLocation: row.job_location ?? null,
     experienceLevel: (row.experience_level ?? null) as ExperienceLevel | null,
     compensation: row.compensation ?? null,
-    awaitingReview: awaiting.get(row.id) ?? 0,
+    awaitingReview: tallies.get(row.id)?.awaitingReview ?? 0,
+    activeApplications:
+      row.opportunity_type === "hire"
+        ? (tallies.get(row.id)?.active ?? 0)
+        : (tallies.get(row.id)?.activeBuild ?? 0),
+    hired: row.opportunity_type === "hire" ? (tallies.get(row.id)?.hired ?? 0) : 0,
+    createdAt: row.created_at,
+    closedAt: row.closed_at ?? null,
   }));
 }
 
@@ -252,7 +279,7 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, candidate_id, status, cover_message, relevant_experience, created_at, candidate_profiles(headline, users(full_name, email, avatar_url), candidate_skills(skill_name))"
+      "id, candidate_id, status, cover_message, relevant_experience, created_at, updated_at, candidate_profiles(headline, users(full_name, email, avatar_url), candidate_skills(skill_name))"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -284,6 +311,7 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
         (skill) => skill.skill_name
       ),
       appliedAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   });
 }
@@ -386,12 +414,14 @@ export async function getProjectHeader(projectId: string): Promise<{
   purpose: ProjectPurpose;
   openings: number;
   opportunityType: OpportunityType;
+  createdAt: string;
+  closedAt: string | null;
 } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings, opportunity_type"
+      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings, opportunity_type, created_at, closed_at"
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -408,6 +438,8 @@ export async function getProjectHeader(projectId: string): Promise<{
     purpose: (data.purpose ?? "hire") as ProjectPurpose,
     openings: data.openings ?? 1,
     opportunityType: (data.opportunity_type ?? "build") as OpportunityType,
+    createdAt: data.created_at,
+    closedAt: data.closed_at ?? null,
   };
 }
 
@@ -458,7 +490,7 @@ export async function getCompanyDashboardStats(
       .select("*", { count: "exact", head: true })
       .in("project_id", ids),
     supabase.from("project_outcomes").select("outcome").in("project_id", ids),
-    awaitingReviewByProject(ids),
+    tallyApplications(ids),
   ]);
 
   return {
@@ -469,7 +501,10 @@ export async function getCompanyDashboardStats(
     applicants: applicants ?? 0,
     inProgress: projects.filter((project) => IN_FLIGHT.includes(project.status)).length,
     hires: (outcomeRows ?? []).filter((row) => row.outcome === "hire").length,
-    awaitingReview: [...awaiting.values()].reduce((sum, count) => sum + count, 0),
+    awaitingReview: [...awaiting.values()].reduce(
+      (sum, tally) => sum + tally.awaitingReview,
+      0
+    ),
   };
 }
 
@@ -540,6 +575,97 @@ export async function getApplicantProfile(
   };
 }
 
+interface RawHistoryPerson {
+  project_id: string;
+  candidate_id: string;
+  at: string;
+  candidate_profiles:
+    | { users: { full_name: string; avatar_url: string | null } | null }
+    | { users: { full_name: string; avatar_url: string | null } | null }[]
+    | null;
+}
+
+/**
+ * Every finished opportunity of a company, newest first: roles that filled or
+ * were closed, projects that completed or were withdrawn. They leave Browse
+ * but stay on record. `withPeople` adds who was hired or built each one — only
+ * for the company's own screens (RLS limits those reads to its members anyway).
+ */
+export async function getCompanyHistory(
+  companyId: string,
+  { withPeople = false }: { withPeople?: boolean } = {}
+): Promise<CompanyHistoryEntry[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("company_history", {
+    target_company_id: companyId,
+  });
+  // Before 20261006000000 runs the function is missing: no history, not an error.
+  const rows = data ?? [];
+
+  const people = new Map<string, CompanyHistoryEntry["people"]>();
+  if (withPeople && rows.length > 0) {
+    const hireIds = rows.filter((row) => row.opportunity_type === "hire");
+    const buildIds = rows.filter((row) => row.opportunity_type === "build");
+    const [{ data: hires }, { data: builders }] = await Promise.all([
+      hireIds.length > 0
+        ? supabase
+            .from("applications")
+            .select(
+              "project_id, candidate_id, at:updated_at, candidate_profiles(users(full_name, avatar_url))"
+            )
+            .in(
+              "project_id",
+              hireIds.map((row) => row.project_id)
+            )
+            .eq("status", "selected")
+        : Promise.resolve({ data: [] }),
+      buildIds.length > 0
+        ? supabase
+            .from("project_selections")
+            .select(
+              "project_id, candidate_id, at:selected_at, candidate_profiles(users(full_name, avatar_url))"
+            )
+            .in(
+              "project_id",
+              buildIds.map((row) => row.project_id)
+            )
+            .eq("status", "completed")
+        : Promise.resolve({ data: [] }),
+    ]);
+    for (const row of [
+      ...((hires ?? []) as unknown as RawHistoryPerson[]),
+      ...((builders ?? []) as unknown as RawHistoryPerson[]),
+    ]) {
+      const account = one(one(row.candidate_profiles)?.users);
+      const list = people.get(row.project_id) ?? [];
+      list.push({
+        candidateId: row.candidate_id,
+        name: account?.full_name ?? "Candidate",
+        avatarUrl: account?.avatar_url ?? null,
+        at: row.at,
+      });
+      people.set(row.project_id, list);
+    }
+  }
+
+  return rows.map((row) => ({
+    projectId: row.project_id,
+    slug: row.slug,
+    title: row.title,
+    opportunityType: row.opportunity_type,
+    status: row.status,
+    openings: row.openings,
+    hired: row.hired,
+    accepted: row.accepted,
+    applications: row.applications,
+    paymentAmount: Number(row.payment_amount),
+    currency: row.currency || DEFAULT_CURRENCY,
+    postedAt: row.posted_at,
+    closedAt: row.closed_at,
+    people: people.get(row.project_id) ?? [],
+  }));
+}
+
 /**
  * A company as candidates see it: the profile, an aggregate track record
  * (company_track_record returns counts only) and its open projects.
@@ -548,14 +674,15 @@ export async function getCompanyPublicProfile(
   companyId: string
 ): Promise<CompanyPublicView | null> {
   const supabase = await createClient();
-  const [{ data: company }, { data: record }, openProjects] = await Promise.all([
+  const [{ data: company }, { data: record }, openProjects, history] = await Promise.all([
     supabase
       .from("companies")
       .select(`${COMPANY_COLUMNS}, created_at`)
       .eq("id", companyId)
       .maybeSingle(),
     supabase.rpc("company_track_record", { target_company_id: companyId }),
-    getOpenProjects(undefined, companyId),
+    getBrowseProjects(companyId),
+    getCompanyHistory(companyId),
   ]);
   if (!company) return null;
 
@@ -574,14 +701,19 @@ export async function getCompanyPublicProfile(
     memberSince: company.created_at,
     ...toCompanyExtras(company as unknown as RawCompanyRow),
     trackRecord: {
-      openProjects: counts?.open_projects ?? openProjects.length,
+      openProjects: counts?.open_projects ?? 0,
       completedEvaluations: counts?.completed_evaluations ?? 0,
       hires: counts?.hires ?? 0,
       interviews: counts?.interviews ?? 0,
       cancelledProjects: counts?.cancelled_projects ?? 0,
       projectsPosted: counts?.projects_posted ?? null,
     },
-    openProjects,
+    // What a candidate could act on: open, or full but still listed. Roles
+    // that filled and projects already being built are history or in progress.
+    openProjects: openProjects.filter(
+      (project) => project.availability === "open" || project.availability === "full"
+    ),
+    history,
   };
 }
 

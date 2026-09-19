@@ -8,9 +8,13 @@ import {
 import { getNotificationSummary } from "@/lib/data/notifications";
 import { unreadByProject } from "@/lib/notifications";
 import { isClosedProject } from "@/lib/applications";
-import { COMPANY_PROJECT_STATUS, OUTCOME_LABEL } from "@/lib/company";
+import {
+  COMPANY_PROJECT_STATUS,
+  HIRING_STATE_DISPLAY,
+  OUTCOME_LABEL,
+  hiringState,
+} from "@/lib/company";
 import { JOB_TYPES, WORK_ARRANGEMENTS } from "@/lib/constants";
-import { getApplicationCounts } from "@/lib/data/project";
 import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { FilterChips } from "@/components/ui/filter-chips";
 import type { OpportunityType } from "@/lib/types/database.types";
@@ -30,19 +34,16 @@ function ProjectRow({
   updateCount,
   latest,
   result,
-  applicationCount,
 }: {
   project: CompanyProjectView;
   updateCount: number;
   latest?: { title: string; createdAt: string };
   result?: CompanyProjectResult;
-  applicationCount: number;
 }) {
   const hire = project.opportunityType === "hire";
-  const status =
-    hire && project.status === "completed"
-      ? { label: "Hiring complete", tone: "success" as const }
-      : COMPANY_PROJECT_STATUS[project.status];
+  const status = hire
+    ? HIRING_STATE_DISPLAY[hiringState(project)]
+    : COMPANY_PROJECT_STATUS[project.status];
   const closed = isClosedProject(project.status);
 
   return (
@@ -73,10 +74,10 @@ function ProjectRow({
               {[
                 project.jobType && JOB_TYPES[project.jobType],
                 project.workArrangement && WORK_ARRANGEMENTS[project.workArrangement],
-                `${project.openings} opening${project.openings === 1 ? "" : "s"}`,
+                `${project.hired} / ${project.openings} filled`,
                 project.maxApplicants !== null
-                  ? `${applicationCount} / ${project.maxApplicants} applications`
-                  : `${applicationCount} applications`,
+                  ? `${project.activeApplications} / ${project.maxApplicants} applications`
+                  : `${project.activeApplications} applications`,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -139,7 +140,7 @@ function ProjectRow({
           )}
           <StatusBadge size="sm" tone={status.tone} label={status.label} />
           <span className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-brand-700 md:ml-0">
-            {hire ? "Candidates" : closed ? "Evaluations" : "Manage"}
+            {hire ? "Manage applicants" : closed ? "Evaluations" : "Manage"}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </span>
         </div>
@@ -180,9 +181,6 @@ export async function CompanyProjectsScreen({
   const projects = type
     ? allProjects.filter((project) => project.opportunityType === type)
     : allProjects;
-  const applicationCounts = await getApplicationCounts(
-    projects.map((project) => project.id)
-  );
   const basePath = tab === "active" ? "/company/projects" : "/company/projects/completed";
   const withType = (path: string) => (type ? `${path}?type=${type}` : path);
 
@@ -307,7 +305,6 @@ export async function CompanyProjectsScreen({
                 updateCount={updates[project.id] ?? 0}
                 latest={latest}
                 result={results.get(project.id)}
-                applicationCount={applicationCounts.get(project.id) ?? 0}
               />
             );
           })}

@@ -13,7 +13,7 @@ const AVAILABILITY: Record<
   { label: string; tone: StatusTone }
 > = {
   open: { label: "Open", tone: "success" },
-  full: { label: "Applications closed", tone: "warning" },
+  full: { label: "Applications full", tone: "warning" },
   selected: { label: "In progress", tone: "active" },
   closed: { label: "Closed", tone: "neutral" },
 };
@@ -76,7 +76,7 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
     .join(" · ");
 
   return (
-    <article className="group relative flex flex-col rounded-xl border border-line bg-surface p-5 transition-[border-color,box-shadow] hover:border-ink-300 hover:shadow-md">
+    <article className="group relative flex flex-col rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line-strong">
       <div className="flex items-start justify-between gap-3">
         <OpportunityBadge type={project.opportunityType} size="sm" />
         <StatusBadge size="sm" tone={status.tone} label={status.label} />
@@ -86,7 +86,7 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
         {/* Stretched over the card, so the whole card opens the opportunity. */}
         <Link
           href={`/projects/${project.slug}`}
-          className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none group-hover:text-brand-700"
+          className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none group-hover:text-brand-700 group-hover:underline"
         >
           {project.title}
         </Link>
@@ -150,6 +150,14 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
         })}
       </dl>
 
+      {project.availability === "full" && (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+          {hire
+            ? "Applications for this role are currently full. If a place opens up, you can apply."
+            : "This project has reached its applicant limit."}
+        </p>
+      )}
+
       <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-500">
         <span>
           {hire
@@ -157,7 +165,7 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
             : "Paid project · 1 candidate selected"}
         </span>
         <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-700">
-          {hire ? "View role" : "View project"}
+          {hire ? "View opportunity" : "View project"}
           <ArrowRight
             className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
             aria-hidden

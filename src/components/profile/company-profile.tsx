@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Activity,
   ArrowDown,
   BadgeCheck,
   Building2,
@@ -17,6 +18,8 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ProfileHeader, type ProfileLink } from "@/components/profile/profile-header";
 import { ProfileStats } from "@/components/profile/profile-stats";
 import { ProjectResultRow, SkillTags } from "@/components/search/result-rows";
+import { HistoryList, historyGroup } from "@/components/company/history-list";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { formatDate } from "@/lib/utils";
 import type { CompanyPublicView, ProfileSocial } from "@/lib/types/domain";
 import type { UserRole } from "@/lib/types/database.types";
@@ -60,20 +63,84 @@ export function CompanyProfile({
     company.foundedYear && { icon: CalendarDays, text: `Founded ${company.foundedYear}` },
   ].filter((fact): fact is { icon: typeof Users; text: string } => Boolean(fact));
 
+  const history = company.history;
+  const filledRoles = history.filter((entry) => historyGroup(entry) === "hires");
+  const completedProjects = history.filter((entry) => historyGroup(entry) === "projects");
+  const postedByType = {
+    hire:
+      company.openProjects.filter((p) => p.opportunityType === "hire").length +
+      history.filter((entry) => entry.opportunityType === "hire").length,
+    build:
+      company.openProjects.filter((p) => p.opportunityType === "build").length +
+      history.filter((entry) => entry.opportunityType === "build").length,
+  };
+
   const track = [
+    {
+      label: "Candidates hired",
+      value: record.hires,
+      hint: "Through hire-only roles and paid projects",
+    },
+    {
+      label: "Roles filled",
+      value: filledRoles.length,
+      hint: "Hire-only roles with every opening filled",
+    },
+    {
+      label: "Projects completed",
+      value: completedProjects.length,
+      hint: "Build projects with the delivered work accepted",
+    },
     {
       label: "Evaluations completed",
       value: record.completedEvaluations,
       hint: "Paid projects taken to a decision",
     },
-    { label: "Interviews", value: record.interviews, hint: "After an evaluation" },
-    { label: "Hires", value: record.hires, hint: "After an evaluation" },
     {
-      label: "Cancelled projects",
+      label: "Withdrawn or closed",
       value: record.cancelledProjects,
-      hint: "Closed without finishing",
+      hint: "Stopped before finishing",
     },
   ];
+
+  // Factual activity: every opportunity posted, filled, completed or closed.
+  const activity = [
+    ...company.openProjects
+      .filter((project) => project.postedAt)
+      .map((project) => ({
+        key: `${project.id}:posted`,
+        at: project.postedAt as string,
+        type: project.opportunityType,
+        text:
+          project.opportunityType === "hire"
+            ? `Started hiring for ${project.title}`
+            : `Posted the project ${project.title}`,
+      })),
+    ...history.flatMap((entry) => [
+      {
+        key: `${entry.projectId}:closed`,
+        at: entry.closedAt,
+        type: entry.opportunityType,
+        text:
+          entry.status === "cancelled"
+            ? `Closed ${entry.title}`
+            : entry.opportunityType === "hire"
+              ? `Filled ${entry.hired} opening${entry.hired === 1 ? "" : "s"} for ${entry.title}`
+              : `Completed the project ${entry.title}`,
+      },
+      {
+        key: `${entry.projectId}:posted`,
+        at: entry.postedAt,
+        type: entry.opportunityType,
+        text:
+          entry.opportunityType === "hire"
+            ? `Started hiring for ${entry.title}`
+            : `Posted the project ${entry.title}`,
+      },
+    ]),
+  ]
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -100,7 +167,7 @@ export function CompanyProfile({
                 href: `/companies/${company.id}/followers`,
               },
               ...(record.projectsPosted !== null
-                ? [{ value: record.projectsPosted, label: "Projects posted" }]
+                ? [{ value: record.projectsPosted, label: "Opportunities posted" }]
                 : []),
               { value: record.completedEvaluations, label: "Candidates evaluated" },
             ]}
@@ -109,7 +176,7 @@ export function CompanyProfile({
         facts={facts}
         links={links}
         stats={[
-          { label: "open projects", value: company.openProjects.length },
+          { label: "open opportunities", value: company.openProjects.length },
           { label: "hires through Trialent", value: record.hires },
           { label: "on Trialent since", value: formatDate(company.memberSince) },
         ]}
@@ -127,7 +194,7 @@ export function CompanyProfile({
                 <a href="#projects">
                   <Button variant="outline" size="sm">
                     <ArrowDown className="h-3.5 w-3.5" aria-hidden />
-                    View open projects
+                    View open opportunities
                   </Button>
                 </a>
               )}
@@ -159,7 +226,7 @@ export function CompanyProfile({
               className="flex items-center gap-2 text-base font-semibold text-ink-900"
             >
               <FolderKanban className="h-4 w-4 text-ink-400" aria-hidden />
-              Open projects
+              Open opportunities
               <span className="tabular rounded bg-ink-100 px-1.5 text-2xs font-medium text-ink-500">
                 {company.openProjects.length}
               </span>
@@ -168,13 +235,13 @@ export function CompanyProfile({
               <EmptyState
                 compact
                 icon={FolderKanban}
-                title="No open projects right now"
+                title="No open opportunities right now"
                 description={
                   ownCompany
-                    ? "Post a paid project to start evaluating candidates."
+                    ? "Post a role or a paid project to start receiving candidates."
                     : `Follow ${company.name} to be notified when they post one.`
                 }
-                actionText={ownCompany ? "Post a project" : undefined}
+                actionText={ownCompany ? "Create opportunity" : undefined}
                 actionHref={ownCompany ? "/company/projects/create" : undefined}
               />
             ) : (
@@ -185,6 +252,57 @@ export function CompanyProfile({
               </ul>
             )}
           </section>
+
+          <section aria-labelledby="hires-title" className="space-y-3">
+            <h2
+              id="hires-title"
+              className="flex items-center gap-2 text-base font-semibold text-ink-900"
+            >
+              Successful hires
+              <span className="tabular rounded bg-ink-100 px-1.5 text-2xs font-medium text-ink-500">
+                {filledRoles.length}
+              </span>
+            </h2>
+            <HistoryList group="hires" entries={filledRoles} limit={5} />
+          </section>
+
+          <section aria-labelledby="completed-title" className="space-y-3">
+            <h2
+              id="completed-title"
+              className="flex items-center gap-2 text-base font-semibold text-ink-900"
+            >
+              Completed projects
+              <span className="tabular rounded bg-ink-100 px-1.5 text-2xs font-medium text-ink-500">
+                {completedProjects.length}
+              </span>
+            </h2>
+            <HistoryList group="projects" entries={completedProjects} limit={5} />
+          </section>
+
+          <SectionCard title="Company activity" icon={Activity}>
+            {activity.length === 0 ? (
+              <p className="text-sm text-ink-500">
+                Nothing yet — posting, hiring and completed projects appear here.
+              </p>
+            ) : (
+              <ol className="-my-1 divide-y divide-line">
+                {activity.map((item) => (
+                  <li
+                    key={item.key}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 text-sm text-ink-700">
+                      <OpportunityBadge type={item.type} size="sm" />
+                      <span className="min-w-0 truncate">{item.text}</span>
+                    </span>
+                    <time dateTime={item.at} className="text-xs text-ink-500">
+                      {formatDate(item.at)}
+                    </time>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </SectionCard>
 
           {company.hiringProcess && (
             <SectionCard title="How they hire">
@@ -223,7 +341,7 @@ export function CompanyProfile({
 
           <SectionCard
             title="Track record"
-            description="How past paid evaluations went. Counts only — individual results stay private."
+            description="Counted from real postings and outcomes. Who was hired stays private."
           >
             <dl className="-my-1 divide-y divide-line">
               {track.map((item) => (
@@ -241,10 +359,23 @@ export function CompanyProfile({
                 </div>
               ))}
             </dl>
-            {record.completedEvaluations === 0 && (
+            {(postedByType.hire > 0 || postedByType.build > 0) && (
+              <p className="mt-3 text-xs text-ink-500">
+                Posts{" "}
+                <span className="font-medium text-ink-700">
+                  {postedByType.hire} hiring role{postedByType.hire === 1 ? "" : "s"}
+                </span>{" "}
+                and{" "}
+                <span className="font-medium text-ink-700">
+                  {postedByType.build} build project{postedByType.build === 1 ? "" : "s"}
+                </span>
+                .
+              </p>
+            )}
+            {record.completedEvaluations === 0 && history.length === 0 && (
               <p className="mt-3 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
-                New to Trialent — no finished evaluations yet. Use the brief and the
-                clarification thread to judge a project before committing your time.
+                New to Trialent — nothing finished yet. Use the brief and the
+                clarification thread to judge an opportunity before committing your time.
               </p>
             )}
           </SectionCard>

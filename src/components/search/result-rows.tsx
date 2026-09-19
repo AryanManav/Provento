@@ -88,8 +88,10 @@ export function ProjectResultRow({
         </div>
         <div className="flex shrink-0 items-center gap-4 pl-12 sm:pl-0">
           {hire ? (
-            <span className="text-sm text-ink-600">
+            <span className="tabular text-sm text-ink-600">
               {project.openings} opening{project.openings === 1 ? "" : "s"}
+              {project.maxApplicants !== null &&
+                ` · ${project.applicationCount} / ${project.maxApplicants} applications`}
             </span>
           ) : (
             <>
@@ -104,8 +106,16 @@ export function ProjectResultRow({
           )}
           <StatusBadge
             size="sm"
-            tone={open ? "success" : "neutral"}
-            label={open ? "Open" : "Closed"}
+            tone={
+              open ? "success" : project.availability === "full" ? "warning" : "neutral"
+            }
+            label={
+              open
+                ? "Open"
+                : project.availability === "full"
+                  ? "Applications full"
+                  : "Closed"
+            }
           />
         </div>
       </Link>

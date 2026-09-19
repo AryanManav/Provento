@@ -218,6 +218,8 @@ export interface NavLink {
 
 /** Everything a signed-in role can reach from anywhere, in one place. */
 export interface RoleNavigation {
+  /** The workspace sidebar (desktop): every section of the role's own area. */
+  sidebar: NavLink[];
   /** The navbar's links — the same on every page for this role. */
   primary: NavLink[];
   /** The one call to action in the navbar, if any. */
@@ -236,6 +238,15 @@ const CANDIDATE_WORK_PATHS = [
 
 const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
   candidate: {
+    sidebar: [
+      { label: "Dashboard", href: "/candidate/dashboard", exact: true },
+      { label: "Browse", href: "/projects" },
+      { label: "My applications", href: "/candidate/applications" },
+      { label: "Active trials", href: "/candidate/trials" },
+      { label: "Completed projects", href: "/candidate/completed" },
+      { label: "My profile", href: "/candidate/profile" },
+      { label: "Settings", href: "/candidate/settings" },
+    ],
     primary: [
       { label: "Home", href: "/candidate/dashboard", exact: true },
       { label: "Projects", href: "/projects" },
@@ -260,10 +271,20 @@ const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
     ],
   },
   company: {
+    sidebar: [
+      { label: "Overview", href: "/company/dashboard", exact: true },
+      { label: "Hiring", href: "/company/projects?type=hire" },
+      { label: "Build projects", href: "/company/projects?type=build" },
+      { label: "Applicants", href: "/company/candidates" },
+      { label: "History", href: "/company/history" },
+      { label: "Company profile", href: "/company/profile" },
+      { label: "Settings", href: "/company/settings" },
+    ],
     primary: [
-      { label: "Home", href: "/company/dashboard", exact: true },
-      { label: "Projects", href: "/company/projects" },
-      { label: "Candidates", href: "/company/candidates" },
+      { label: "Overview", href: "/company/dashboard", exact: true },
+      { label: "Opportunities", href: "/company/projects" },
+      { label: "Applicants", href: "/company/candidates" },
+      { label: "History", href: "/company/history" },
       { label: "Discover talent", href: "/search?type=candidates", match: ["/search"] },
     ],
     action: { label: "Create opportunity", href: "/company/projects/create" },
@@ -280,6 +301,7 @@ const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
     ],
   },
   admin: {
+    sidebar: [],
     primary: [
       { label: "Overview", href: "/admin", exact: true },
       { label: "Users", href: "/admin/users" },

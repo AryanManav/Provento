@@ -14,7 +14,7 @@ const NEXT_STEPS: Partial<Record<ApplicationStatus, ("shortlisted" | "interview"
   shortlisted: ["interview"],
 };
 
-const STEP_LABEL = { shortlisted: "Shortlist", interview: "Move to interview" } as const;
+const STEP_LABEL = { shortlisted: "Shortlist", interview: "Interview" } as const;
 
 /**
  * The company's move on one hire-only application. Shortlist and interview
@@ -42,20 +42,20 @@ export function HiringDecision({
   const [confirming, setConfirming] = useState<"selected" | "rejected" | null>(null);
 
   if (status === "withdrawn") {
-    return <p className="text-sm text-ink-500">Withdrawn by the candidate</p>;
+    return <p className="text-xs text-ink-500">Withdrawn by the candidate</p>;
   }
   if (status === "selected") {
     return (
-      <p className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-        <CheckCircle2 className="h-4 w-4" aria-hidden />
-        Selected · final
+      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+        Hired · final
       </p>
     );
   }
   if (status === "rejected") {
     return (
-      <p className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-500">
-        <XCircle className="h-4 w-4" aria-hidden />
+      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-500">
+        <XCircle className="h-3.5 w-3.5" aria-hidden />
         Rejected · final
       </p>
     );
@@ -136,16 +136,20 @@ export function HiringDecision({
       <Button
         type="button"
         size="sm"
+        variant="outline"
+        className="text-emerald-700"
         disabled={openingsFilled}
         title={openingsFilled ? "Every opening is filled" : undefined}
         onClick={() => setConfirming("selected")}
       >
+        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
         Select
       </Button>
       <Button
         type="button"
         size="sm"
         variant="ghost"
+        className="text-ink-600 hover:text-rose-700"
         onClick={() => setConfirming("rejected")}
       >
         Reject

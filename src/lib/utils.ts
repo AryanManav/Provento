@@ -21,6 +21,14 @@ export function formatDate(dateString: string) {
   });
 }
 
+/** "Sep 2026" — for history, where the day adds nothing. */
+export function formatMonth(dateString: string) {
+  return new Date(dateString).toLocaleDateString("en-IN", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;

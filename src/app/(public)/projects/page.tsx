@@ -282,8 +282,18 @@ export default async function ProjectsDirectoryPage({
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={SearchX}
-          title="No projects match these filters"
-          description="Try fewer words, a different topic, or a wider fee and effort range."
+          title={
+            filters.type === "hire"
+              ? "No open roles match these filters"
+              : filters.type === "build"
+                ? "No projects match these filters"
+                : "No opportunities match these filters"
+          }
+          description={
+            filters.type === "hire"
+              ? "Try fewer words, a different topic, job type or work arrangement."
+              : "Try fewer words, a different topic, or a wider fee and effort range."
+          }
           actionText="Clear filters"
           actionHref="/projects"
         />

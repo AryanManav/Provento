@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Avatar } from "@/components/common/avatar";
 import { EmptyState } from "@/components/common/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -8,15 +8,38 @@ import { LinkTabs } from "@/components/ui/tabs";
 import { RoleBadge } from "@/components/profile/role-badge";
 import { SkillTags } from "@/components/search/result-rows";
 import { HiringDecision } from "@/components/company/hiring-decision";
-import { HIRE_STAGE_DISPLAY, HIRE_TABS, inHireTab, type HireTab } from "@/lib/company";
+import {
+  HIRE_STAGE_DISPLAY,
+  HIRE_TABS,
+  HIRING_STATE_DISPLAY,
+  hiringState,
+  inHireTab,
+  type HireTab,
+  type HiringState,
+} from "@/lib/company";
 import { cn, formatDate } from "@/lib/utils";
 import type { ApplicantView } from "@/lib/types/domain";
 import type { ProjectStatus } from "@/lib/types/database.types";
 
+const STATE_NOTE: Record<HiringState, string> = {
+  private: "Private — hidden from Browse. Make it public to take applications.",
+  open: "Open — listed in Browse and taking applications.",
+  applications_full:
+    "Applications full — still listed, but Apply is disabled. If a candidate withdraws, it reopens automatically.",
+  partially_filled: "Partially filled — keep hiring until every opening is filled.",
+  hiring:
+    "Applications closed — the deadline has passed. Review and select from those received.",
+  completed:
+    "Hiring complete — every opening is filled. It has left Browse and is in your history.",
+  closed:
+    "Closed — hiring stopped before every opening was filled. It's in your history.",
+};
+
 /**
- * A hire-only posting's applicants: how many of the openings are filled, how
- * close the posting is to its application limit, and each candidate moving
- * through Applied → Shortlisted → Interview → Selected.
+ * A hire-only posting's applicants: where the posting stands, how many of the
+ * openings are filled, how close it is to its application limit, when things
+ * happened, and each candidate moving through
+ * Applied → Shortlisted → Interview → Selected, as a dense table.
  */
 export function HiringPipeline({
   project,
@@ -30,6 +53,8 @@ export function HiringPipeline({
     openings: number;
     maxApplicants: number | null;
     applicationDeadline: string;
+    createdAt: string;
+    closedAt: string | null;
   };
   applicants: ApplicantView[];
   tab: HireTab;
@@ -37,74 +62,115 @@ export function HiringPipeline({
   unreadApplicants: Set<string>;
 }) {
   const projectPath = `/company/projects/${project.id}`;
-  const selected = applicants.filter((a) => a.status === "selected").length;
-  const received = applicants.filter((a) => a.status !== "withdrawn").length;
-  const filled = selected >= project.openings;
-  const limitReached =
-    project.maxApplicants !== null && received >= project.maxApplicants;
+  const hires = applicants
+    .filter((a) => a.status === "selected")
+    .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+  // Withdrawn applications give their place back; everything else holds one.
+  const active = applicants.filter((a) => a.status !== "withdrawn").length;
+  const state = hiringState({
+    ...project,
+    activeApplications: active,
+    hired: hires.length,
+  });
+  const display = HIRING_STATE_DISPLAY[state];
+  const filled = hires.length >= project.openings;
+  const finished = state === "completed" || state === "closed";
   const shown = applicants.filter((a) => inHireTab(tab, a.status));
 
-  const statusLine = filled
-    ? "Hiring complete — every opening is filled."
-    : project.status === "draft"
-      ? "Private — hidden from candidates."
-      : project.status === "cancelled"
-        ? "Withdrawn."
-        : limitReached
-          ? "Applications closed — the limit is reached. Review and select from those received."
-          : new Date(project.applicationDeadline).getTime() < Date.now()
-            ? "Applications closed — the deadline has passed."
-            : "Open for applications.";
+  const timeline = [
+    { label: "Posted", value: formatDate(project.createdAt) },
+    {
+      label: finished ? "Applications closed" : "Apply by",
+      value: formatDate(project.applicationDeadline),
+    },
+    ...(project.closedAt
+      ? [
+          {
+            label: state === "completed" ? "Hiring completed" : "Closed",
+            value: formatDate(project.closedAt),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-5">
       <section
         aria-label="Hiring status"
-        className="grid gap-4 rounded-xl border border-line bg-surface p-5 sm:grid-cols-2"
+        className="rounded-lg border border-line bg-surface"
       >
-        <div>
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-medium text-ink-900">Positions filled</p>
-            <p className="tabular text-sm text-ink-700">
-              <span className="font-semibold text-ink-900">{selected}</span> /{" "}
-              {project.openings}
-            </p>
-          </div>
-          <ProgressBar
-            value={(selected / project.openings) * 100}
-            label="Positions filled"
-            tone={filled ? "success" : "brand"}
-            className="mt-2"
-          />
-          <p className="mt-1.5 text-xs text-ink-500">
-            {filled
-              ? "All openings filled"
-              : `${project.openings - selected} position${project.openings - selected === 1 ? "" : "s"} remaining`}
-          </p>
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+          <StatusBadge tone={display.tone} label={display.label} />
+          <p className="text-sm text-ink-600">{STATE_NOTE[state]}</p>
         </div>
-        <div>
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-medium text-ink-900">Applications</p>
-            <p className="tabular text-sm text-ink-700">
-              <span className="font-semibold text-ink-900">{received}</span>
-              {project.maxApplicants !== null && <> / {project.maxApplicants}</>}
-            </p>
-          </div>
-          {project.maxApplicants !== null && (
+
+        <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
+          <div>
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-medium text-ink-900">Positions filled</p>
+              <p className="tabular text-sm text-ink-700">
+                <span className="font-semibold text-ink-900">{hires.length}</span> /{" "}
+                {project.openings}
+              </p>
+            </div>
             <ProgressBar
-              value={(received / project.maxApplicants) * 100}
-              label="Applications received"
+              value={(hires.length / project.openings) * 100}
+              label="Positions filled"
+              tone={filled ? "success" : "brand"}
               className="mt-2"
             />
-          )}
-          <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-500">
-            <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-            Apply by {formatDate(project.applicationDeadline)}
-          </p>
+            <p className="mt-1.5 text-xs text-ink-500">
+              {filled
+                ? "All openings filled"
+                : `${project.openings - hires.length} position${project.openings - hires.length === 1 ? "" : "s"} remaining`}
+            </p>
+          </div>
+          <div>
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-medium text-ink-900">Active applications</p>
+              <p className="tabular text-sm text-ink-700">
+                <span className="font-semibold text-ink-900">{active}</span>
+                {project.maxApplicants !== null && <> / {project.maxApplicants}</>}
+              </p>
+            </div>
+            {project.maxApplicants !== null && (
+              <ProgressBar
+                value={(active / project.maxApplicants) * 100}
+                label="Active applications"
+                tone={state === "applications_full" ? "warning" : "brand"}
+                className="mt-2"
+              />
+            )}
+            <p className="mt-1.5 text-xs text-ink-500">
+              Withdrawn applications don&apos;t count toward the limit.
+            </p>
+          </div>
         </div>
-        <p className="border-t border-line pt-3 text-sm text-ink-600 sm:col-span-2">
-          {statusLine}
-        </p>
+
+        <dl className="flex flex-wrap gap-x-6 gap-y-1 border-t border-line px-4 py-3 text-xs">
+          {timeline.map((item) => (
+            <div key={item.label} className="flex gap-1.5">
+              <dt className="text-ink-500">{item.label}</dt>
+              <dd className="font-medium text-ink-900">{item.value}</dd>
+            </div>
+          ))}
+          {hires.length > 0 && (
+            <div className="flex basis-full flex-wrap gap-x-4 gap-y-1">
+              <dt className="text-ink-500">Hired</dt>
+              {hires.map((hire) => (
+                <dd key={hire.id} className="text-ink-900">
+                  <Link
+                    href={`${projectPath}/applicants/${hire.id}`}
+                    className="font-medium hover:text-brand-700 hover:underline"
+                  >
+                    {hire.candidateName}
+                  </Link>
+                  <span className="text-ink-500"> · {formatDate(hire.updatedAt)}</span>
+                </dd>
+              ))}
+            </div>
+          )}
+        </dl>
       </section>
 
       <LinkTabs
@@ -132,60 +198,99 @@ export function HiringPipeline({
           description="Candidates move here as you progress them through hiring."
         />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
-          {shown.map((applicant) => {
-            const display = HIRE_STAGE_DISPLAY[applicant.status];
-            const applicantPath = `${projectPath}/applicants/${applicant.id}`;
-            return (
-              <li
-                key={applicant.id}
-                className={cn(
-                  "flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center",
-                  unreadApplicants.has(applicant.id) && "bg-accent-50/40"
-                )}
-              >
-                <div className="flex min-w-0 flex-1 gap-3">
-                  <Avatar
-                    name={applicant.candidateName}
-                    src={applicant.candidateAvatarUrl}
-                    className="h-10 w-10 rounded-full text-xs"
-                  />
-                  <div className="min-w-0 space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={applicantPath}
-                        className="text-sm font-medium text-ink-900 hover:text-brand-700 hover:underline"
-                      >
-                        {applicant.candidateName}
-                      </Link>
-                      <RoleBadge role="candidate" size="sm" />
-                      <StatusBadge size="sm" tone={display.tone} label={display.label} />
-                    </div>
-                    <p className="truncate text-xs text-ink-500">
-                      {applicant.candidateHeadline ?? "Candidate"} · Applied{" "}
-                      {formatDate(applicant.appliedAt)}
-                    </p>
-                    <SkillTags skills={applicant.candidateSkills} limit={5} />
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-2 pl-[3.25rem] lg:items-end lg:pl-0">
-                  <HiringDecision
-                    applicationId={applicant.id}
-                    status={applicant.status}
-                    openingsFilled={filled}
-                    stage={tab === "all" ? undefined : tab}
-                  />
-                  <Link
-                    href={applicantPath}
-                    className="text-xs font-medium text-brand-700 hover:underline"
+        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+          <table className="w-full text-left text-sm">
+            <thead className="hidden border-b border-line bg-ink-50 text-xs text-ink-500 md:table-header-group">
+              <tr>
+                <th scope="col" className="px-4 py-2 font-medium">
+                  Candidate
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Applied
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Status
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Relevant skills
+                </th>
+                <th scope="col" className="px-4 py-2 text-right font-medium">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {shown.map((applicant) => {
+                const stage = HIRE_STAGE_DISPLAY[applicant.status];
+                const applicantPath = `${projectPath}/applicants/${applicant.id}`;
+                return (
+                  <tr
+                    key={applicant.id}
+                    className={cn(
+                      "flex flex-col gap-2 px-4 py-3 align-middle md:table-row md:px-0 md:py-0",
+                      unreadApplicants.has(applicant.id) && "bg-accent-50/40"
+                    )}
                   >
-                    View profile and application
-                  </Link>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                    <td className="md:px-4 md:py-2.5">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Avatar
+                          name={applicant.candidateName}
+                          src={applicant.candidateAvatarUrl}
+                          className="h-8 w-8 shrink-0 rounded-full text-[10px]"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Link
+                              href={applicantPath}
+                              className="font-medium text-ink-900 hover:text-brand-700 hover:underline"
+                            >
+                              {applicant.candidateName}
+                            </Link>
+                            <RoleBadge role="candidate" size="sm" />
+                          </div>
+                          <p className="max-w-[16rem] truncate text-xs text-ink-500">
+                            {applicant.candidateHeadline ?? "Candidate"}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap text-xs text-ink-600 md:px-3 md:py-2.5">
+                      <span className="md:hidden">Applied </span>
+                      {formatDate(applicant.appliedAt)}
+                    </td>
+                    <td className="md:px-3 md:py-2.5">
+                      <StatusBadge size="sm" tone={stage.tone} label={stage.label} />
+                    </td>
+                    <td className="md:px-3 md:py-2.5">
+                      {applicant.candidateSkills.length > 0 ? (
+                        <SkillTags skills={applicant.candidateSkills} limit={3} />
+                      ) : (
+                        <span className="text-xs text-ink-400">No skills listed</span>
+                      )}
+                    </td>
+                    <td className="md:px-4 md:py-2.5">
+                      <div className="flex flex-col items-start gap-1 md:items-end">
+                        <HiringDecision
+                          applicationId={applicant.id}
+                          status={applicant.status}
+                          openingsFilled={filled || state === "closed"}
+                          stage={tab === "all" ? undefined : tab}
+                          align="end"
+                        />
+                        <Link
+                          href={applicantPath}
+                          className="text-xs font-medium text-brand-700 hover:underline"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

@@ -211,3 +211,73 @@ export function inHireTab(tab: HireTab, status: ApplicationStatus): boolean {
   const statuses: readonly ApplicationStatus[] | null = HIRE_TABS[tab].statuses;
   return statuses === null || statuses.includes(status);
 }
+
+/**
+ * Where a hire-only posting stands. Derived from database facts — the project
+ * status, its deadline, active applications and hires — so it can't drift:
+ * the database already refuses applications at the limit, frees a slot when
+ * someone withdraws, and completes the posting when the last opening fills.
+ *
+ * - private:          hidden from Browse
+ * - open:             taking applications, nobody hired yet
+ * - applications_full: at the limit — visible, Apply disabled; a withdrawal reopens it
+ * - partially_filled: some openings filled, still hiring
+ * - hiring:           applications closed (deadline passed), candidates in review
+ * - completed:        every opening filled — out of Browse, into history
+ * - closed:           closed by the company before filling every opening
+ */
+export type HiringState =
+  | "private"
+  | "open"
+  | "applications_full"
+  | "partially_filled"
+  | "hiring"
+  | "completed"
+  | "closed";
+
+export function hiringState(
+  posting: {
+    status: ProjectStatus;
+    applicationDeadline: string;
+    maxApplicants: number | null;
+    openings: number;
+    /** Applications that aren't withdrawn — the ones holding a slot. */
+    activeApplications: number;
+    hired: number;
+  },
+  now: Date = new Date()
+): HiringState {
+  if (posting.status === "cancelled") return "closed";
+  if (posting.status === "completed" || posting.hired >= posting.openings) {
+    return "completed";
+  }
+  if (posting.status === "draft" || posting.status === "pending_review") return "private";
+
+  const beforeDeadline = new Date(posting.applicationDeadline).getTime() > now.getTime();
+  if (!beforeDeadline) return posting.hired > 0 ? "partially_filled" : "hiring";
+  if (
+    posting.maxApplicants !== null &&
+    posting.activeApplications >= posting.maxApplicants
+  ) {
+    return "applications_full";
+  }
+  return posting.hired > 0 ? "partially_filled" : "open";
+}
+
+export const HIRING_STATE_DISPLAY: Record<
+  HiringState,
+  { label: string; tone: StatusTone }
+> = {
+  private: { label: "Private", tone: "neutral" },
+  open: { label: "Open", tone: "success" },
+  applications_full: { label: "Applications full", tone: "warning" },
+  partially_filled: { label: "Partially filled", tone: "active" },
+  hiring: { label: "Hiring", tone: "active" },
+  completed: { label: "Hiring complete", tone: "success" },
+  closed: { label: "Closed", tone: "neutral" },
+};
+
+/** Still on the company's desk: not completed, not closed. */
+export function isActiveHiring(state: HiringState): boolean {
+  return state !== "completed" && state !== "closed";
+}

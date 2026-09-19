@@ -1,5 +1,6 @@
 import { requireCandidate } from "@/lib/auth/guards";
 import { SiteShell, Workspace } from "@/components/layout/site-shell";
+import { navigationFor } from "@/lib/constants";
 
 export default async function CandidateLayout({
   children,
@@ -10,7 +11,7 @@ export default async function CandidateLayout({
 
   return (
     <SiteShell footer={false}>
-      <Workspace>{children}</Workspace>
+      <Workspace sidebar={navigationFor("candidate")?.sidebar}>{children}</Workspace>
     </SiteShell>
   );
 }
