@@ -19,8 +19,7 @@ function isCategory(value: string | undefined): value is ProjectCategory {
 }
 
 /**
- * Browse, in sections by topic. A chip narrows it to one topic. Students land
- * here from "/" once signed in.
+ * Browse, in sections by topic. A chip narrows it to one topic.
  */
 export default async function ProjectsDirectoryPage({
   searchParams,

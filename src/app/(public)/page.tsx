@@ -65,8 +65,7 @@ export default async function LandingPage({
   searchParams: Promise<{ account?: string }>;
 }) {
   const { account } = await searchParams;
-  // Signed-in users skip the marketing page: students land on Browse, startups
-  // on their dashboard.
+  // Signed-in users skip the marketing page and land on their dashboard.
   const user = await getCurrentUser();
   if (user) redirect(homeFor(user.role));
   return (

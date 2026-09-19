@@ -364,16 +364,10 @@ export const COMPANY_WORK_STYLES = {
  */
 export const COMPANY_SETUP_MIN_DESCRIPTION = 80;
 
-/** Where each signed-in role lands from "/" and the logo. */
+/**
+ * Where each signed-in role lands from "/" and the logo: their own dashboard.
+ * Visitors get the landing page.
+ */
 export function homeFor(role: UserRole | null | undefined): string {
-  switch (role) {
-    case "candidate":
-      return "/projects";
-    case "company":
-      return "/company/dashboard";
-    case "admin":
-      return "/admin";
-    default:
-      return "/";
-  }
+  return role ? dashboardFor(role) : "/";
 }

@@ -13,8 +13,8 @@ const readyCompany = {
 };
 
 describe("where each role lands", () => {
-  it("sends students to Browse, startups to their dashboard", () => {
-    expect(homeFor("candidate")).toBe("/projects");
+  it("sends every signed-in role to its own dashboard", () => {
+    expect(homeFor("candidate")).toBe("/candidate/dashboard");
     expect(homeFor("company")).toBe("/company/dashboard");
     expect(homeFor("admin")).toBe("/admin");
     expect(homeFor(null)).toBe("/");
