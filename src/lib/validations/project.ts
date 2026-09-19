@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { DEFAULT_CURRENCY, MAX_APPLICANTS_LIMIT, MAX_OPENINGS } from "@/lib/constants";
+import {
+  DEFAULT_CURRENCY,
+  MAX_APPLICANTS_LIMIT,
+  MAX_OPENINGS,
+  PROJECT_CATEGORIES,
+} from "@/lib/constants";
+import type { ProjectCategory } from "@/lib/types/database.types";
 import { optionalNote } from "./application";
 
 export const createProjectSchema = z
@@ -37,6 +43,10 @@ export const createProjectSchema = z
       .number()
       .min(1000, "Minimum payment is ₹1,000 to respect candidate labor"),
     currency: z.string().default(DEFAULT_CURRENCY),
+    category: z.enum(
+      Object.keys(PROJECT_CATEGORIES) as [ProjectCategory, ...ProjectCategory[]],
+      { errorMap: () => ({ message: "Choose the project's topic" }) }
+    ),
     purpose: z
       .enum(["hire", "build"], {
         errorMap: () => ({ message: "Choose whether you're hiring or only building" }),

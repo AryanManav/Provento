@@ -92,6 +92,7 @@ describe("Validation Schemas", () => {
     it("validates complete project specification", () => {
       const result = createProjectSchema.safeParse({
         title: "Build REST API for Inventory System",
+        category: "backend",
         description:
           "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
         problemStatement:
@@ -114,6 +115,7 @@ describe("Validation Schemas", () => {
     it("enforces minimum payment requirement to protect candidate labor", () => {
       const result = createProjectSchema.safeParse({
         title: "Build REST API for Inventory System",
+        category: "backend",
         description:
           "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
         problemStatement:

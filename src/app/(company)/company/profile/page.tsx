@@ -53,14 +53,6 @@ export default async function CompanyProfilePage({
 
   return (
     <div className="space-y-fib6 pb-fib8">
-      <div className="border-b border-line pb-fib6">
-        <h1 className="text-2xl font-bold text-ink-900">Company profile</h1>
-        <p className="mt-fib2 text-sm text-ink-500">
-          Candidates see this before applying to your paid projects. A complete profile
-          earns more, and better, applications.
-        </p>
-      </div>
-
       {params.error && <StatusBanner tone="error">{params.error}</StatusBanner>}
       {params.saved && <StatusBanner tone="success">Company profile saved.</StatusBanner>}
 

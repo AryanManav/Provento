@@ -1,4 +1,5 @@
 import type { ProjectOutcomeType, ProjectStatus } from "@/lib/types/database.types";
+import { COMPANY_SETUP_MIN_DESCRIPTION } from "@/lib/constants";
 import type { CompanyView } from "@/lib/types/domain";
 
 /**
@@ -54,3 +55,24 @@ export const OUTCOME_LABEL: Record<ProjectOutcomeType, string> = {
   candidate_withdrew: "Candidate withdrew",
   project_cancelled: "Project cancelled",
 };
+
+/**
+ * True once a company has the basics candidates need — the same rule the
+ * database enforces before it accepts a project (company_ready_to_post).
+ */
+export function isCompanyReadyToPost(
+  company: Pick<
+    CompanyView,
+    "name" | "description" | "industry" | "companySize" | "location"
+  > | null
+): boolean {
+  if (!company) return false;
+  const filled = (value: string | null) => (value ?? "").trim().length > 0;
+  return (
+    company.name.trim().length >= 2 &&
+    (company.description ?? "").trim().length >= COMPANY_SETUP_MIN_DESCRIPTION &&
+    filled(company.industry) &&
+    filled(company.companySize) &&
+    filled(company.location)
+  );
+}

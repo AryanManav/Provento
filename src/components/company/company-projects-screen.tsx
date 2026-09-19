@@ -66,7 +66,7 @@ function ProjectCard({
           <div className="flex flex-wrap items-center gap-fib4">
             <h2 className="font-semibold text-ink-900">{project.title}</h2>
             {updateCount > 0 && (
-              <span className="inline-flex items-center gap-fib2 rounded-full bg-rose-50 px-fib4 py-fib1 text-xs font-semibold text-rose-600">
+              <span className="inline-flex items-center gap-fib2 rounded-full bg-accent-50 px-fib4 py-fib1 text-xs font-semibold text-accent-700">
                 <CountBadge count={updateCount} className="h-4 min-w-4 text-[10px]" />
                 {updateCount === 1 ? "update" : "updates"}
               </span>

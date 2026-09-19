@@ -11,6 +11,8 @@ import type {
   ProjectMessageAuthorRole,
   ProjectOutcomeType,
   ProjectPurpose,
+  ProjectCategory,
+  CompanyWorkStyle,
   SelectionWorkStatus,
   ProjectStatus,
   ProjectWorkMode,
@@ -68,6 +70,8 @@ export interface ProjectSummaryView {
   /** Recruiting ("hire", up to `openings` candidates) or just the work ("build", one). */
   purpose: ProjectPurpose;
   openings: number;
+  /** The topic Browse lists it under. */
+  category: ProjectCategory;
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -180,6 +184,25 @@ export interface CompanyView {
   location: string | null;
   logoUrl: string | null;
   verified: boolean;
+  /** Culture and stack — what working there is like. */
+  techStack: string[];
+  workStyle: CompanyWorkStyle | null;
+  perks: string | null;
+  hiringProcess: string | null;
+  foundedYear: number | null;
+  /** Links candidates can check. */
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  careersUrl: string | null;
+}
+
+export interface CompanyTeamMember {
+  userId: string;
+  fullName: string;
+  email: string | null;
+  avatarUrl: string | null;
+  role: string;
+  joinedAt: string;
 }
 
 export interface AttachmentView {
@@ -347,6 +370,14 @@ export interface NotificationSummary {
 export interface CompanyPublicView {
   id: string;
   name: string;
+  techStack: string[];
+  workStyle: CompanyWorkStyle | null;
+  perks: string | null;
+  hiringProcess: string | null;
+  foundedYear: number | null;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  careersUrl: string | null;
   description: string | null;
   website: string | null;
   industry: string | null;
@@ -371,4 +402,62 @@ export interface AccountSettingsView {
   hasPassword: boolean;
   /** Reasons the account can't be deleted right now; empty when it can. */
   deletionBlockers: string[];
+  /** Candidates only: shown in search with a public profile. Null for others. */
+  discoverable: boolean | null;
+  /** Candidates only: their public profile's address. */
+  publicProfilePath: string | null;
+}
+
+/** A company in the candidate-facing directory. */
+export interface CompanyDirectoryEntry {
+  id: string;
+  name: string;
+  industry: string | null;
+  location: string | null;
+  size: string | null;
+  logoUrl: string | null;
+  verified: boolean;
+  workStyle: CompanyWorkStyle | null;
+  openProjects: number;
+}
+
+/** One hit in the people-and-companies search. */
+export interface SearchResult {
+  kind: "company" | "candidate";
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  location: string | null;
+}
+
+export interface FollowStats {
+  followers: number;
+  following: boolean;
+}
+
+/** What anyone signed in may see of a discoverable candidate. No contact details. */
+export interface CandidatePublicView {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+  bannerUrl: string | null;
+  headline: string | null;
+  bio: string | null;
+  location: string | null;
+  education: string | null;
+  graduationYear: number | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  linkedinUrl: string | null;
+  isSelf: boolean;
+  skills: { name: string; level: string | null }[];
+  projects: {
+    title: string;
+    description: string;
+    technologies: string[];
+    repositoryUrl: string | null;
+    liveUrl: string | null;
+  }[];
+  verifiedProjects: number;
 }

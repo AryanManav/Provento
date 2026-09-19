@@ -1,4 +1,6 @@
 import type {
+  CompanyWorkStyle,
+  ProjectCategory,
   SelectionWorkStatus,
   ApplicationStatus,
   ProjectOutcomeType,
@@ -139,33 +141,38 @@ export interface NavLink {
   href: string;
 }
 
-const HOW_IT_WORKS: NavLink = { label: "How It Works", href: "/how-it-works" };
-const BROWSE_PROJECTS: NavLink = { label: "Browse Projects", href: "/projects" };
+const HOW_IT_WORKS: NavLink = { label: "How it works", href: "/how-it-works" };
+const BROWSE_PROJECTS: NavLink = { label: "Browse projects", href: "/projects" };
 
 /**
- * Top-level navigation, by who is signed in.
- *
- * The marketing links are for visitors only: "For Candidates" is noise to a
- * signed-in startup, and the public project board is the candidate's surface,
- * not the company's. Signed-in users get their own area instead, and everything
- * else lives in their role nav.
+ * Top-level navigation, by who is signed in. It holds what's *outside* your
+ * workspace — the workspace's own pages (dashboard, applications, projects,
+ * profile, settings) live in the sidebar, so nothing appears twice.
  */
 export function primaryNavFor(role: UserRole | null | undefined): NavLink[] {
   switch (role) {
     case "candidate":
-      return [BROWSE_PROJECTS, HOW_IT_WORKS];
+      return [BROWSE_PROJECTS, { label: "Companies", href: "/companies" }];
     case "company":
-      return [{ label: "My Projects", href: "/company/projects" }, HOW_IT_WORKS];
     case "admin":
-      return [{ label: "Platform Overview", href: "/admin" }];
+      // Everything a startup or admin opens is in its sidebar; the navbar
+      // carries the startup's main action instead (see navbarActionFor).
+      return [];
     default:
       return [
         BROWSE_PROJECTS,
         HOW_IT_WORKS,
-        { label: "For Candidates", href: "/for-candidates" },
-        { label: "For Startups", href: "/for-companies" },
+        { label: "For candidates", href: "/for-candidates" },
+        { label: "For startups", href: "/for-companies" },
       ];
   }
+}
+
+/** The one call to action a role gets in the navbar, if any. */
+export function navbarActionFor(role: UserRole | null | undefined): NavLink | null {
+  return role === "company"
+    ? { label: "Post a project", href: "/company/projects/create" }
+    : null;
 }
 
 export const PROFILE_MEDIA_BUCKET = "profile-media";
@@ -234,6 +241,7 @@ export const NOTIFICATION_TYPES = [
   "message",
   "feedback",
   "outcome",
+  "new_project",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -318,3 +326,54 @@ export const SUBMITTABLE_WORK_STATUSES = [
   "in_progress",
   "revision_requested",
 ] as const satisfies readonly SelectionWorkStatus[];
+
+/** Browse sections, in display order. */
+export const PROJECT_CATEGORIES = {
+  full_stack: {
+    label: "Full-stack apps",
+    blurb: "End-to-end products: UI, API and database.",
+  },
+  frontend: {
+    label: "Frontend and web UI",
+    blurb: "Interfaces, components and web experiences.",
+  },
+  backend: {
+    label: "Backend and APIs",
+    blurb: "Services, APIs, integrations and data models.",
+  },
+  mobile: { label: "Mobile apps", blurb: "Android, iOS and cross-platform apps." },
+  ai_ml: {
+    label: "AI and machine learning",
+    blurb: "Models, LLM features and intelligent tools.",
+  },
+  data: { label: "Data and analytics", blurb: "Pipelines, dashboards and analysis." },
+  devops: { label: "DevOps and cloud", blurb: "Infrastructure, CI/CD and reliability." },
+  design: { label: "UI/UX design", blurb: "Research, flows and visual design." },
+  other: { label: "Other projects", blurb: "Everything else startups need built." },
+} as const satisfies Record<ProjectCategory, { label: string; blurb: string }>;
+
+export const COMPANY_WORK_STYLES = {
+  remote: "Remote",
+  hybrid: "Hybrid",
+  onsite: "On-site",
+} as const satisfies Record<CompanyWorkStyle, string>;
+
+/**
+ * What a company must fill in before it can post (mirrors the database's
+ * company_ready_to_post): enough for a candidate to judge who they'd work for.
+ */
+export const COMPANY_SETUP_MIN_DESCRIPTION = 80;
+
+/** Where each signed-in role lands from "/" and the logo. */
+export function homeFor(role: UserRole | null | undefined): string {
+  switch (role) {
+    case "candidate":
+      return "/projects";
+    case "company":
+      return "/company/dashboard";
+    case "admin":
+      return "/admin";
+    default:
+      return "/";
+  }
+}

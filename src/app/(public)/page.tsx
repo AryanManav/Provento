@@ -1,5 +1,8 @@
 import { StatusBanner } from "@/components/common/status-banner";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { homeFor } from "@/lib/constants";
 import {
   ArrowRight,
   CheckCircle,
@@ -62,6 +65,10 @@ export default async function LandingPage({
   searchParams: Promise<{ account?: string }>;
 }) {
   const { account } = await searchParams;
+  // Signed-in users skip the marketing page: students land on Browse, startups
+  // on their dashboard.
+  const user = await getCurrentUser();
+  if (user) redirect(homeFor(user.role));
   return (
     <div className="pb-fib9">
       {account === "deleted" && (

@@ -73,6 +73,7 @@ describe("company decisions", () => {
 describe("applicant limit", () => {
   const project = {
     title: "Build REST API for Inventory System",
+    category: "backend",
     description: "Develop a clean Node.js and PostgreSQL REST API for warehouse stock.",
     problemStatement:
       "Current warehouse team faces discrepancy issues with spreadsheet logging.",
@@ -180,6 +181,7 @@ describe("project controls", () => {
 describe("hire vs build projects", () => {
   const project = {
     title: "Build REST API for Inventory System",
+    category: "backend",
     description: "Develop a clean Node.js and PostgreSQL REST API for warehouse stock.",
     problemStatement:
       "Current warehouse team faces discrepancy issues with spreadsheet logging.",

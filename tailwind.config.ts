@@ -1,52 +1,71 @@
 import type { Config } from "tailwindcss";
 
 /**
- * A single deep violet carries the whole interface. Everything else is warm
- * greyscale, so colour always means something: brand violet for action, emerald
- * for money and success, rose for danger, amber for waiting. Gold appears only
- * in illustration, never chrome.
+ * Slate greys carry the interface; each colour has one job so it always means
+ * something:
+ *   brand (indigo)   — every action: buttons, links, active navigation
+ *   money (teal)     — fees, success, "applications open", accepted work
+ *   accent (orange)  — attention: unread counts, updates, highlights
+ *   rose             — danger only (delete, reject, errors)
+ *   amber            — waiting (under review)
  */
-const violet = {
-  50: "#f5f3ff",
-  100: "#ede9fe",
-  200: "#ddd6fe",
-  300: "#c4b5fd",
-  400: "#a78bfa",
-  500: "#8b5cf6",
-  600: "#6d28d9",
-  700: "#5b21b6",
-  800: "#4c1d95",
-  900: "#3b1680",
-  950: "#240d54",
+const indigo = {
+  50: "#eef2ff",
+  100: "#e0e7ff",
+  200: "#c7d2fe",
+  300: "#a5b4fc",
+  400: "#818cf8",
+  500: "#6366f1",
+  600: "#4f46e5",
+  700: "#4338ca",
+  800: "#3730a3",
+  900: "#312e81",
+  950: "#1e1b4b",
 };
 
-const gold = {
-  50: "#fff9eb",
-  100: "#fff0c7",
-  200: "#ffe08a",
-  300: "#ffcb4d",
-  400: "#fdb724",
-  500: "#f0a00b",
-  600: "#d07c06",
-  700: "#a65709",
-  800: "#88440e",
-  900: "#73380f",
-  950: "#431b03",
+/** Money and success. Aliased over `emerald` so existing success styles follow. */
+const teal = {
+  50: "#f0fdfa",
+  100: "#ccfbf1",
+  200: "#99f6e4",
+  300: "#5eead4",
+  400: "#2dd4bf",
+  500: "#14b8a6",
+  600: "#0d9488",
+  700: "#0f766e",
+  800: "#115e59",
+  900: "#134e4a",
+  950: "#042f2e",
 };
 
-/** Warm greys (stone): a softer backdrop that suits violet better than cool zinc. */
+/** Warm highlight for attention — deliberately not rose, which means danger. */
+const orange = {
+  50: "#fff7ed",
+  100: "#ffedd5",
+  200: "#fed7aa",
+  300: "#fdba74",
+  400: "#fb923c",
+  500: "#f97316",
+  600: "#ea580c",
+  700: "#c2410c",
+  800: "#9a3412",
+  900: "#7c2d12",
+  950: "#431407",
+};
+
+/** Slate: cool, crisp greys for surfaces, borders and text. */
 const grey = {
-  50: "#fafaf9",
-  100: "#f5f5f4",
-  200: "#e7e5e4",
-  300: "#d6d3d1",
-  400: "#a8a29e",
-  500: "#78716c",
-  600: "#57534e",
-  700: "#44403c",
-  800: "#292524",
-  900: "#1c1917",
-  950: "#0c0a09",
+  50: "#f8fafc",
+  100: "#f1f5f9",
+  200: "#e2e8f0",
+  300: "#cbd5e1",
+  400: "#94a3b8",
+  500: "#64748b",
+  600: "#475569",
+  700: "#334155",
+  800: "#1e293b",
+  900: "#0f172a",
+  950: "#020617",
 };
 
 /**
@@ -70,15 +89,17 @@ const config: Config = {
       },
       colors: {
         // Semantic tokens — prefer these in new code.
-        brand: violet,
-        accent: gold,
+        brand: indigo,
+        accent: orange,
+        money: teal,
         ink: grey,
 
         // Transitional aliases. The app already contains ~82 `indigo-*` and
         // ~411 `slate-*` usages; re-pointing the built-in names re-themes every
         // one of them from here instead of touching 80 files. New code should
         // use brand/ink. Remove these once the migration finishes.
-        indigo: violet,
+        indigo,
+        emerald: teal,
         slate: grey,
 
         surface: "var(--surface)",

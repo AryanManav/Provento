@@ -161,6 +161,14 @@ describe("company profile", () => {
       location: "Pune",
       logoUrl: null,
       verified: false,
+      techStack: [],
+      workStyle: null,
+      perks: null,
+      hiringProcess: null,
+      foundedYear: null,
+      linkedinUrl: null,
+      githubUrl: null,
+      careersUrl: null,
     });
     expect(partial.missing).toEqual(["Logo", "What you build", "Industry"]);
     expect(partial.percent).toBe(57);

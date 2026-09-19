@@ -18,7 +18,7 @@ export function UpdatesPanel({
         <span
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full",
-            items.length > 0 ? "bg-rose-50 text-rose-600" : "bg-ink-100 text-ink-400"
+            items.length > 0 ? "bg-accent-50 text-accent-600" : "bg-ink-100 text-ink-400"
           )}
         >
           <BellRing className="h-4 w-4" />

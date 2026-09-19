@@ -1,26 +1,36 @@
 import Link from "next/link";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { getBrowseProjects } from "@/lib/data/project";
-import { purposeLabel, spotsLeft } from "@/lib/projects";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Clock, Banknote, Building, ArrowRight } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { companyProfilePath } from "@/lib/constants";
+import { PROJECT_CATEGORIES } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/common/empty-state";
+import { BrowseProjectCard } from "@/components/projects/browse-project-card";
+import { cn } from "@/lib/utils";
+import type { ProjectCategory } from "@/lib/types/database.types";
+import type { BrowseProjectView } from "@/lib/types/domain";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectsDirectoryPage() {
+const CATEGORY_ORDER = Object.keys(PROJECT_CATEGORIES) as ProjectCategory[];
+
+function isCategory(value: string | undefined): value is ProjectCategory {
+  return !!value && (CATEGORY_ORDER as string[]).includes(value);
+}
+
+/**
+ * Browse, in sections by topic. A chip narrows it to one topic. Students land
+ * here from "/" once signed in.
+ */
+export default async function ProjectsDirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
+  const selected = isCategory(category) ? category : null;
   const [projects, user] = await Promise.all([getBrowseProjects(), getCurrentUser()]);
+
   // Posting is for startups and visitors; candidates only browse here.
   const postHref =
     user?.role === "company" || user?.role === "admin"
@@ -29,110 +39,105 @@ export default async function ProjectsDirectoryPage() {
         ? null
         : "/signup?role=company";
 
+  const byCategory = new Map<ProjectCategory, BrowseProjectView[]>();
+  for (const project of projects) {
+    const list = byCategory.get(project.category) ?? [];
+    list.push(project);
+    byCategory.set(project.category, list);
+  }
+  const sections = CATEGORY_ORDER.filter(
+    (key) => (byCategory.get(key)?.length ?? 0) > 0 && (!selected || key === selected)
+  );
+  const openCount = projects.filter((project) => project.availability === "open").length;
+  const firstName = user?.role === "candidate" ? user.fullName.split(" ")[0] : null;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+    <div className="mx-auto max-w-6xl space-y-fib6 px-fib5 py-fib7 sm:px-fib6">
+      <div className="flex flex-col justify-between gap-fib5 border-b border-line pb-fib6 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">
-            Open Evaluation Projects
+          <h1 className="text-3xl font-extrabold text-ink-900">
+            {firstName ? `Find your next project, ${firstName}` : "Browse projects"}
           </h1>
-          <p className="text-slate-600 mt-1">
-            Browse paid trial projects from startups actively looking to hire junior
-            engineers.
+          <p className="mt-fib2 text-sm text-ink-500">
+            {openCount} paid project{openCount === 1 ? "" : "s"} open right now, from
+            startups that evaluate real work before they hire.
           </p>
         </div>
         {postHref && (
           <Link href={postHref}>
-            <Button variant="outline">Post an Evaluation Project</Button>
+            <Button variant="outline" className="gap-fib2">
+              <Plus className="h-4 w-4" />
+              Post a project
+            </Button>
           </Link>
         )}
       </div>
+
+      {projects.length > 0 && (
+        <nav aria-label="Topics" className="flex gap-fib2 overflow-x-auto pb-fib1">
+          <Link
+            href="/projects"
+            aria-current={!selected ? "page" : undefined}
+            className={cn(
+              "shrink-0 rounded-full border px-fib5 py-fib2 text-sm font-semibold transition-colors",
+              !selected
+                ? "border-brand-600 bg-brand-600 text-white"
+                : "border-line bg-white text-ink-600 hover:border-ink-300"
+            )}
+          >
+            All · {projects.length}
+          </Link>
+          {CATEGORY_ORDER.filter((key) => byCategory.has(key)).map((key) => (
+            <Link
+              key={key}
+              href={`/projects?category=${key}`}
+              aria-current={selected === key ? "page" : undefined}
+              className={cn(
+                "shrink-0 rounded-full border px-fib5 py-fib2 text-sm font-semibold transition-colors",
+                selected === key
+                  ? "border-brand-600 bg-brand-600 text-white"
+                  : "border-line bg-white text-ink-600 hover:border-ink-300"
+              )}
+            >
+              {PROJECT_CATEGORIES[key].label} · {byCategory.get(key)?.length}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {projects.length === 0 ? (
         <EmptyState
           title="No open projects right now"
           description="Startups post new paid trial projects regularly. Check back soon — every open project is listed here."
         />
+      ) : sections.length === 0 ? (
+        <EmptyState
+          title="Nothing in this topic yet"
+          description="No open projects in this topic right now. Browse all topics instead."
+          actionText="Show all projects"
+          actionHref="/projects"
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((project) => (
-            <Card
-              key={project.id}
-              className="flex flex-col justify-between hover:border-indigo-300 transition-all"
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <Building className="h-3.5 w-3.5" />
-                    <Link
-                      href={companyProfilePath(project.companyId)}
-                      className="hover:text-brand-600 hover:underline"
-                    >
-                      {project.companyName || "Startup"}
-                    </Link>
-                  </div>
-                  <Badge
-                    variant={
-                      project.availability === "open"
-                        ? "success"
-                        : project.availability === "full"
-                          ? "warning"
-                          : "secondary"
-                    }
-                  >
-                    {project.availability === "open"
-                      ? "Applications open"
-                      : project.availability === "full"
-                        ? "Full"
-                        : "Candidate selected"}
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl text-slate-900 mt-2">
-                  {project.title}
-                </CardTitle>
-                <CardDescription className="line-clamp-2 mt-1">
-                  {project.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-6 text-sm text-slate-600">
-                  <div className="flex items-center gap-1.5 font-medium text-emerald-700">
-                    <Banknote className="h-4 w-4" />
-                    <span>{formatCurrency(project.paymentAmount, project.currency)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4 text-slate-400" />
-                    <span>{project.expectedHours} hours effort</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-500">
-                    <span className="font-semibold text-brand-700">
-                      {purposeLabel(project)}
-                    </span>
-                    <span>Apply by {formatDate(project.applicationDeadline)}</span>
-                    {spotsLeft(project.maxApplicants, project.applicationCount) !==
-                      null && (
-                      <span>
-                        {project.applicationCount} / {project.maxApplicants} places taken
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t border-slate-100 pt-4">
-                <Link href={`/projects/${project.slug}`} className="w-full">
-                  <Button className="w-full gap-2">
-                    <span>
-                      {project.availability === "open"
-                        ? "Apply for Evaluation"
-                        : "View brief"}
-                    </span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        sections.map((key) => (
+          <section key={key} className="space-y-fib4" aria-labelledby={`topic-${key}`}>
+            <div className="flex items-end justify-between gap-fib4">
+              <div>
+                <h2 id={`topic-${key}`} className="text-xl font-bold text-ink-900">
+                  {PROJECT_CATEGORIES[key].label}
+                </h2>
+                <p className="text-sm text-ink-500">{PROJECT_CATEGORIES[key].blurb}</p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-ink-400">
+                {byCategory.get(key)?.length}
+              </span>
+            </div>
+            <div className="grid gap-fib5 md:grid-cols-2 lg:grid-cols-3">
+              {byCategory.get(key)?.map((project) => (
+                <BrowseProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
     </div>
   );

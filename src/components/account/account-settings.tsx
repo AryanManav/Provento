@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import {
   AlertTriangle,
+  Eye,
   KeyRound,
   Loader2,
   LogOut,
@@ -23,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusBanner } from "@/components/common/status-banner";
+import { DiscoverabilityToggle } from "@/components/account/discoverability-toggle";
 import { cn } from "@/lib/utils";
 import type { AccountSettingsView } from "@/lib/types/domain";
 import type { UserRole } from "@/lib/types/database.types";
@@ -298,6 +300,19 @@ export function AccountSettings({
           </p>
         </div>
       </Section>
+
+      {settings.discoverable !== null && (
+        <Section
+          icon={Eye}
+          title="Profile visibility"
+          description="Choose whether you can be found in search."
+        >
+          <DiscoverabilityToggle
+            initial={settings.discoverable}
+            profileHref={settings.publicProfilePath}
+          />
+        </Section>
+      )}
 
       <Section
         icon={ShieldCheck}

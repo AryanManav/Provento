@@ -83,7 +83,7 @@ function ApplicationCard({
               </h3>
             )}
             {changed && (
-              <span className="rounded-full bg-rose-50 px-fib3 py-0.5 text-[11px] font-semibold text-rose-600">
+              <span className="rounded-full bg-accent-50 px-fib3 py-0.5 text-[11px] font-semibold text-accent-700">
                 Updated
               </span>
             )}

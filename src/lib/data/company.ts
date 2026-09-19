@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
 import { getOpenProjects } from "@/lib/data/project";
@@ -14,15 +15,22 @@ import type {
   CompanyProjectResult,
   CompanyProjectView,
   CompanyPublicView,
+  CompanyDirectoryEntry,
+  CompanyTeamMember,
   CompanyView,
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
   ProjectOutcomeType,
+  CompanyWorkStyle,
+  ProjectCategory,
   ProjectPurpose,
   ProjectStatus,
   SelectionWorkStatus,
 } from "@/lib/types/database.types";
+
+const COMPANY_COLUMNS =
+  "id, name, website, description, industry, company_size, location, logo_url, verified, tech_stack, work_style, perks, hiring_process, founded_year, linkedin_url, github_url, careers_url";
 
 interface RawCompanyRow {
   id: string;
@@ -34,6 +42,28 @@ interface RawCompanyRow {
   location: string | null;
   logo_url: string | null;
   verified: boolean;
+  tech_stack: string[] | null;
+  work_style: CompanyWorkStyle | null;
+  perks: string | null;
+  hiring_process: string | null;
+  founded_year: number | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  careers_url: string | null;
+}
+
+/** The culture, stack and link fields shared by the private and public views. */
+function toCompanyExtras(row: RawCompanyRow) {
+  return {
+    techStack: row.tech_stack ?? [],
+    workStyle: row.work_style,
+    perks: row.perks,
+    hiringProcess: row.hiring_process,
+    foundedYear: row.founded_year,
+    linkedinUrl: row.linkedin_url,
+    githubUrl: row.github_url,
+    careersUrl: row.careers_url,
+  };
 }
 
 interface RawMembership {
@@ -65,14 +95,17 @@ interface RawApplicant {
     | null;
 }
 
-/** The company the user belongs to, or null if they have not created one yet. */
-export async function getCompanyForUser(userId: string): Promise<CompanyView | null> {
+/**
+ * The company the user belongs to, or null if they haven't created one yet. Cached per request: the company layout, the
+ * profile layout and most pages all ask, and each ask was a round trip.
+ */
+export const getCompanyForUser = cache(async function getCompanyForUser(
+  userId: string
+): Promise<CompanyView | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("company_members")
-    .select(
-      "company_id, companies(id, name, website, description, industry, company_size, location, logo_url, verified)"
-    )
+    .select(`company_id, companies(${COMPANY_COLUMNS})`)
     .eq("user_id", userId)
     .limit(1)
     .maybeSingle();
@@ -90,19 +123,13 @@ export async function getCompanyForUser(userId: string): Promise<CompanyView | n
     location: company.location,
     logoUrl: company.logo_url,
     verified: company.verified,
+    ...toCompanyExtras(company),
   };
-}
+});
 
+/** The user's company id — shares the cached getCompanyForUser query. */
 export async function getCompanyIdForUser(userId: string): Promise<string | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("company_members")
-    .select("company_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-
-  return data?.company_id ?? null;
+  return (await getCompanyForUser(userId))?.id ?? null;
 }
 
 /** Applications the company hasn't acted on, per project id. */
@@ -132,7 +159,7 @@ export async function getCompanyProjects(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings, category"
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -155,6 +182,7 @@ export async function getCompanyProjects(
     maxApplicants: row.max_applicants ?? null,
     purpose: (row.purpose ?? "hire") as ProjectPurpose,
     openings: row.openings ?? 1,
+    category: (row.category ?? "other") as ProjectCategory,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
 }
@@ -420,9 +448,7 @@ export async function getCompanyPublicProfile(
   const [{ data: company }, { data: record }, openProjects] = await Promise.all([
     supabase
       .from("companies")
-      .select(
-        "id, name, description, website, industry, company_size, location, logo_url, verified, created_at"
-      )
+      .select(`${COMPANY_COLUMNS}, created_at`)
       .eq("id", companyId)
       .maybeSingle(),
     supabase.rpc("company_track_record", { target_company_id: companyId }),
@@ -443,6 +469,7 @@ export async function getCompanyPublicProfile(
     logoUrl: company.logo_url,
     verified: company.verified,
     memberSince: company.created_at,
+    ...toCompanyExtras(company as unknown as RawCompanyRow),
     trackRecord: {
       openProjects: counts?.open_projects ?? openProjects.length,
       completedEvaluations: counts?.completed_evaluations ?? 0,
@@ -452,4 +479,83 @@ export async function getCompanyPublicProfile(
     },
     openProjects,
   };
+}
+
+interface RawTeamMember {
+  user_id: string;
+  role: string;
+  created_at: string;
+  users:
+    | { full_name: string; email: string; avatar_url: string | null }
+    | { full_name: string; email: string; avatar_url: string | null }[]
+    | null;
+}
+
+/** Everyone on the company's account, owners first. */
+export async function getCompanyTeam(companyId: string): Promise<CompanyTeamMember[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("company_members")
+    .select("user_id, role, created_at, users(full_name, email, avatar_url)")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: true });
+
+  return ((data ?? []) as unknown as RawTeamMember[])
+    .map((row) => {
+      const account = one(row.users);
+      return {
+        userId: row.user_id,
+        fullName: account?.full_name ?? "Team member",
+        email: account?.email ?? null,
+        avatarUrl: account?.avatar_url ?? null,
+        role: row.role,
+        joinedAt: row.created_at,
+      };
+    })
+    .sort((a, b) => Number(b.role === "owner") - Number(a.role === "owner"));
+}
+
+interface RawDirectoryCompany {
+  id: string;
+  name: string;
+  industry: string | null;
+  location: string | null;
+  company_size: string | null;
+  logo_url: string | null;
+  verified: boolean;
+  work_style: CompanyWorkStyle | null;
+  projects: { status: ProjectStatus; application_deadline: string }[] | null;
+}
+
+/**
+ * Every company on Trialent for the candidate-facing directory, busiest first.
+ * `openProjects` counts projects still taking applications.
+ */
+export async function getCompanyDirectory(): Promise<CompanyDirectoryEntry[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("companies")
+    .select(
+      "id, name, industry, location, company_size, logo_url, verified, work_style, projects(status, application_deadline)"
+    )
+    .order("name", { ascending: true });
+
+  const now = Date.now();
+  return ((data ?? []) as unknown as RawDirectoryCompany[])
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      industry: row.industry,
+      location: row.location,
+      size: row.company_size,
+      logoUrl: row.logo_url,
+      verified: row.verified,
+      workStyle: row.work_style,
+      openProjects: (row.projects ?? []).filter(
+        (project) =>
+          (OPEN_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status) &&
+          new Date(project.application_deadline).getTime() > now
+      ).length,
+    }))
+    .sort((a, b) => b.openProjects - a.openProjects);
 }

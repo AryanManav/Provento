@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBanner } from "@/components/common/status-banner";
 import { ProjectPurposeFields } from "@/components/company/project-purpose-fields";
-import { MAX_APPLICANTS_LIMIT, WORK_MODES } from "@/lib/constants";
+import { MAX_APPLICANTS_LIMIT, PROJECT_CATEGORIES, WORK_MODES } from "@/lib/constants";
 
 export default async function CreateProjectPage({
   searchParams,
@@ -35,6 +35,29 @@ export default async function CreateProjectPage({
         className="rounded-xl border bg-white p-6 space-y-5"
       >
         <Input name="title" placeholder="Project title" required />
+        <div className="space-y-fib2">
+          <label htmlFor="category" className="text-sm font-semibold text-ink-800">
+            Topic — where it&apos;s listed in Browse
+          </label>
+          <select
+            id="category"
+            name="category"
+            required
+            defaultValue=""
+            className="h-10 w-full rounded-lg border border-line bg-white px-fib4 text-sm"
+          >
+            <option value="" disabled>
+              Choose a topic
+            </option>
+            {(Object.entries(PROJECT_CATEGORIES) as [string, { label: string }][]).map(
+              ([value, topic]) => (
+                <option key={value} value={value}>
+                  {topic.label}
+                </option>
+              )
+            )}
+          </select>
+        </div>
         <ProjectPurposeFields />
         <fieldset className="space-y-fib4">
           <legend className="text-xs font-semibold uppercase tracking-wider text-ink-500">

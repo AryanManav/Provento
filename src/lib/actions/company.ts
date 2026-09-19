@@ -4,9 +4,17 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
-import { getCompanyIdForUser, getProjectHeader } from "@/lib/data/company";
 import {
+  getCompanyForUser,
+  getCompanyIdForUser,
+  getProjectHeader,
+} from "@/lib/data/company";
+import { isCompanyReadyToPost } from "@/lib/company";
+import {
+  companyCultureSchema,
+  companyLinksSchema,
   companyProfileSchema,
+  companySetupSchema,
   createProjectSchema,
   deleteProjectSchema,
   projectVisibilitySchema,
@@ -122,6 +130,7 @@ export async function createProjectAction(formData: FormData) {
     paymentAmount: formData.get("paymentAmount"),
     currency: DEFAULT_CURRENCY,
     maxApplicants: formData.get("maxApplicants"),
+    category: formData.get("category"),
     purpose: formData.get("purpose") || "hire",
     // Build-only projects always have one candidate, whatever was typed.
     openings: formData.get("purpose") === "build" ? 1 : formData.get("openings") || 1,
@@ -130,6 +139,10 @@ export async function createProjectAction(formData: FormData) {
   });
   if (!validated.success) {
     redirectWithError(createPath, validated.error.errors[0].message);
+  }
+
+  if (user.role !== "admin" && !isCompanyReadyToPost(await getCompanyForUser(user.id))) {
+    redirect("/onboarding/company");
   }
 
   const companyId = await getCompanyIdForUser(user.id);
@@ -161,6 +174,7 @@ export async function createProjectAction(formData: FormData) {
       application_deadline: validated.data.applicationDeadline,
       project_deadline: validated.data.projectDeadline,
       max_applicants: validated.data.maxApplicants ?? null,
+      category: validated.data.category,
       purpose: validated.data.purpose,
       openings: validated.data.openings,
       status: "applications_open",
@@ -399,4 +413,123 @@ export async function deleteProjectAction(formData: FormData) {
   revalidatePath("/company/projects");
   revalidatePath("/projects");
   redirect("/company/projects?deleted=1");
+}
+
+/**
+ * First-run setup for a new startup. Creates the company (or finishes an
+ * existing one) with the basics candidates need, then opens the workspace.
+ */
+export async function completeCompanySetupAction(
+  _prev: ActionResponse | null,
+  formData: FormData
+): Promise<ActionResponse> {
+  const user = await requireRole(["company"]);
+  const parsed = companySetupSchema.safeParse({
+    name: formData.get("name"),
+    website: formData.get("website"),
+    industry: formData.get("industry"),
+    companySize: formData.get("companySize"),
+    location: formData.get("location"),
+    description: formData.get("description"),
+  });
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  const values = {
+    name: parsed.data.name,
+    website: parsed.data.website || null,
+    description: parsed.data.description,
+    industry: parsed.data.industry,
+    company_size: parsed.data.companySize,
+    location: parsed.data.location,
+  };
+
+  const supabase = await createClient();
+  const companyId = await getCompanyIdForUser(user.id);
+  if (companyId) {
+    const { error } = await supabase.from("companies").update(values).eq("id", companyId);
+    if (error) return { error: "Couldn't save your company. Please try again." };
+  } else {
+    const { error } = await supabase.rpc("create_company_with_owner", {
+      company_name: values.name,
+      company_website: values.website,
+      company_description: values.description,
+      company_industry: values.industry,
+      company_size: values.company_size,
+      company_location: values.location,
+    });
+    if (error) return { error: "Couldn't create your company. Please try again." };
+  }
+
+  revalidatePath("/company", "layout");
+  redirect("/company/dashboard?welcome=1");
+}
+
+function splitList(value: FormDataEntryValue | null, separator: RegExp): string[] {
+  return String(value || "")
+    .split(separator)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+/** Culture and stack tab: what working at the company is like. */
+export async function saveCompanyCultureAction(formData: FormData) {
+  const user = await requireRole(["company", "admin"]);
+  const path = "/company/profile/culture";
+  const parsed = companyCultureSchema.safeParse({
+    // One per line or comma-separated; duplicates dropped.
+    techStack: Array.from(new Set(splitList(formData.get("techStack"), /[,\n]/))),
+    workStyle: formData.get("workStyle") || null,
+    perks: String(formData.get("perks") || "").trim() || null,
+    hiringProcess: String(formData.get("hiringProcess") || "").trim() || null,
+  });
+  if (!parsed.success) redirectWithError(path, parsed.error.errors[0].message);
+
+  const companyId = await getCompanyIdForUser(user.id);
+  if (!companyId) redirect("/onboarding/company");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("companies")
+    .update({
+      tech_stack: parsed.data.techStack,
+      work_style: parsed.data.workStyle,
+      perks: parsed.data.perks,
+      hiring_process: parsed.data.hiringProcess,
+    })
+    .eq("id", companyId);
+  if (error) redirectWithError(path, "Couldn't save. Please try again.");
+
+  revalidatePath("/company/profile", "layout");
+  redirect(`${path}?saved=1`);
+}
+
+/** Links tab: where candidates can learn more. */
+export async function saveCompanyLinksAction(formData: FormData) {
+  const user = await requireRole(["company", "admin"]);
+  const path = "/company/profile/links";
+  const parsed = companyLinksSchema.safeParse({
+    linkedinUrl: formData.get("linkedinUrl"),
+    githubUrl: formData.get("githubUrl"),
+    careersUrl: formData.get("careersUrl"),
+    foundedYear: formData.get("foundedYear"),
+  });
+  if (!parsed.success) redirectWithError(path, parsed.error.errors[0].message);
+
+  const companyId = await getCompanyIdForUser(user.id);
+  if (!companyId) redirect("/onboarding/company");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("companies")
+    .update({
+      linkedin_url: parsed.data.linkedinUrl || null,
+      github_url: parsed.data.githubUrl || null,
+      careers_url: parsed.data.careersUrl || null,
+      founded_year: parsed.data.foundedYear,
+    })
+    .eq("id", companyId);
+  if (error) redirectWithError(path, "Couldn't save. Please try again.");
+
+  revalidatePath("/company/profile", "layout");
+  redirect(`${path}?saved=1`);
 }

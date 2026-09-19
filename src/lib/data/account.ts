@@ -18,6 +18,13 @@ export async function getAccountSettings(): Promise<AccountSettingsView> {
     supabase.auth.getUser(),
     supabase.rpc("account_deletion_blockers"),
   ]);
+  const { data: candidate } = userData.user
+    ? await supabase
+        .from("candidate_profiles")
+        .select("id, is_discoverable")
+        .eq("user_id", userData.user.id)
+        .maybeSingle()
+    : { data: null };
 
   const identities = userData.user?.identities ?? [];
   const providers = Array.from(new Set(identities.map((identity) => identity.provider)));
@@ -31,5 +38,7 @@ export async function getAccountSettings(): Promise<AccountSettingsView> {
     // Before the migration runs the function is missing; the delete action
     // re-checks on the server either way.
     deletionBlockers: Array.isArray(blockers) ? blockers : [],
+    discoverable: candidate ? candidate.is_discoverable !== false : null,
+    publicProfilePath: candidate ? `/candidates/${candidate.id}` : null,
   };
 }

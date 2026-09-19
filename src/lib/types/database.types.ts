@@ -19,6 +19,20 @@ export type ProjectStatus =
 export type ApplicationStatus =
   "submitted" | "reviewing" | "shortlisted" | "selected" | "rejected" | "withdrawn";
 
+/** The topic a project is listed under in Browse. */
+export type ProjectCategory =
+  | "frontend"
+  | "backend"
+  | "full_stack"
+  | "mobile"
+  | "ai_ml"
+  | "data"
+  | "devops"
+  | "design"
+  | "other";
+
+export type CompanyWorkStyle = "remote" | "hybrid" | "onsite";
+
 /** Whether the company is recruiting, or only wants the work built. */
 export type ProjectPurpose = "hire" | "build";
 
@@ -88,6 +102,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          is_discoverable: boolean;
           headline: string | null;
           bio: string | null;
           location: string | null;
@@ -105,6 +120,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          is_discoverable?: boolean;
           headline?: string | null;
           bio?: string | null;
           location?: string | null;
@@ -120,6 +136,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          is_discoverable?: boolean;
           headline?: string | null;
           bio?: string | null;
           location?: string | null;
@@ -259,6 +276,14 @@ export interface Database {
           location: string | null;
           logo_url: string | null;
           verified: boolean;
+          tech_stack: string[];
+          work_style: CompanyWorkStyle | null;
+          perks: string | null;
+          hiring_process: string | null;
+          founded_year: number | null;
+          linkedin_url: string | null;
+          github_url: string | null;
+          careers_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -272,6 +297,14 @@ export interface Database {
           location?: string | null;
           logo_url?: string | null;
           verified?: boolean;
+          tech_stack?: string[];
+          work_style?: CompanyWorkStyle | null;
+          perks?: string | null;
+          hiring_process?: string | null;
+          founded_year?: number | null;
+          linkedin_url?: string | null;
+          github_url?: string | null;
+          careers_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -284,6 +317,14 @@ export interface Database {
           location?: string | null;
           logo_url?: string | null;
           verified?: boolean;
+          tech_stack?: string[];
+          work_style?: CompanyWorkStyle | null;
+          perks?: string | null;
+          hiring_process?: string | null;
+          founded_year?: number | null;
+          linkedin_url?: string | null;
+          github_url?: string | null;
+          careers_url?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -326,6 +367,7 @@ export interface Database {
           withdrawal_reason: string | null;
           purpose: ProjectPurpose;
           openings: number;
+          category: ProjectCategory;
           expected_hours: number;
           payment_amount: number;
           currency: string;
@@ -352,6 +394,7 @@ export interface Database {
           withdrawal_reason?: string | null;
           purpose?: ProjectPurpose;
           openings?: number;
+          category?: ProjectCategory;
           expected_hours?: number;
           payment_amount: number;
           currency?: string;
@@ -376,6 +419,7 @@ export interface Database {
           withdrawal_reason?: string | null;
           purpose?: ProjectPurpose;
           openings?: number;
+          category?: ProjectCategory;
           expected_hours?: number;
           payment_amount?: number;
           currency?: string;
@@ -661,6 +705,24 @@ export interface Database {
         };
         Relationships: [];
       };
+      follows: {
+        Row: {
+          id: string;
+          follower_id: string;
+          company_id: string | null;
+          candidate_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          follower_id: string;
+          company_id?: string | null;
+          candidate_id?: string | null;
+          created_at?: string;
+        };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -785,6 +847,29 @@ export interface Database {
       delete_my_account: {
         Args: Record<string, never>;
         Returns: undefined;
+      };
+      search_directory: {
+        Args: { query: string };
+        Returns: {
+          kind: string;
+          id: string;
+          title: string;
+          subtitle: string | null;
+          image_url: string | null;
+          location: string | null;
+        }[];
+      };
+      candidate_public_profile: {
+        Args: { target_candidate_id: string };
+        Returns: Json | null;
+      };
+      follow_stats: {
+        Args: { target_company_id?: string | null; target_candidate_id?: string | null };
+        Returns: { followers: number; following: boolean }[];
+      };
+      company_ready_to_post: {
+        Args: { target_company_id: string };
+        Returns: boolean;
       };
       delete_project: {
         Args: { target_project_id: string };

@@ -39,7 +39,7 @@ export function HeroFragments() {
       {/* Handwritten brief note, pinned and rotated */}
       <div className="absolute left-[-4rem] top-[6%] w-72 rotate-[-7deg]">
         <div className="relative rounded-sm bg-accent-200 p-fib6 shadow-lg">
-          <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full bg-rose-500 shadow" />
+          <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full bg-accent-500 shadow" />
           <p className="font-hand text-[1.35rem] leading-snug text-ink-800">
             Write the brief once — requirements, deliverables, how you&rsquo;ll judge it.
           </p>

@@ -10,3 +10,4 @@ export * from "./application";
 export * from "./evaluation";
 export * from "./notification";
 export * from "./account";
+export * from "./follow";

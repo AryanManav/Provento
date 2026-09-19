@@ -162,6 +162,7 @@ describe("withdrawing an application", () => {
 describe("project work mode", () => {
   const base = {
     title: "Build REST API for Inventory System",
+    category: "backend",
     description:
       "Develop a clean Node.js and PostgreSQL REST API for warehouse stock tracking.",
     problemStatement:

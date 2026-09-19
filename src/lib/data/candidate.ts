@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
@@ -86,7 +87,8 @@ function toProfileView(data: RawProfileRow): CandidateProfileView {
   };
 }
 
-export async function getCandidateProfile(
+/** The signed-in candidate's profile. Cached per request (layouts and pages all ask). */
+export const getCandidateProfile = cache(async function getCandidateProfile(
   userId: string
 ): Promise<CandidateProfileView | null> {
   const supabase = await createClient();
@@ -97,7 +99,7 @@ export async function getCandidateProfile(
     .maybeSingle();
 
   return data ? toProfileView(data as RawProfileRow) : null;
-}
+});
 
 /** By candidate_profiles.id — how companies reach an applicant. RLS limits it to applicants. */
 export async function getCandidateProfileById(
@@ -113,16 +115,9 @@ export async function getCandidateProfileById(
   return data ? toProfileView(data as RawProfileRow) : null;
 }
 
-/** Resolves the candidate_profiles.id for a given auth user, or null. */
+/** The candidate_profiles.id for a user — shares the cached getCandidateProfile query. */
 export async function getCandidateProfileId(userId: string): Promise<string | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("candidate_profiles")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  return data?.id ?? null;
+  return (await getCandidateProfile(userId))?.id ?? null;
 }
 
 export async function getCandidateSkills(
