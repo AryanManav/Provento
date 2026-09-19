@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { CLOSED_WORK_STATUSES } from "../lib/constants";
 import {
   applicationHref,
   applicationStage,
@@ -117,6 +120,37 @@ describe("dashboard counts", () => {
       activeTrials: 0,
       completed: 1,
     });
+  });
+  it("never counts rejected work as a completed project or its fee as earned", () => {
+    const rejected = {
+      ...application("selected", "applications_open"),
+      workStatus: "not_accepted" as const,
+    };
+    expect(applicationStage("selected", "applications_open", "not_accepted")).toBe(
+      "work_not_accepted"
+    );
+    expect(summarizeApplications([rejected])).toMatchObject({
+      activeTrials: 0,
+      completed: 0,
+      completedValue: 0,
+    });
+  });
+});
+
+describe("rejecting work", () => {
+  const migration = readFileSync(
+    join(process.cwd(), "supabase/migrations/20261002000000_reopen_after_rejection.sql"),
+    "utf8"
+  );
+
+  it("gives the opening back and reopens the project", () => {
+    expect(migration).toContain("WHEN 'rejected' THEN 'not_accepted'");
+    expect(migration).toContain("status <> 'not_accepted'");
+    expect(migration).toContain("next_status := 'applications_open'");
+  });
+
+  it("keeps not-accepted work out of the finished-and-verified count", () => {
+    expect(CLOSED_WORK_STATUSES).toContain("not_accepted");
   });
 });
 

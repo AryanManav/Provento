@@ -23,6 +23,7 @@ export type ApplicationStage =
   | "awaiting_review"
   | "revision_requested"
   | "completed"
+  | "work_not_accepted"
   | "cancelled"
   | "not_selected"
   | "withdrawn";
@@ -76,6 +77,7 @@ export function applicationStage(
       // Several candidates can work on one project, so their own cycle decides.
       if (workStatus) {
         if (workStatus === "completed") return "completed";
+        if (workStatus === "not_accepted") return "work_not_accepted";
         if (workStatus === "cancelled") return "cancelled";
         if (workStatus === "revision_requested") return "revision_requested";
         if (workStatus === "submitted" || workStatus === "under_review") {
@@ -139,6 +141,11 @@ export const STAGE_DISPLAY: Record<
     action: "See what to change",
   },
   completed: { label: "Project completed", tone: "success", action: "View evaluation" },
+  work_not_accepted: {
+    label: "Work not accepted",
+    tone: "danger",
+    action: "See their feedback",
+  },
   cancelled: { label: "Project cancelled", tone: "neutral", action: "View workspace" },
   not_selected: { label: "Not selected", tone: "neutral", action: "View brief" },
   withdrawn: { label: "Withdrawn", tone: "neutral", action: "View brief" },

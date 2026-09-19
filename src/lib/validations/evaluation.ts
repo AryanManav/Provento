@@ -31,6 +31,11 @@ export const reviewSubmissionSchema = z
     }),
     /** Shown to the candidate with the decision. */
     reviewNote: optionalNote(2000),
+    /**
+     * Only for a rejection: reopen the project to new applicants (true) or
+     * close it (false).
+     */
+    reopenProject: z.enum(["reopen", "close"]).optional(),
   })
   .refine((value) => value.decision !== "revision_requested" || !!value.reviewNote, {
     message: "Tell the candidate what to change when you request a revision",

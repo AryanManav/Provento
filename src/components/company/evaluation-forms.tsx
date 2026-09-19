@@ -40,14 +40,28 @@ function Feedback({ state }: { state: ActionResponse | null }) {
 
 const SUBMISSION_DECISIONS = [
   { value: "accepted", label: "Accept work" },
-  { value: "revision_requested", label: "Request a revision" },
+  { value: "revision_requested", label: "Give another chance — request a revision" },
   { value: "rejected", label: "Reject work" },
 ] as const;
 
+const AFTER_REJECTION = [
+  {
+    value: "reopen",
+    label: "Reopen the project to new applicants",
+    hint: "It goes back on Browse and you can select someone else. A deadline that has passed moves a week out.",
+  },
+  {
+    value: "close",
+    label: "Close it",
+    hint: "No one else is selected for this place.",
+  },
+] as const;
+
 /**
- * One decision per submission. Accepting or rejecting ends the project's work
- * phase; a revision request lets the candidate send a new submission, which
- * gets its own decision. The database refuses any second decision.
+ * One decision per submission. Accepting ends this candidate's work; a
+ * revision request gives them another chance with a new submission, which gets
+ * its own decision. Rejecting ends it and either reopens the place to new
+ * applicants or closes it. The database refuses any second decision.
  */
 export function ReviewSubmissionForm({ submissionId }: { submissionId: string }) {
   const [state, formAction, isPending] = useActionState(
@@ -57,6 +71,8 @@ export function ReviewSubmissionForm({ submissionId }: { submissionId: string })
   );
   const [decision, setDecision] =
     useState<(typeof SUBMISSION_DECISIONS)[number]["value"]>("accepted");
+  const [afterRejection, setAfterRejection] =
+    useState<(typeof AFTER_REJECTION)[number]["value"]>("reopen");
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -93,6 +109,32 @@ export function ReviewSubmissionForm({ submissionId }: { submissionId: string })
           </Button>
         )}
       </div>
+      {confirming && decision === "rejected" && (
+        <fieldset className="space-y-1.5">
+          <legend className="text-xs font-semibold text-slate-700">
+            What happens to the project?
+          </legend>
+          {AFTER_REJECTION.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 p-2.5 text-sm has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50"
+            >
+              <input
+                type="radio"
+                name="afterRejection"
+                value={option.value}
+                checked={afterRejection === option.value}
+                onChange={() => setAfterRejection(option.value)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                <span className="block font-medium text-slate-800">{option.label}</span>
+                <span className="block text-xs text-slate-500">{option.hint}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       {confirming && (
         <label className="block space-y-1">
           <span className="text-xs font-semibold text-slate-700">
@@ -120,7 +162,11 @@ export function ReviewSubmissionForm({ submissionId }: { submissionId: string })
           This decision is final for this submission.
           {decision === "revision_requested"
             ? " The candidate can then send a revised submission."
-            : " It closes the work phase of the project."}
+            : decision === "accepted"
+              ? " It completes this candidate's work."
+              : afterRejection === "reopen"
+                ? " It ends this candidate's work and reopens the project."
+                : " It ends this candidate's work and closes the place."}
         </p>
       )}
     </form>

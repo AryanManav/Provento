@@ -242,21 +242,32 @@ export default async function CandidateTrialWorkspacePage({
         />
       )}
 
-      {closed && (
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-fib6">
+      {closed && (accepted || cancelled || evaluation) && (
+        <section
+          className={cn(
+            "rounded-2xl border p-fib6",
+            accepted && !cancelled
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-line bg-white text-ink-800"
+          )}
+        >
           <div className="flex items-start gap-fib4">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            {accepted && !cancelled ? (
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            ) : (
+              <FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-ink-400" />
+            )}
             <div className="min-w-0 space-y-fib3">
-              <h2 className="font-bold text-emerald-900">
+              <h2 className="font-bold">
                 {cancelled
                   ? "Project cancelled"
                   : accepted
                     ? "Project completed — work accepted"
-                    : "Project completed — work not accepted"}
+                    : "The startup's evaluation"}
               </h2>
               {evaluation ? (
                 <>
-                  <p className="text-sm text-emerald-900">
+                  <p className="text-sm">
                     Requirements{" "}
                     {evaluation.requirementsCompleted
                       ? "completed"
@@ -275,17 +286,15 @@ export default async function CandidateTrialWorkspacePage({
                       </>
                     )}
                   </p>
-                  <p className="whitespace-pre-wrap text-sm text-emerald-900/80">
+                  <p className="whitespace-pre-wrap text-sm opacity-80">
                     {evaluation.writtenFeedback}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-emerald-900/80">
+                <p className="text-sm opacity-80">
                   {cancelled
                     ? "The startup closed this project. Your submissions stay below for reference."
-                    : accepted
-                      ? "Your work was accepted and is now on your profile's verified work history. The startup's written feedback will appear here if they record it."
-                      : "The startup didn't accept this submission. Their message is on it below — use it for your next project."}
+                    : "Your work was accepted and is now on your profile's verified work history. The startup's written feedback will appear here if they record it."}
                 </p>
               )}
             </div>

@@ -43,6 +43,7 @@ export type SelectionWorkStatus =
   | "under_review"
   | "revision_requested"
   | "completed"
+  | "not_accepted"
   | "cancelled";
 
 export type ProjectWorkMode = "local" | "in_app";
@@ -516,6 +517,7 @@ export interface Database {
           submitted_at: string;
           status: SubmissionStatus;
           review_note: string | null;
+          reopen_project: boolean | null;
           reviewed_at: string | null;
         };
         Insert: {
@@ -528,6 +530,7 @@ export interface Database {
           submitted_at?: string;
           status?: SubmissionStatus;
           review_note?: string | null;
+          reopen_project?: boolean | null;
           reviewed_at?: string | null;
         };
         Update: {
@@ -536,6 +539,7 @@ export interface Database {
           submission_notes?: string;
           status?: SubmissionStatus;
           review_note?: string | null;
+          reopen_project?: boolean | null;
           reviewed_at?: string | null;
         };
         Relationships: [];

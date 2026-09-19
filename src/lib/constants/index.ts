@@ -317,9 +317,13 @@ export const PROJECT_PURPOSES = {
   },
 } as const;
 
-/** A selected candidate's work is finished once it reaches one of these. */
+/**
+ * A selected candidate's work is finished once it reaches one of these.
+ * "completed" means the work was accepted; "not_accepted" that it was rejected.
+ */
 export const CLOSED_WORK_STATUSES = [
   "completed",
+  "not_accepted",
   "cancelled",
 ] as const satisfies readonly SelectionWorkStatus[];
 

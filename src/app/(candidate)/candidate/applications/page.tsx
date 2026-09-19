@@ -27,6 +27,7 @@ export const dynamic = "force-dynamic";
 /** Finished one way or another — listed below the ones still moving. */
 const CLOSED_STAGES: ApplicationStage[] = [
   "completed",
+  "work_not_accepted",
   "cancelled",
   "not_selected",
   "withdrawn",
@@ -40,6 +41,8 @@ const STAGE_NOTE: Partial<Record<ApplicationStage, string>> = {
     "Your work is with the startup. Their decision and message will appear in the workspace, and you'll get a notification.",
   revision_requested: "The startup asked for changes. Open the workspace to resubmit.",
   completed: "Evaluation complete. Your feedback and outcome are in the workspace.",
+  work_not_accepted:
+    "The startup didn't accept this work. Their message is in the workspace — use it for your next project.",
 };
 
 function ApplicationCard({

@@ -144,6 +144,7 @@ export async function reviewSubmissionAction(
     submissionId: formData.get("submissionId"),
     decision: formData.get("decision"),
     reviewNote: formData.get("reviewNote"),
+    reopenProject: formData.get("afterRejection") || undefined,
   });
   if (!validated.success) return { error: validated.error.errors[0].message };
 
@@ -164,12 +165,17 @@ export async function reviewSubmissionAction(
   if ("error" in ownership) return { error: ownership.error };
 
   // apply_submission_decision (database) refuses a second decision and moves
-  // the project on: accepted/rejected → completed, revision → reopened.
+  // the project on: accepted → completed, revision → back to the candidate,
+  // rejected → the opening is reopened to new applicants or closed.
   const { error } = await supabase
     .from("project_submissions")
     .update({
       status: validated.data.decision,
       review_note: validated.data.reviewNote ?? null,
+      reopen_project:
+        validated.data.decision === "rejected"
+          ? validated.data.reopenProject !== "close"
+          : null,
     })
     .eq("id", validated.data.submissionId);
 
@@ -178,6 +184,7 @@ export async function reviewSubmissionAction(
 
   revalidatePath(`/company/projects/${submission.project_id}`, "layout");
   revalidatePath(`/candidate/trials/${submission.project_id}`);
+  if (validated.data.decision === "rejected") revalidatePath("/projects", "layout");
   return { success: true };
 }
 
