@@ -22,7 +22,7 @@ export function PipelineList({
   showProject?: boolean;
 }) {
   return (
-    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
       {entries.map((entry) => {
         const stage = pipelineStage(entry.applicationStatus, entry.workStatus);
         const display = PIPELINE_DISPLAY[stage];

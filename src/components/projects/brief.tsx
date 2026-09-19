@@ -83,7 +83,7 @@ export function StackList({ skills }: { skills: { name: string; required: boolea
           className={cn(
             "rounded-md border px-2 py-0.5 font-mono text-xs",
             skill.required
-              ? "border-ink-300 bg-white text-ink-800"
+              ? "border-ink-300 bg-surface text-ink-800"
               : "border-line bg-ink-50 text-ink-500"
           )}
         >

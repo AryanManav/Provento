@@ -207,7 +207,7 @@ export async function CompanyProjectsScreen({
           actionHref={tab === "active" ? "/company/projects/create" : undefined}
         />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
           {ordered.map((project) => {
             const latest = notifications.recent.find(
               (item) => item.projectId === project.id && !item.read

@@ -22,9 +22,9 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="mx-auto flex max-w-md flex-col items-center rounded-xl border border-line bg-white px-6 py-12 text-center"
+      className="mx-auto flex max-w-md flex-col items-center rounded-xl border border-line bg-surface px-6 py-12 text-center"
     >
-      <span className="grid h-10 w-10 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600">
+      <span className="grid h-10 w-10 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700">
         <AlertTriangle className="h-5 w-5" aria-hidden />
       </span>
       <h1 className="mt-3 text-base font-semibold text-ink-900">

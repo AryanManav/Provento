@@ -9,7 +9,7 @@ export default function NotFound() {
       <Link href="/" aria-label="Trialent home">
         <Logo />
       </Link>
-      <span className="mt-10 grid h-10 w-10 place-items-center rounded-lg border border-line bg-white text-ink-400">
+      <span className="mt-10 grid h-10 w-10 place-items-center rounded-lg border border-line bg-surface text-ink-400">
         <SearchX className="h-5 w-5" aria-hidden />
       </span>
       <h1 className="mt-3 text-xl font-semibold text-ink-900">Page not found</h1>

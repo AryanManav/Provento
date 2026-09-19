@@ -98,7 +98,7 @@ export function FollowButton({
           "group inline-flex items-center gap-1.5 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70",
           height,
           following
-            ? "border border-ink-200 bg-white text-ink-800 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+            ? "border border-ink-200 bg-surface text-ink-800 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
             : "bg-brand-600 text-white shadow-xs hover:bg-brand-700"
         )}
       >
@@ -119,7 +119,7 @@ export function FollowButton({
         )}
       </button>
       {error && (
-        <span role="alert" className="text-xs text-rose-600">
+        <span role="alert" className="text-xs text-rose-700">
           {error}
         </span>
       )}

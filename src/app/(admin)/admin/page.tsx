@@ -64,9 +64,9 @@ export default async function AdminOverviewPage() {
         <Card className="p-4">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase">
             <span>Interviews & Hires</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-700" />
           </div>
-          <div className="text-2xl font-semibold text-emerald-600 mt-2">0 / 0</div>
+          <div className="text-2xl font-semibold text-emerald-700 mt-2">0 / 0</div>
           <div className="text-xs text-slate-400 mt-1">Outcomes achieved</div>
         </Card>
       </div>

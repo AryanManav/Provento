@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navigationFor } from "@/lib/constants";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Avatar } from "@/components/common/avatar";
 import type { CurrentUser } from "@/lib/auth/guards";
 import { RoleBadge } from "@/components/profile/role-badge";
@@ -86,7 +87,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-60 animate-fade-in overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-60 animate-fade-in overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg"
         >
           <div className="border-b border-line px-3 pb-2.5 pt-2">
             <p className="truncate text-sm font-medium text-ink-900">{user.fullName}</p>
@@ -115,6 +116,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             );
           })}
 
+          <div className="border-t border-line px-3 py-2.5">
+            <p className="mb-1.5 text-2xs font-medium uppercase tracking-wider text-ink-400">
+              Theme
+            </p>
+            <ThemeSwitcher size="sm" className="w-full" />
+          </div>
+
           <form
             action="/auth/signout"
             method="post"
@@ -123,7 +131,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             <button
               type="submit"
               role="menuitem"
-              className={cn(itemClass, "text-rose-600 hover:bg-rose-50")}
+              className={cn(itemClass, "text-rose-700 hover:bg-rose-50")}
             >
               <LogOut className="h-4 w-4" />
               Sign out

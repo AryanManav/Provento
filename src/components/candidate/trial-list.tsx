@@ -27,7 +27,7 @@ export function TrialList({
   updates?: Record<string, number>;
 }) {
   return (
-    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
       {trials.map((trial) => {
         const status = WORK_STATUS_DISPLAY[trial.workStatus];
         const closed = isClosedWork(trial);

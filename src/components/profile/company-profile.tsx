@@ -178,7 +178,7 @@ export function CompanyProfile({
                 actionHref={ownCompany ? "/company/projects/create" : undefined}
               />
             ) : (
-              <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+              <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
                 {company.openProjects.map((project) => (
                   <ProjectResultRow key={project.id} project={project} />
                 ))}

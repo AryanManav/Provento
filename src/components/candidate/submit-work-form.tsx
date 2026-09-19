@@ -207,7 +207,7 @@ export function SubmitWorkForm({
                       current.filter((item) => item.path !== file.path)
                     )
                   }
-                  className="rounded-md p-fib2 text-ink-400 hover:bg-ink-100 hover:text-rose-600"
+                  className="rounded-md p-fib2 text-ink-400 hover:bg-ink-100 hover:text-rose-700"
                 >
                   <X className="h-4 w-4" />
                 </button>

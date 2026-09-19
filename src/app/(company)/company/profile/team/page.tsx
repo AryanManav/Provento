@@ -13,7 +13,7 @@ export default async function CompanyTeamPage() {
   const team = companyId ? await getCompanyTeam(companyId) : [];
 
   return (
-    <section className="space-y-fib5 rounded-2xl border border-line bg-white p-fib6 shadow-xs">
+    <section className="space-y-fib5 rounded-2xl border border-line bg-surface p-fib6 shadow-xs">
       <div>
         <h2 className="text-lg font-semibold text-ink-900">Team · {team.length}</h2>
         <p className="text-sm text-ink-500">
@@ -43,7 +43,7 @@ export default async function CompanyTeamPage() {
             </div>
             <span className="inline-flex shrink-0 items-center gap-fib2 rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-semibold capitalize text-ink-700">
               {member.role === "owner" ? (
-                <Crown className="h-3.5 w-3.5 text-accent-600" />
+                <Crown className="h-3.5 w-3.5 text-accent-700" />
               ) : (
                 <UserRound className="h-3.5 w-3.5" />
               )}

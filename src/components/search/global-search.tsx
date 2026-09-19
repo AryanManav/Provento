@@ -187,7 +187,7 @@ export function GlobalSearch({ role }: { role: UserRole }) {
         className={cn(
           "flex h-9 items-center gap-2 rounded-lg border px-2.5 transition-colors",
           open
-            ? "border-brand-400 bg-white ring-2 ring-brand-100"
+            ? "border-brand-400 bg-surface ring-2 ring-brand-100"
             : "border-line bg-ink-50 hover:border-ink-300"
         )}
       >
@@ -235,7 +235,7 @@ export function GlobalSearch({ role }: { role: UserRole }) {
             <X className="h-3.5 w-3.5" />
           </button>
         ) : (
-          <kbd className="hidden rounded border border-line bg-white px-1.5 font-mono text-2xs text-ink-400 lg:inline">
+          <kbd className="hidden rounded border border-line bg-surface px-1.5 font-mono text-2xs text-ink-400 lg:inline">
             /
           </kbd>
         )}
@@ -246,7 +246,7 @@ export function GlobalSearch({ role }: { role: UserRole }) {
           id={listId}
           role="listbox"
           aria-label="Search suggestions and results"
-          className="absolute left-0 top-full z-50 mt-2 w-[min(36rem,calc(100vw-2rem))] animate-fade-in overflow-hidden rounded-xl border border-line bg-white shadow-lg"
+          className="absolute left-0 top-full z-50 mt-2 w-[min(36rem,calc(100vw-2rem))] animate-fade-in overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <div className="max-h-[70vh] overflow-y-auto p-2">
             {trimmed.length < 2 ? (

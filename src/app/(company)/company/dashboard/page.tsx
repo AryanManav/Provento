@@ -131,9 +131,9 @@ export default async function CompanyDashboardPage() {
       </header>
 
       {stats.totalProjects === 0 ? (
-        <section className="rounded-xl border border-line bg-white p-6">
+        <section className="rounded-xl border border-line bg-surface p-6">
           <p className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-            <Sparkles className="h-4 w-4 text-brand-600" aria-hidden />
+            <Sparkles className="h-4 w-4 text-brand-700" aria-hidden />
             Find talent through real work
           </p>
           <ol className="mt-5 grid gap-4 md:grid-cols-3">
@@ -164,7 +164,7 @@ export default async function CompanyDashboardPage() {
         <>
           <nav
             aria-label="Pipeline at a glance"
-            className="grid grid-cols-2 divide-line overflow-hidden rounded-xl border border-line bg-white sm:grid-cols-5 sm:divide-x"
+            className="grid grid-cols-2 divide-line overflow-hidden rounded-xl border border-line bg-surface sm:grid-cols-5 sm:divide-x"
           >
             {metrics.map((metric) => (
               <Link
@@ -195,7 +195,7 @@ export default async function CompanyDashboardPage() {
               )}
             </div>
             {attention.length === 0 ? (
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-dashed border-ink-200 bg-white px-4 py-5">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-dashed border-ink-200 bg-surface px-4 py-5">
                 <p className="text-sm text-ink-600">
                   You&apos;re all caught up. New applications and submitted work will show
                   here first.
@@ -225,7 +225,7 @@ export default async function CompanyDashboardPage() {
                 </Link>
               </div>
               {evaluations.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-ink-200 bg-white px-4 py-5 text-sm text-ink-500">
+                <p className="rounded-xl border border-dashed border-ink-200 bg-surface px-4 py-5 text-sm text-ink-500">
                   No one is building for you right now. Select a candidate from an
                   application to start a paid evaluation.
                 </p>
@@ -239,11 +239,11 @@ export default async function CompanyDashboardPage() {
                 Recent activity
               </h2>
               {notifications.recent.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-ink-200 bg-white px-4 py-5 text-sm text-ink-500">
+                <p className="rounded-xl border border-dashed border-ink-200 bg-surface px-4 py-5 text-sm text-ink-500">
                   Applications, questions and submissions appear here as they happen.
                 </p>
               ) : (
-                <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+                <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
                   {notifications.recent.slice(0, 6).map((item) => {
                     const body = (
                       <>

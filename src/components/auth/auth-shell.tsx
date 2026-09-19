@@ -37,7 +37,7 @@ export function AuthShell({
               {switchPrompt}{" "}
               <Link
                 href={switchHref}
-                className="font-semibold text-brand-600 underline underline-offset-4"
+                className="font-semibold text-brand-700 underline underline-offset-4"
               >
                 {switchLabel}
               </Link>

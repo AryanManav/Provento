@@ -25,8 +25,8 @@ export function AuthAside({
 
       <div className="relative flex h-full flex-col justify-center gap-fib7 px-fib8 py-fib9">
         {/* Evidence card */}
-        <div className="w-[19rem] rounded-2xl bg-white p-fib6 shadow-xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">
+        <div className="w-[19rem] rounded-2xl bg-surface p-fib6 shadow-xl">
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">
             Verified record
           </p>
           <p className="mt-fib4 text-3xl font-semibold text-ink-900">4 / 4</p>
@@ -48,13 +48,13 @@ export function AuthAside({
           </div>
 
           <div className="mt-fib5 flex items-center gap-fib4 border-t border-line pt-fib5">
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
+            <TrendingUp className="h-4 w-4 text-emerald-700" />
             <p className="text-xs font-medium text-ink-600">Delivered before deadline</p>
           </div>
         </div>
 
         {/* Message card */}
-        <div className="w-[24rem] rounded-2xl bg-white p-fib7 shadow-xl">
+        <div className="w-[24rem] rounded-2xl bg-surface p-fib7 shadow-xl">
           <div className="flex items-start justify-between gap-fib6">
             <div className="flex-1 space-y-fib4" aria-hidden="true">
               <span className="block h-2 w-16 rounded-full bg-brand-600" />

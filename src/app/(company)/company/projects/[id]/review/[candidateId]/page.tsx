@@ -53,7 +53,7 @@ export default async function CandidateEvaluationPage({
       <MarkNotificationsRead
         scopes={[{ link: reviewPath }, { link: `/company/projects/${id}/review` }]}
       />
-      <Link href={`/company/projects/${id}`} className="text-sm text-indigo-600">
+      <Link href={`/company/projects/${id}`} className="text-sm text-indigo-700">
         ← Applicants
       </Link>
 
@@ -72,7 +72,7 @@ export default async function CandidateEvaluationPage({
       {selected.length > 1 && (
         <nav
           aria-label="Selected candidates"
-          className="flex flex-wrap gap-fib3 rounded-xl border border-line bg-white p-fib3"
+          className="flex flex-wrap gap-fib3 rounded-xl border border-line bg-surface p-fib3"
         >
           {selected.map((item) => (
             <Link
@@ -95,7 +95,7 @@ export default async function CandidateEvaluationPage({
       )}
 
       <>
-        <section className="rounded-xl border bg-white p-5">
+        <section className="rounded-xl border bg-surface p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Candidate under evaluation
           </h2>
@@ -122,7 +122,7 @@ export default async function CandidateEvaluationPage({
           viewer="company"
         />
 
-        <section className="rounded-xl border bg-white p-5 space-y-3">
+        <section className="rounded-xl border bg-surface p-5 space-y-3">
           <h2 className="text-lg font-semibold">
             Submitted work ({evaluation.submissions.length})
           </h2>
@@ -150,7 +150,7 @@ export default async function CandidateEvaluationPage({
                   href={submission.repositoryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-sm text-indigo-600 hover:underline break-all"
+                  className="block text-sm text-indigo-700 hover:underline break-all"
                 >
                   {submission.repositoryUrl}
                 </a>
@@ -160,7 +160,7 @@ export default async function CandidateEvaluationPage({
                     href={submission.deploymentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-sm text-indigo-600 hover:underline break-all"
+                    className="block text-sm text-indigo-700 hover:underline break-all"
                   >
                     {submission.deploymentUrl}
                   </a>
@@ -194,7 +194,7 @@ export default async function CandidateEvaluationPage({
           )}
         </section>
 
-        <section className="rounded-xl border bg-white p-5 space-y-4">
+        <section className="rounded-xl border bg-surface p-5 space-y-4">
           <h2 className="text-lg font-semibold">Evaluation</h2>
           {evaluation.feedback ? (
             <div className="space-y-2 text-sm">
@@ -231,7 +231,7 @@ export default async function CandidateEvaluationPage({
         </section>
 
         {evaluation.purpose === "hire" && (
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-surface p-5 space-y-4">
             <h2 className="text-lg font-semibold">Outcome</h2>
             {evaluation.outcome ? (
               <div className="text-sm space-y-1">

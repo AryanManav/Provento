@@ -24,7 +24,7 @@ export default async function CreateProjectPage({
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href="/company/projects" className="text-sm text-indigo-600">
+        <Link href="/company/projects" className="text-sm text-indigo-700">
           ← Projects
         </Link>
         <h1 className="text-2xl font-semibold mt-2">Create paid evaluation project</h1>
@@ -32,7 +32,7 @@ export default async function CreateProjectPage({
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
       <form
         action={createProjectAction}
-        className="rounded-xl border bg-white p-6 space-y-5"
+        className="rounded-xl border bg-surface p-6 space-y-5"
       >
         <Input name="title" placeholder="Project title" required />
         <div className="space-y-fib2">
@@ -44,7 +44,7 @@ export default async function CreateProjectPage({
             name="category"
             required
             defaultValue=""
-            className="h-10 w-full rounded-lg border border-line bg-white px-fib4 text-sm"
+            className="h-10 w-full rounded-lg border border-line bg-surface px-fib4 text-sm"
           >
             <option value="" disabled>
               Choose a topic

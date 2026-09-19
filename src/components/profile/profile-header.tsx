@@ -46,7 +46,7 @@ export function ProfileHeader({
   actions?: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-white">
+    <section className="overflow-hidden rounded-xl border border-line bg-surface">
       {bannerUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={bannerUrl} alt="" className="h-28 w-full object-cover sm:h-36" />
@@ -62,7 +62,7 @@ export function ProfileHeader({
             name={name}
             src={imageUrl}
             className={cn(
-              "h-20 w-20 text-xl ring-4 ring-white",
+              "h-20 w-20 text-xl ring-4 ring-surface",
               shape === "round" ? "rounded-full" : "rounded-xl"
             )}
           />

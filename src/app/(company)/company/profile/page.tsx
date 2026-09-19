@@ -33,7 +33,7 @@ export default async function CompanyProfilePage({
       <div className="grid items-start gap-fib6 lg:grid-cols-3">
         <form
           action={saveCompanyProfileAction}
-          className="space-y-5 rounded-xl border border-line bg-white p-5 lg:col-span-2"
+          className="space-y-5 rounded-xl border border-line bg-surface p-5 lg:col-span-2"
         >
           <div>
             <h2 className="text-base font-semibold text-ink-900">Basics</h2>
@@ -133,7 +133,7 @@ export default async function CompanyProfilePage({
         </form>
 
         <aside className="space-y-6">
-          <section className="rounded-xl border border-line bg-white p-5">
+          <section className="rounded-xl border border-line bg-surface p-5">
             <h2 className="text-sm font-semibold text-ink-900">Logo</h2>
             <p className="mt-0.5 text-xs text-ink-500">Square, PNG or JPG, up to 2 MB.</p>
             <div className="mt-4">
@@ -150,10 +150,10 @@ export default async function CompanyProfilePage({
               </p>
             )}
           </section>
-          <section className="space-y-4 rounded-xl border border-line bg-white p-5">
+          <section className="space-y-4 rounded-xl border border-line bg-surface p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-ink-900">Profile strength</h2>
-              <span className="text-sm font-semibold text-brand-600">
+              <span className="text-sm font-semibold text-brand-700">
                 {completeness.percent}%
               </span>
             </div>
@@ -182,7 +182,7 @@ export default async function CompanyProfilePage({
               Ready to hire?{" "}
               <Link
                 href="/company/projects/create"
-                className="font-semibold text-brand-600 hover:underline"
+                className="font-semibold text-brand-700 hover:underline"
               >
                 Post a paid project →
               </Link>

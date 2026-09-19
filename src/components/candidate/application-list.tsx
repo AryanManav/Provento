@@ -27,7 +27,7 @@ export function ApplicationList({
 }) {
   const columns = showNextAction ? COLUMNS_WITH_NEXT : COLUMNS;
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-white">
+    <div className="overflow-hidden rounded-xl border border-line bg-surface">
       <div
         aria-hidden
         className={cn(

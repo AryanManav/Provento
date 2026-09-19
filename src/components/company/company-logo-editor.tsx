@@ -30,7 +30,7 @@ export function CompanyLogoEditor({
         <Avatar
           name={name || "Company"}
           src={logoUrl}
-          className="h-24 w-24 rounded-2xl text-2xl ring-4 ring-white shadow-md"
+          className="h-24 w-24 rounded-2xl text-2xl ring-4 ring-surface shadow-md"
         />
         {editable && (
           <ProfileImageUpload
@@ -39,7 +39,7 @@ export function CompanyLogoEditor({
             label={logoUrl ? "Change logo" : "Upload logo"}
             onError={setError}
             save={saveCompanyLogoAction}
-            className="absolute inset-0 grid place-items-center rounded-2xl bg-ink-900/55 text-white opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+            className="absolute inset-0 grid place-items-center rounded-2xl bg-black/55 text-white opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
           >
             <Camera className="h-5 w-5" />
           </ProfileImageUpload>
@@ -50,14 +50,14 @@ export function CompanyLogoEditor({
             label="Remove logo"
             onError={setError}
             remove={removeCompanyLogoAction}
-            className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full border border-line bg-white text-ink-500 shadow-sm hover:text-rose-600"
+            className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full border border-line bg-surface text-ink-500 shadow-sm hover:text-rose-700"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </ProfileImageRemove>
         )}
       </div>
       {error && (
-        <p role="alert" className="max-w-[12rem] text-xs text-rose-600">
+        <p role="alert" className="max-w-[12rem] text-xs text-rose-700">
           {error}
         </p>
       )}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { dashboardFor } from "@/lib/constants";
 import { Logo } from "@/components/layout/logo";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import type { UserRole } from "@/lib/types/database.types";
 
 interface FooterLink {
@@ -63,7 +64,7 @@ export async function PublicFooter() {
   const columns = columnsFor(user?.role ?? null);
 
   return (
-    <footer className="border-t border-line bg-white">
+    <footer className="border-t border-line bg-surface">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_repeat(4,1fr)]">
         <div className="space-y-3">
           <Logo />
@@ -123,9 +124,10 @@ export async function PublicFooter() {
         </nav>
       </div>
       <div className="border-t border-line">
-        <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-400 sm:px-6">
-          © {new Date().getFullYear()} Trialent
-        </p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <p className="text-xs text-ink-400">© {new Date().getFullYear()} Trialent</p>
+          <ThemeSwitcher size="sm" />
+        </div>
       </div>
     </footer>
   );

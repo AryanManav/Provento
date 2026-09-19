@@ -53,9 +53,9 @@ function Fact({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-900">
       {ok ? (
-        <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+        <Check className="h-4 w-4 text-emerald-700" aria-hidden />
       ) : (
-        <X className="h-4 w-4 text-rose-600" aria-hidden />
+        <X className="h-4 w-4 text-rose-700" aria-hidden />
       )}
       {label}
     </span>
@@ -82,7 +82,7 @@ export function EvaluationCard({
   return (
     <section
       aria-labelledby="evaluation-title"
-      className="overflow-hidden rounded-xl border border-line bg-white"
+      className="overflow-hidden rounded-xl border border-line bg-surface"
     >
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
         <div>

@@ -21,7 +21,7 @@ export function AttachmentList({ attachments }: { attachments: AttachmentView[] 
           {file.url ? (
             <a
               href={file.url}
-              className="inline-flex shrink-0 items-center gap-fib2 font-semibold text-brand-600 hover:underline"
+              className="inline-flex shrink-0 items-center gap-fib2 font-semibold text-brand-700 hover:underline"
             >
               <Download className="h-4 w-4" />
               Download

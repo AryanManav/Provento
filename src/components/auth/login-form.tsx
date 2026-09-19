@@ -81,7 +81,7 @@ export function LoginForm({ providers }: { providers: OAuthProviderStatus }) {
             ) : (
               <>
                 <span className="flex-1">Sign in</span>
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-surface/20 transition-transform group-hover:translate-x-0.5">
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </>
@@ -93,7 +93,7 @@ export function LoginForm({ providers }: { providers: OAuthProviderStatus }) {
           Joining as a startup?{" "}
           <Link
             href="/signup?role=company"
-            className="font-semibold text-brand-600 underline underline-offset-4"
+            className="font-semibold text-brand-700 underline underline-offset-4"
           >
             Create a company account
           </Link>

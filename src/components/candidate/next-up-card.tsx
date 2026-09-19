@@ -23,7 +23,7 @@ export function NextUpCard({ action }: { action: NextAction }) {
     <section
       aria-labelledby="next-up-title"
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-white",
+        "relative overflow-hidden rounded-xl border bg-surface",
         urgent ? "border-brand-200" : "border-line"
       )}
     >
@@ -36,7 +36,7 @@ export function NextUpCard({ action }: { action: NextAction }) {
             className={cn(
               "grid h-10 w-10 shrink-0 place-items-center rounded-lg border",
               urgent
-                ? "border-brand-200 bg-brand-50 text-brand-600"
+                ? "border-brand-200 bg-brand-50 text-brand-700"
                 : "border-line bg-ink-50 text-ink-500"
             )}
           >

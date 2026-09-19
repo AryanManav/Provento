@@ -39,7 +39,7 @@ export default async function CompanyDirectoryPage() {
             <Link
               key={company.id}
               href={companyProfilePath(company.id)}
-              className="group flex flex-col gap-fib4 rounded-2xl border border-line bg-white p-fib6 shadow-xs transition-all hover:border-brand-300 hover:shadow-md"
+              className="group flex flex-col gap-fib4 rounded-2xl border border-line bg-surface p-fib6 shadow-xs transition-all hover:border-brand-300 hover:shadow-md"
             >
               <div className="flex items-center gap-fib4">
                 <Avatar
@@ -51,7 +51,7 @@ export default async function CompanyDirectoryPage() {
                   <p className="flex items-center gap-fib2 truncate font-semibold text-ink-900 group-hover:text-brand-700">
                     {company.name}
                     {company.verified && (
-                      <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-700" />
                     )}
                   </p>
                   <p className="truncate text-xs text-ink-500">

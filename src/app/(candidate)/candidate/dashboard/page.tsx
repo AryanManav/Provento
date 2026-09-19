@@ -187,7 +187,7 @@ export default async function CandidateDashboardPage({
                 description="Startups post new paid projects regularly. Check back soon."
               />
             ) : (
-              <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+              <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
                 {openProjects.map((project) => (
                   <li key={project.id}>
                     <Link

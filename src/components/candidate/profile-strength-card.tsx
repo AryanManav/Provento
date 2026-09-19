@@ -18,7 +18,7 @@ export function ProfileStrengthCard({
   return (
     <section
       aria-labelledby="profile-strength"
-      className="rounded-xl border border-line bg-white p-4"
+      className="rounded-xl border border-line bg-surface p-4"
     >
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="profile-strength" className="text-sm font-semibold text-ink-900">
@@ -42,7 +42,7 @@ export function ProfileStrengthCard({
         {checklist.map((item) => (
           <li key={item.label} className="flex items-center gap-2 text-sm">
             {item.done ? (
-              <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+              <Check className="h-4 w-4 text-emerald-700" aria-hidden />
             ) : (
               <Circle className="h-4 w-4 text-ink-300" aria-hidden />
             )}

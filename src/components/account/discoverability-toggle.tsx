@@ -55,7 +55,7 @@ export function DiscoverabilityToggle({
         >
           <span
             className={cn(
-              "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+              "absolute top-0.5 h-5 w-5 rounded-full bg-surface shadow transition-all",
               on ? "left-[1.375rem]" : "left-0.5"
             )}
           />
@@ -64,13 +64,13 @@ export function DiscoverabilityToggle({
       {on && profileHref && (
         <Link
           href={profileHref}
-          className="text-sm font-semibold text-brand-600 hover:underline"
+          className="text-sm font-semibold text-brand-700 hover:underline"
         >
           See your public profile →
         </Link>
       )}
       {error && (
-        <p role="alert" className="text-xs text-rose-600">
+        <p role="alert" className="text-xs text-rose-700">
           {error}
         </p>
       )}

@@ -59,7 +59,8 @@ export function StatCard({
     </>
   );
 
-  const className = "block rounded-xl border border-line bg-white p-4 transition-colors";
+  const className =
+    "block rounded-xl border border-line bg-surface p-4 transition-colors";
   return href ? (
     <Link
       href={href}

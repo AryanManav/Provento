@@ -228,7 +228,7 @@ export default async function CandidateApplicationsPage({
           actionHref={tab === "all" || tab === "pending" ? "/projects" : undefined}
         />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
           {shown.map((application) => (
             <ApplicationRow
               key={application.id}

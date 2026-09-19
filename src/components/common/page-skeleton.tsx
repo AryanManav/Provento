@@ -17,7 +17,7 @@ export function PageSkeleton({ rows = 4 }: { rows?: number }) {
         {Array.from({ length: 4 }, (_, index) => (
           <div
             key={index}
-            className="space-y-3 rounded-xl border border-line bg-white p-4"
+            className="space-y-3 rounded-xl border border-line bg-surface p-4"
           >
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-7 w-16" />
@@ -25,7 +25,7 @@ export function PageSkeleton({ rows = 4 }: { rows?: number }) {
           </div>
         ))}
       </div>
-      <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+      <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
         {Array.from({ length: rows }, (_, index) => (
           <div key={index} className="flex items-center gap-3 px-4 py-3.5">
             <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />

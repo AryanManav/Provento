@@ -10,7 +10,7 @@ export default async function SignupPage() {
     <Suspense
       fallback={
         <div className="grid min-h-screen place-items-center">
-          <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
         </div>
       }
     >

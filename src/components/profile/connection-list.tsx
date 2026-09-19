@@ -91,7 +91,7 @@ export function ConnectionList({
               name="q"
               defaultValue={query}
               placeholder={`Search ${direction === "followers" ? "followers" : "following"}`}
-              className="h-9 w-full rounded-lg border border-line bg-white pl-9 pr-3 text-sm outline-none placeholder:text-ink-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="h-9 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm outline-none placeholder:text-ink-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
           </label>
         </form>
@@ -117,7 +117,7 @@ export function ConnectionList({
           }
         />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
           {shown.map((connection) => {
             const href =
               connection.kind === "company"

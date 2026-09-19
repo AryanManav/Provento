@@ -35,7 +35,7 @@ const CATEGORY_ORDER = Object.keys(PROJECT_CATEGORIES) as ProjectCategory[];
 const PREVIEW = 3;
 
 const fieldClass =
-  "h-9 w-full rounded-lg border border-line bg-white px-2.5 text-sm text-ink-800 outline-none transition-colors placeholder:text-ink-400 hover:border-ink-300 focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-100";
+  "h-9 w-full rounded-lg border border-line bg-surface px-2.5 text-sm text-ink-800 outline-none transition-colors placeholder:text-ink-400 hover:border-ink-300 focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-100";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -96,7 +96,7 @@ function ResultGroup({
           </Link>
         )}
       </div>
-      <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+      <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
         {children}
       </ul>
     </section>
@@ -267,7 +267,7 @@ export default async function SearchPage({
   const noResults = total === 0 && (searching || browsing);
 
   return (
-    <div className="bg-ink-50">
+    <div className="bg-canvas">
       <div className="mx-auto max-w-6xl space-y-5 px-4 py-8 sm:px-6">
         <form action="/search" role="search" className="space-y-4">
           {type !== "all" && <input type="hidden" name="type" value={type} />}
@@ -284,7 +284,7 @@ export default async function SearchPage({
                 defaultValue={query}
                 autoFocus={!searching && !browsing}
                 placeholder="Search projects, candidates, companies or skills"
-                className="h-11 w-full rounded-xl border border-line bg-white pl-11 pr-4 text-base text-ink-900 shadow-xs outline-none placeholder:text-ink-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                className="h-11 w-full rounded-xl border border-line bg-surface pl-11 pr-4 text-base text-ink-900 shadow-xs outline-none placeholder:text-ink-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <Button type="submit" size="lg">
@@ -318,12 +318,12 @@ export default async function SearchPage({
                 />
                 <label
                   htmlFor="filters-toggle"
-                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium text-ink-800 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400 lg:hidden"
+                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-ink-800 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400 lg:hidden"
                 >
                   <SlidersHorizontal className="h-4 w-4 text-ink-400" aria-hidden />
                   Filters
                 </label>
-                <div className="mt-2 hidden space-y-4 rounded-xl border border-line bg-white p-4 peer-checked:block lg:mt-0 lg:block">
+                <div className="mt-2 hidden space-y-4 rounded-xl border border-line bg-surface p-4 peer-checked:block lg:mt-0 lg:block">
                   <p className="hidden text-sm font-semibold text-ink-900 lg:block">
                     Filters
                   </p>
@@ -345,7 +345,7 @@ export default async function SearchPage({
             <div className={filters ? "space-y-6" : "space-y-6 lg:col-span-2"}>
               {!searching && type === "all" ? (
                 <div className="space-y-6">
-                  <section className="rounded-xl border border-line bg-white p-5">
+                  <section className="rounded-xl border border-line bg-surface p-5">
                     <p className="text-sm font-semibold text-ink-900">Try a search</p>
                     <ul className="mt-3 flex flex-wrap gap-2">
                       {SEARCH_SUGGESTIONS[user.role].map((term) => (

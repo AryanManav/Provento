@@ -27,7 +27,7 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
   const extra = project.stack.length - STACK_SHOWN;
 
   return (
-    <article className="group relative flex flex-col rounded-xl border border-line bg-white p-5 transition-[border-color,box-shadow] hover:border-ink-300 hover:shadow-md">
+    <article className="group relative flex flex-col rounded-xl border border-line bg-surface p-5 transition-[border-color,box-shadow] hover:border-ink-300 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <CompanyMark name={project.companyName || "Startup"} className="h-8 w-8" />

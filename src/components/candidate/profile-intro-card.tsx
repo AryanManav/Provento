@@ -94,7 +94,7 @@ export function ProfileIntroCard({
   ].filter((link): link is typeof link & { href: string } => Boolean(link.href));
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-line bg-white shadow-xs">
+    <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-xs">
       <div className="relative h-32 border-b border-line bg-brand-50 sm:h-44">
         {profile?.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -110,7 +110,7 @@ export function ProfileIntroCard({
               userId={user.id}
               label="Change banner"
               onError={setMediaError}
-              className="inline-flex items-center gap-fib3 rounded-lg bg-white/90 px-fib5 py-fib3 text-xs font-semibold text-ink-700 shadow-sm backdrop-blur transition-colors hover:bg-white"
+              className="inline-flex items-center gap-fib3 rounded-lg bg-surface/90 px-fib5 py-fib3 text-xs font-semibold text-ink-700 shadow-sm backdrop-blur transition-colors hover:bg-surface"
             >
               <ImagePlus className="h-4 w-4" />
               {profile?.bannerUrl ? "Change banner" : "Add banner"}
@@ -120,7 +120,7 @@ export function ProfileIntroCard({
                 kind="banner"
                 label="Remove banner"
                 onError={setMediaError}
-                className="inline-flex items-center rounded-lg bg-white/90 px-fib4 py-fib3 text-ink-500 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-rose-600"
+                className="inline-flex items-center rounded-lg bg-surface/90 px-fib4 py-fib3 text-ink-500 shadow-sm backdrop-blur transition-colors hover:bg-surface hover:text-rose-700"
               >
                 <Trash2 className="h-4 w-4" />
               </ProfileImageRemove>
@@ -137,7 +137,7 @@ export function ProfileIntroCard({
             <Avatar
               name={user.fullName}
               src={user.avatarUrl}
-              className="h-24 w-24 rounded-full border-4 border-white text-2xl"
+              className="h-24 w-24 rounded-full border-4 border-surface text-2xl"
             />
             {!readOnly && (
               <ProfileImageUpload
@@ -145,7 +145,7 @@ export function ProfileIntroCard({
                 userId={user.id}
                 label={user.avatarUrl ? "Change profile photo" : "Add profile photo"}
                 onError={setMediaError}
-                className="absolute -bottom-fib3 -right-fib3 grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-brand-600 text-white shadow-md transition-colors hover:bg-brand-700"
+                className="absolute -bottom-fib3 -right-fib3 grid h-9 w-9 place-items-center rounded-full border-2 border-surface bg-brand-600 text-white shadow-md transition-colors hover:bg-brand-700"
               >
                 <Camera className="h-4 w-4" />
               </ProfileImageUpload>
@@ -158,7 +158,7 @@ export function ProfileIntroCard({
                 <ProfileImageRemove
                   kind="avatar"
                   onError={setMediaError}
-                  className="text-xs font-semibold text-ink-400 transition-colors hover:text-rose-600"
+                  className="text-xs font-semibold text-ink-400 transition-colors hover:text-rose-700"
                 >
                   Remove photo
                 </ProfileImageRemove>
@@ -198,7 +198,7 @@ export function ProfileIntroCard({
               href={`https://github.com/${verifiedGithub}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-fib2 rounded-md bg-ink-900 px-fib5 py-fib2 text-xs font-semibold text-white hover:bg-ink-700"
+              className="inline-flex items-center gap-fib2 rounded-md bg-inverse px-fib5 py-fib2 text-xs font-semibold text-inverse-fg hover:bg-inverse/85"
             >
               <Github className="h-3.5 w-3.5" />
               Verified @{verifiedGithub}
@@ -212,7 +212,7 @@ export function ProfileIntroCard({
           <button
             type="button"
             onClick={() => setIsEditing(true)}
-            className="mt-fib4 flex items-center gap-fib3 rounded-lg border border-dashed border-ink-300 px-fib5 py-fib3 text-sm font-medium text-ink-500 transition-colors hover:border-brand-400 hover:text-brand-600"
+            className="mt-fib4 flex items-center gap-fib3 rounded-lg border border-dashed border-ink-300 px-fib5 py-fib3 text-sm font-medium text-ink-500 transition-colors hover:border-brand-400 hover:text-brand-700"
           >
             <Plus className="h-4 w-4" />
             Add a headline — e.g. Junior Backend Engineer · Node.js, PostgreSQL
@@ -247,7 +247,7 @@ export function ProfileIntroCard({
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-fib3 rounded-lg border border-line px-fib5 py-fib3 text-sm font-medium text-ink-700 transition-colors hover:border-brand-300 hover:text-brand-600"
+                  className="inline-flex items-center gap-fib3 rounded-lg border border-line px-fib5 py-fib3 text-sm font-medium text-ink-700 transition-colors hover:border-brand-300 hover:text-brand-700"
                 >
                   <Icon className="h-4 w-4" />
                   {link.label}
@@ -260,7 +260,7 @@ export function ProfileIntroCard({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="text-sm font-semibold text-brand-600 hover:underline"
+              className="text-sm font-semibold text-brand-700 hover:underline"
             >
               + Add your GitHub, LinkedIn and portfolio links
             </button>

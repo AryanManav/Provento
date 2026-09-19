@@ -26,13 +26,13 @@ export function Modal({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-950/50 p-fib5 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 dark:bg-black/65 p-fib5 backdrop-blur-sm sm:items-center">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "my-fib7 w-full overflow-hidden rounded-2xl border border-line bg-white shadow-lg",
+          "my-fib7 w-full overflow-hidden rounded-2xl border border-line bg-surface shadow-lg",
           size === "lg" ? "max-w-xl" : "max-w-md"
         )}
       >

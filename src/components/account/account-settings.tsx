@@ -28,7 +28,8 @@ import { DiscoverabilityToggle } from "@/components/account/discoverability-togg
 import { cn } from "@/lib/utils";
 import type { AccountSettingsView } from "@/lib/types/domain";
 import type { UserRole } from "@/lib/types/database.types";
-import type { LucideIcon } from "lucide-react";
+import { Palette, type LucideIcon } from "lucide-react";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 
 function Section({
   icon: Icon,
@@ -46,7 +47,7 @@ function Section({
   return (
     <section
       className={cn(
-        "grid gap-fib5 rounded-2xl border bg-white p-fib6 shadow-xs md:grid-cols-3",
+        "grid gap-fib5 rounded-2xl border bg-surface p-fib6 shadow-xs md:grid-cols-3",
         tone === "danger" ? "border-rose-200" : "border-line"
       )}
     >
@@ -132,7 +133,7 @@ function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
         {PASSWORD_RULES.map((rule) => (
           <li
             key={rule.id}
-            className={rule.test(password) ? "text-emerald-600" : "text-ink-400"}
+            className={rule.test(password) ? "text-emerald-700" : "text-ink-400"}
           >
             {rule.test(password) ? "✓" : "•"} {rule.label}
           </li>
@@ -300,6 +301,14 @@ export function AccountSettings({
             Your email is your sign-in and can&apos;t be changed here.
           </p>
         </div>
+      </Section>
+
+      <Section
+        icon={Palette}
+        title="Appearance"
+        description="Light, dark, or match your device. Saved in this browser."
+      >
+        <ThemeSwitcher />
       </Section>
 
       {settings.discoverable !== null && (

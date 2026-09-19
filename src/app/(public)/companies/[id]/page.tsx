@@ -25,7 +25,7 @@ export default async function CompanyPublicProfilePage({
   if (!company) notFound();
 
   return (
-    <div className="bg-ink-50">
+    <div className="bg-canvas">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <CompanyProfile
           company={company}

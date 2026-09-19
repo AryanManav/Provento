@@ -22,7 +22,7 @@ export default async function CompanyCulturePage({
   return (
     <form
       action={saveCompanyCultureAction}
-      className="space-y-fib6 rounded-2xl border border-line bg-white p-fib6 shadow-xs"
+      className="space-y-fib6 rounded-2xl border border-line bg-surface p-fib6 shadow-xs"
     >
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
       {saved && <StatusBanner tone="success">Culture and stack saved.</StatusBanner>}

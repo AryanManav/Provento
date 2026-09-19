@@ -91,7 +91,7 @@ export function NotificationBell({ initial }: { initial: NotificationSummary }) 
         <Bell className="h-4 w-4" aria-hidden />
         <CountBadge
           count={unread}
-          className="absolute -right-0.5 -top-0.5 ring-2 ring-white"
+          className="absolute -right-0.5 -top-0.5 ring-2 ring-surface"
         />
       </button>
 
@@ -99,7 +99,7 @@ export function NotificationBell({ initial }: { initial: NotificationSummary }) 
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-2 w-[22rem] animate-fade-in max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-white shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-[22rem] animate-fade-in max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <div className="flex items-center justify-between border-b border-line px-fib5 py-fib4">
             <p className="text-sm font-semibold text-ink-900">
@@ -112,7 +112,7 @@ export function NotificationBell({ initial }: { initial: NotificationSummary }) 
               <button
                 type="button"
                 onClick={() => void markNotificationsRead([{ all: true }])}
-                className="flex items-center gap-fib2 text-xs font-semibold text-brand-600 hover:text-brand-700"
+                className="flex items-center gap-fib2 text-xs font-semibold text-brand-700 hover:text-brand-700"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 Mark all read

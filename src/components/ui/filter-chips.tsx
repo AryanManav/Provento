@@ -41,8 +41,8 @@ export function FilterChips({
             className={cn(
               "shrink-0 rounded-md border px-2.5 py-1 text-sm transition-colors",
               current
-                ? "border-ink-900 bg-ink-900 font-medium text-white"
-                : "border-line bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900"
+                ? "border-inverse bg-inverse font-medium text-inverse-fg"
+                : "border-line bg-surface text-ink-600 hover:border-ink-300 hover:text-ink-900"
             )}
           >
             {chip.label}

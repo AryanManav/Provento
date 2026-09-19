@@ -27,7 +27,10 @@ export function SectionCard({
   return (
     <section
       id={id}
-      className={cn("scroll-mt-20 rounded-xl border border-line bg-white p-5", className)}
+      className={cn(
+        "scroll-mt-20 rounded-xl border border-line bg-surface p-5",
+        className
+      )}
     >
       <header className="flex items-center justify-between gap-4 border-b border-line pb-3">
         <div className="flex min-w-0 items-center gap-2">

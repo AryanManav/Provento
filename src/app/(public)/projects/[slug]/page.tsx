@@ -127,7 +127,7 @@ export default async function ProjectDetailPage({
           <RoleBadge role="company" size="sm" />
           {project.company.verified && (
             <BadgeCheck
-              className="h-4 w-4 text-emerald-600"
+              className="h-4 w-4 text-emerald-700"
               aria-label="Verified company"
             />
           )}
@@ -139,10 +139,10 @@ export default async function ProjectDetailPage({
         <p className="mt-3 max-w-3xl text-base text-ink-600">{project.description}</p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <StatusBadge tone={availability.tone} label={availability.label} />
-          <span className="rounded-md border border-line bg-white px-2 py-0.5 text-xs font-medium text-ink-600">
+          <span className="rounded-md border border-line bg-surface px-2 py-0.5 text-xs font-medium text-ink-600">
             {purposeLabel(project)}
           </span>
-          <span className="rounded-md border border-line bg-white px-2 py-0.5 text-xs font-medium text-ink-600">
+          <span className="rounded-md border border-line bg-surface px-2 py-0.5 text-xs font-medium text-ink-600">
             {WORK_MODES[project.workMode].label}
           </span>
         </div>
@@ -195,7 +195,7 @@ export default async function ProjectDetailPage({
             icon={Scale}
             description={`${company} published these criteria before anyone applied. Every submission is judged against them.`}
           >
-            <div className="rounded-xl border border-line bg-white">
+            <div className="rounded-xl border border-line bg-surface">
               {project.evaluationCriteria.length > 0 && (
                 <div className="border-b border-line p-4">
                   <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
@@ -299,7 +299,7 @@ export default async function ProjectDetailPage({
                 </Link>
               </p>
             ) : project.availability === "open" ? (
-              <div className="rounded-xl border border-line bg-white p-5">
+              <div className="rounded-xl border border-line bg-surface p-5">
                 <ApplicationForm projectId={project.id} />
               </div>
             ) : (
@@ -317,7 +317,7 @@ export default async function ProjectDetailPage({
         </div>
 
         <aside className="lg:sticky lg:top-20">
-          <div className="rounded-xl border border-line bg-white p-5">
+          <div className="rounded-xl border border-line bg-surface p-5">
             <p className="text-xs text-ink-500">Project fee</p>
             <p className="tabular mt-1 text-3xl font-semibold text-ink-900">
               {formatCurrency(project.paymentAmount, project.currency)}

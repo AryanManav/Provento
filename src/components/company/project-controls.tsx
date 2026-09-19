@@ -52,7 +52,7 @@ export function ProjectControls({
   const canDelete = applicationCount === 0;
 
   return (
-    <div className="space-y-fib4 rounded-2xl border border-line bg-white p-fib5">
+    <div className="space-y-fib4 rounded-2xl border border-line bg-surface p-fib5">
       <div className="flex flex-wrap items-center justify-between gap-fib4">
         <p className="flex items-center gap-fib3 text-sm">
           {isPrivate ? (
@@ -67,7 +67,7 @@ export function ProjectControls({
             </>
           ) : (
             <>
-              <Eye className="h-4 w-4 text-emerald-600" />
+              <Eye className="h-4 w-4 text-emerald-700" />
               <span>
                 <span className="font-semibold text-ink-900">Public.</span>{" "}
                 <span className="text-ink-500">
@@ -145,7 +145,7 @@ export function ProjectControls({
               rows={3}
               maxLength={1000}
               placeholder="e.g. We've filled the role — thank you for applying."
-              className="w-full rounded-lg border border-rose-200 bg-white p-fib4 text-sm"
+              className="w-full rounded-lg border border-rose-200 bg-surface p-fib4 text-sm"
             />
           </label>
           <div className="flex gap-fib3">

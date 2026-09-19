@@ -13,12 +13,12 @@ export function UpdatesPanel({
   emptyText: string;
 }) {
   return (
-    <section className="rounded-2xl border border-line bg-white">
+    <section className="rounded-2xl border border-line bg-surface">
       <div className="flex items-center gap-fib4 border-b border-line px-fib6 py-fib5">
         <span
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full",
-            items.length > 0 ? "bg-accent-50 text-accent-600" : "bg-ink-100 text-ink-400"
+            items.length > 0 ? "bg-accent-50 text-accent-700" : "bg-ink-100 text-ink-400"
           )}
         >
           <BellRing className="h-4 w-4" />

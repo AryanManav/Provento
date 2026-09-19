@@ -53,7 +53,7 @@ export default async function ApplicantProfilePage({
       <MarkNotificationsRead scopes={[{ link: selfPath }]} />
       <Link
         href={`/company/projects/${project.id}`}
-        className="text-sm font-medium text-brand-600 hover:underline"
+        className="text-sm font-medium text-brand-700 hover:underline"
       >
         ← All applicants for {project.title}
       </Link>

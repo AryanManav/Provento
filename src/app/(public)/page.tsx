@@ -112,7 +112,7 @@ function CheckList({
       {items.map((item) => (
         <li key={item} className="flex items-start gap-2.5 text-sm text-ink-700">
           {tone === "brand" ? (
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" aria-hidden />
           ) : (
             <Minus className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden />
           )}
@@ -149,9 +149,13 @@ export default async function LandingPage({
           aria-hidden
           className="absolute inset-0 bg-line-grid opacity-40 mask-radial"
         />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 hidden h-[34rem] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgb(var(--brand-600)/0.14),transparent)] dark:block"
+        />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:py-24">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-700">
               Project-based talent evaluation
             </p>
             <h1 className="mt-4 text-balance text-4xl font-semibold text-ink-950 sm:text-5xl lg:text-6xl">
@@ -177,7 +181,7 @@ export default async function LandingPage({
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
               {HERO_POINTS.map((point) => (
                 <li key={point} className="flex items-center gap-2 text-sm text-ink-600">
-                  <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                  <Check className="h-4 w-4 text-emerald-700" aria-hidden />
                   {point}
                 </li>
               ))}
@@ -188,7 +192,7 @@ export default async function LandingPage({
       </section>
 
       {/* Roles band */}
-      <section className="border-b border-line bg-ink-50">
+      <section className="border-b border-line bg-canvas">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:gap-10">
           <p className="shrink-0 text-sm font-medium text-ink-600">
             Built for companies that value demonstrated ability — across
@@ -197,7 +201,7 @@ export default async function LandingPage({
             {ROLES.map((role) => (
               <li
                 key={role}
-                className="rounded-md border border-line bg-white px-2.5 py-1 text-xs font-medium text-ink-600"
+                className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-600"
               >
                 {role}
               </li>
@@ -214,7 +218,7 @@ export default async function LandingPage({
           trailing="Real projects show you how they work."
         />
         <div className="mt-12 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-line bg-white p-6">
+          <div className="rounded-xl border border-line bg-surface p-6">
             <div className="flex items-center gap-2.5">
               <span className="grid h-8 w-8 place-items-center rounded-md border border-line bg-ink-50 text-ink-500">
                 <FileSearch className="h-4 w-4" aria-hidden />
@@ -227,7 +231,7 @@ export default async function LandingPage({
           </div>
           <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-6">
             <div className="flex items-center gap-2.5">
-              <span className="grid h-8 w-8 place-items-center rounded-md border border-brand-200 bg-white text-brand-600">
+              <span className="grid h-8 w-8 place-items-center rounded-md border border-brand-200 bg-surface text-brand-700">
                 <Target className="h-4 w-4" aria-hidden />
               </span>
               <h3 className="text-base font-semibold text-ink-900">
@@ -242,7 +246,7 @@ export default async function LandingPage({
       </section>
 
       {/* How it works */}
-      <section className="border-y border-line bg-ink-50">
+      <section className="border-y border-line bg-canvas">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
           <SectionHeading
             chip="How it works"
@@ -255,13 +259,13 @@ export default async function LandingPage({
               return (
                 <li
                   key={step.title}
-                  className="rounded-xl border border-line bg-white p-5"
+                  className="rounded-xl border border-line bg-surface p-5"
                 >
                   <div className="flex items-center justify-between">
                     <span className="tabular font-mono text-xs font-medium text-ink-400">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <Icon className="h-4 w-4 text-brand-600" aria-hidden />
+                    <Icon className="h-4 w-4 text-brand-700" aria-hidden />
                   </div>
                   <h3 className="mt-6 text-sm font-semibold text-ink-900">
                     {step.title}
@@ -277,7 +281,7 @@ export default async function LandingPage({
       {/* Audiences */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="flex flex-col rounded-xl border border-line bg-white p-8">
+          <div className="flex flex-col rounded-xl border border-line bg-surface p-8">
             <span className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-ink-50 text-ink-600">
               <Users className="h-4 w-4" aria-hidden />
             </span>
@@ -297,11 +301,11 @@ export default async function LandingPage({
               </Button>
             </Link>
           </div>
-          <div className="flex flex-col rounded-xl border border-ink-800 bg-ink-900 p-8 text-white">
-            <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink-700 bg-ink-800 text-ink-200">
+          <div className="flex flex-col rounded-xl border border-night-line bg-night p-8 text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-lg border border-white/15 bg-white/5 text-white/80">
               <ShieldCheck className="h-4 w-4" aria-hidden />
             </span>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-ink-400">
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-white/55">
               For startups
             </p>
             <h3 className="mt-2 text-2xl font-semibold">
@@ -309,14 +313,14 @@ export default async function LandingPage({
             </h3>
             <ul className="mt-6 flex-1 space-y-2.5">
               {FOR_STARTUPS.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-ink-200">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" aria-hidden />
+                <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden />
                   {item}
                 </li>
               ))}
             </ul>
             <Link href="/signup?role=company" className="mt-8">
-              <Button className="bg-white text-ink-900 hover:bg-ink-100 active:bg-ink-200">
+              <Button className="bg-white text-night hover:bg-white/90 active:bg-white/80">
                 Post a project
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Button>
@@ -326,7 +330,7 @@ export default async function LandingPage({
       </section>
 
       {/* Evidence */}
-      <section className="border-y border-line bg-ink-50">
+      <section className="border-y border-line bg-canvas">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-24">
           <div>
             <SectionHeading
@@ -337,18 +341,18 @@ export default async function LandingPage({
             />
             <ul className="mt-6 space-y-3 text-sm text-ink-600">
               <li className="flex gap-2.5">
-                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
                 Accepted work becomes verified history on the candidate&apos;s profile.
               </li>
               <li className="flex gap-2.5">
-                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
                 Every decision comes with a written message to the candidate.
               </li>
             </ul>
           </div>
           <article
             aria-label="Example evaluation"
-            className="rounded-xl border border-line bg-white shadow-md"
+            className="rounded-xl border border-line bg-surface shadow-md"
           >
             <header className="flex items-center justify-between border-b border-line px-5 py-4">
               <div>
@@ -398,7 +402,7 @@ export default async function LandingPage({
       {/* Payment */}
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-24">
         <div className="order-2 lg:order-1">
-          <div className="rounded-xl border border-line bg-white p-6 shadow-md">
+          <div className="rounded-xl border border-line bg-surface p-6 shadow-md">
             <div className="flex items-center gap-2.5">
               <span className="grid h-8 w-8 place-items-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700">
                 <IndianRupee className="h-4 w-4" aria-hidden />
@@ -441,16 +445,16 @@ export default async function LandingPage({
 
       {/* Final CTA */}
       <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="overflow-hidden rounded-2xl bg-ink-900 px-6 py-14 text-center sm:px-12">
+        <div className="overflow-hidden rounded-2xl border border-night-line bg-night px-6 py-14 text-center sm:px-12">
           <h2 className="mx-auto max-w-2xl text-balance text-3xl font-semibold text-white sm:text-4xl">
             Stop guessing. See how candidates actually work.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-ink-300">
+          <p className="mx-auto mt-4 max-w-xl text-base text-white/70">
             Post a paid project, or find one that shows what you can build.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/projects">
-              <Button size="lg" className="bg-white text-ink-900 hover:bg-ink-100">
+              <Button size="lg" className="bg-white text-night hover:bg-white/90">
                 Browse projects
               </Button>
             </Link>
@@ -458,7 +462,7 @@ export default async function LandingPage({
               <Button
                 size="lg"
                 variant="outline"
-                className="border-ink-600 bg-transparent text-white hover:border-ink-500 hover:bg-ink-800"
+                className="border-white/25 bg-transparent text-white hover:border-white/40 hover:bg-white/10"
               >
                 For startups
               </Button>

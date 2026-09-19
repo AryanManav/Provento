@@ -1,72 +1,32 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Slate greys carry the interface; each colour has one job so it always means
- * something:
+ * Colours come from CSS variables in src/app/tokens.css, one set for light and
+ * one for dark, so every class (bg-ink-50, text-brand-700, …) follows the
+ * theme. Each colour has one job so it always means something:
  *   brand (indigo)   — every action: buttons, links, active navigation
- *   money (teal)     — fees, success, "applications open", accepted work
+ *   money (teal)     — fees, success, accepted work
  *   accent (orange)  — attention: unread counts, updates, highlights
  *   rose             — danger only (delete, reject, errors)
  *   amber            — waiting (under review)
+ *   sky              — information
  */
-const indigo = {
-  50: "#eef2ff",
-  100: "#e0e7ff",
-  200: "#c7d2fe",
-  300: "#a5b4fc",
-  400: "#818cf8",
-  500: "#6366f1",
-  600: "#4f46e5",
-  700: "#4338ca",
-  800: "#3730a3",
-  900: "#312e81",
-  950: "#1e1b4b",
-};
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
-/** Money and success. Aliased over `emerald` so existing success styles follow. */
-const teal = {
-  50: "#f0fdfa",
-  100: "#ccfbf1",
-  200: "#99f6e4",
-  300: "#5eead4",
-  400: "#2dd4bf",
-  500: "#14b8a6",
-  600: "#0d9488",
-  700: "#0f766e",
-  800: "#115e59",
-  900: "#134e4a",
-  950: "#042f2e",
-};
+function ramp(name: string): Record<number, string> {
+  return Object.fromEntries(
+    STEPS.map((step) => [step, `rgb(var(--${name}-${step}) / <alpha-value>)`])
+  );
+}
 
-/** Warm highlight for attention — deliberately not rose, which means danger. */
-const orange = {
-  50: "#fff7ed",
-  100: "#ffedd5",
-  200: "#fed7aa",
-  300: "#fdba74",
-  400: "#fb923c",
-  500: "#f97316",
-  600: "#ea580c",
-  700: "#c2410c",
-  800: "#9a3412",
-  900: "#7c2d12",
-  950: "#431407",
-};
+function token(name: string): string {
+  return `rgb(var(--${name}) / <alpha-value>)`;
+}
 
-/** Slate: cool, crisp greys for surfaces, borders and text. */
-const grey = {
-  50: "#f8fafc",
-  100: "#f1f5f9",
-  200: "#e2e8f0",
-  300: "#cbd5e1",
-  400: "#94a3b8",
-  500: "#64748b",
-  600: "#475569",
-  700: "#334155",
-  800: "#1e293b",
-  900: "#0f172a",
-  950: "#020617",
-};
+const grey = ramp("ink");
+const indigo = ramp("brand");
+const teal = ramp("money");
+const orange = ramp("accent");
 
 /**
  * Type: a conventional product scale (12 → 60px) with tight leading on
@@ -76,6 +36,7 @@ const grey = {
  * nearest grid step, so every screen that used them sits on the same grid.
  */
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -88,23 +49,35 @@ const config: Config = {
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       colors: {
-        // Semantic tokens — prefer these in new code.
+        // Semantic ramps — prefer these in new code.
         brand: indigo,
         accent: orange,
         money: teal,
         ink: grey,
 
-        // Transitional aliases. The app already contains ~82 `indigo-*` and
-        // ~411 `slate-*` usages; re-pointing the built-in names re-themes every
-        // one of them from here instead of touching 80 files. New code should
-        // use brand/ink. Remove these once the migration finishes.
+        // Built-in names re-pointed at the same tokens, so older classes theme too.
         indigo,
         emerald: teal,
         slate: grey,
+        amber: ramp("amber"),
+        rose: ramp("rose"),
+        sky: ramp("sky"),
 
-        surface: "var(--surface)",
-        "surface-muted": "var(--surface-muted)",
-        line: "var(--line)",
+        // Surfaces, from back to front: the page, a card, something above a card.
+        canvas: token("canvas"),
+        surface: token("surface"),
+        raised: token("raised"),
+        "surface-muted": token("canvas"),
+        line: token("line"),
+        "line-strong": token("line-strong"),
+        // Inverted emphasis (dark on light, light on dark) and fixed dark bands.
+        inverse: token("inverse"),
+        "inverse-fg": token("inverse-fg"),
+        night: token("night"),
+        "night-line": token("night-line"),
+      },
+      ringOffsetColor: {
+        DEFAULT: token("surface"),
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1rem" }], // 11 — overline, dense meta
@@ -140,11 +113,11 @@ const config: Config = {
         "3xl": "1rem", // 16 — large surfaces
       },
       boxShadow: {
-        xs: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
-        sm: "0 1px 2px 0 rgb(15 23 42 / 0.05), 0 1px 3px 0 rgb(15 23 42 / 0.04)",
-        md: "0 4px 8px -2px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04)",
-        lg: "0 12px 24px -8px rgb(15 23 42 / 0.10), 0 4px 8px -4px rgb(15 23 42 / 0.04)",
-        glow: "0 0 0 1px rgb(79 70 229 / 0.10), 0 8px 24px -8px rgb(79 70 229 / 0.20)",
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        glow: "0 0 0 1px rgb(var(--brand-600) / 0.12), 0 8px 24px -8px rgb(var(--brand-600) / 0.25)",
       },
       keyframes: {
         "fade-in": {

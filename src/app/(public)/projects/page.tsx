@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 const CATEGORY_ORDER = Object.keys(PROJECT_CATEGORIES) as ProjectCategory[];
 
 const selectClass =
-  "h-9 rounded-lg border border-line bg-white px-2.5 text-sm text-ink-800 shadow-xs outline-none transition-colors hover:border-ink-300 focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-100";
+  "h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink-800 shadow-xs outline-none transition-colors hover:border-ink-300 focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-100";
 
 /** A URL for the current filters with one value changed. */
 function hrefWith(
@@ -101,7 +101,7 @@ export default async function ProjectsDirectoryPage({
           <form
             action="/projects"
             role="search"
-            className="flex flex-col gap-2 rounded-xl border border-line bg-white p-2 sm:flex-row sm:items-center"
+            className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-2 sm:flex-row sm:items-center"
           >
             {filters.category && (
               <input type="hidden" name="category" value={filters.category} />
@@ -175,8 +175,8 @@ export default async function ProjectsDirectoryPage({
               className={cn(
                 "shrink-0 rounded-md border px-2.5 py-1 text-sm transition-colors",
                 !filters.category
-                  ? "border-ink-900 bg-ink-900 font-medium text-white"
-                  : "border-line bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900"
+                  ? "border-inverse bg-inverse font-medium text-inverse-fg"
+                  : "border-line bg-surface text-ink-600 hover:border-ink-300 hover:text-ink-900"
               )}
             >
               All <span className="tabular opacity-70">{projects.length}</span>
@@ -189,8 +189,8 @@ export default async function ProjectsDirectoryPage({
                 className={cn(
                   "shrink-0 rounded-md border px-2.5 py-1 text-sm transition-colors",
                   filters.category === key
-                    ? "border-ink-900 bg-ink-900 font-medium text-white"
-                    : "border-line bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900"
+                    ? "border-inverse bg-inverse font-medium text-inverse-fg"
+                    : "border-line bg-surface text-ink-600 hover:border-ink-300 hover:text-ink-900"
                 )}
               >
                 {PROJECT_CATEGORIES[key].label}{" "}

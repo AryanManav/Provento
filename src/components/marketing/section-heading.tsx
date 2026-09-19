@@ -34,7 +34,7 @@ export function SectionHeading({
       )}
     >
       {chip && (
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-700">
           {chip}
         </p>
       )}

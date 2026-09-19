@@ -46,7 +46,7 @@ export function HeroWorkflow() {
   return (
     <div className="relative mx-auto w-full max-w-[34rem]" aria-hidden>
       {/* Project window */}
-      <div className="overflow-hidden rounded-xl border border-line bg-white shadow-lg">
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-lg">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <div className="min-w-0">
             <p className="text-2xs font-medium uppercase tracking-wider text-ink-400">
@@ -101,7 +101,7 @@ export function HeroWorkflow() {
                   key={item.label}
                   className="flex items-start gap-2 text-xs text-ink-700"
                 >
-                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-700" />
                   {item.label}
                 </li>
               ))}
@@ -127,7 +127,7 @@ export function HeroWorkflow() {
       </div>
 
       {/* Evaluation, overlapping the window */}
-      <div className="relative -mt-6 ml-auto w-[88%] rounded-xl border border-line bg-white p-4 shadow-lg sm:mr-[-1.5rem]">
+      <div className="relative -mt-6 ml-auto w-[88%] rounded-xl border border-line bg-surface p-4 shadow-lg sm:mr-[-1.5rem]">
         <div className="flex items-center justify-between">
           <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
             Evaluation

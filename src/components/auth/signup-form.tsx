@@ -106,7 +106,7 @@ export function SignupForm({ providers }: { providers: OAuthProviderStatus }) {
                   <Icon
                     className={cn(
                       "mb-fib3 h-5 w-5",
-                      active ? "text-brand-600" : "text-ink-400"
+                      active ? "text-brand-700" : "text-ink-400"
                     )}
                   />
                   {option.label}
@@ -171,13 +171,13 @@ export function SignupForm({ providers }: { providers: OAuthProviderStatus }) {
                   key={rule.id}
                   className={cn(
                     "flex items-center gap-fib4 text-sm transition-colors",
-                    met ? "text-emerald-600" : "text-ink-400"
+                    met ? "text-emerald-700" : "text-ink-400"
                   )}
                 >
                   <span
                     className={cn(
                       "grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
-                      met ? "bg-emerald-100 text-emerald-600" : "bg-ink-200 text-ink-400"
+                      met ? "bg-emerald-100 text-emerald-700" : "bg-ink-200 text-ink-400"
                     )}
                   >
                     {met ? "✓" : "•"}
@@ -199,7 +199,7 @@ export function SignupForm({ providers }: { providers: OAuthProviderStatus }) {
           ) : (
             <>
               <span className="flex-1">Create account</span>
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-surface/20 transition-transform group-hover:translate-x-0.5">
                 <ArrowRight className="h-4 w-4" />
               </span>
             </>

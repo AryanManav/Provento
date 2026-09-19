@@ -102,7 +102,7 @@ export function WeekStrip({ calendar }: { calendar: ActivityCalendar }) {
                   ? "border border-dashed border-ink-200"
                   : active
                     ? "bg-money-500"
-                    : "border border-ink-300 bg-white",
+                    : "border border-ink-300 bg-surface",
                 cell.day === calendar.today && "ring-2 ring-ink-200 ring-offset-1"
               )}
             />
@@ -139,7 +139,7 @@ export function StreakCard({
   return (
     <section
       aria-labelledby="streak-title"
-      className="rounded-xl border border-line bg-white p-4"
+      className="rounded-xl border border-line bg-surface p-4"
     >
       <h2
         id="streak-title"

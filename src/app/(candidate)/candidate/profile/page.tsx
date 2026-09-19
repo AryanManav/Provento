@@ -51,7 +51,7 @@ export default async function CandidateProfilePage({
     <div className="space-y-6">
       <GithubLinkBanner status={github} />
 
-      <div className="flex flex-col justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 sm:flex-row sm:items-center">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <p className="flex items-center gap-2 text-sm text-ink-600">
             <Eye className="h-4 w-4 text-ink-400" aria-hidden />

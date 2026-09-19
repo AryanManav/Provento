@@ -113,7 +113,7 @@ function DecisionPanel({
   return (
     <section
       aria-label="Startup's decision"
-      className="relative overflow-hidden rounded-xl border border-line bg-white p-5"
+      className="relative overflow-hidden rounded-xl border border-line bg-surface p-5"
     >
       <span aria-hidden className={cn("absolute inset-y-0 left-0 w-1", style.accent)} />
       <div className="flex items-start gap-4">
@@ -208,7 +208,7 @@ export default async function CandidateTrialWorkspacePage({
         {closed ? "Completed work" : "Active work"}
       </Link>
 
-      <header className="rounded-xl border border-line bg-white">
+      <header className="rounded-xl border border-line bg-surface">
         <div className="flex flex-col justify-between gap-5 p-5 lg:flex-row lg:items-start">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -259,7 +259,7 @@ export default async function CandidateTrialWorkspacePage({
       </header>
 
       {cancelled && (
-        <div className="rounded-xl border border-line bg-white p-5 text-sm text-ink-600">
+        <div className="rounded-xl border border-line bg-surface p-5 text-sm text-ink-600">
           <p className="font-semibold text-ink-900">Project cancelled</p>
           <p className="mt-1">
             The startup closed this project. Your submissions stay below for reference.
@@ -285,7 +285,7 @@ export default async function CandidateTrialWorkspacePage({
         accepted && (
           <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
             <CheckCircle2
-              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
+              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700"
               aria-hidden
             />
             <div className="text-sm">
@@ -423,7 +423,7 @@ export default async function CandidateTrialWorkspacePage({
 
         <aside className="space-y-6">
           {!closed && (
-            <div className="rounded-xl border border-line bg-white p-5">
+            <div className="rounded-xl border border-line bg-surface p-5">
               <p className="flex items-center gap-2 text-sm font-semibold text-ink-900">
                 <CalendarClock className="h-4 w-4 text-ink-400" aria-hidden />
                 Due {formatDate(trial.projectDeadline)}
@@ -452,7 +452,7 @@ export default async function CandidateTrialWorkspacePage({
           )}
 
           {!closed && (
-            <section className="rounded-xl border border-line bg-white p-5">
+            <section className="rounded-xl border border-line bg-surface p-5">
               <h2 className="text-sm font-semibold text-ink-900">How to work on this</h2>
               <ol className="mt-3 space-y-3">
                 {LOCAL_STEPS.map((step) => {

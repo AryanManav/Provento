@@ -57,7 +57,7 @@ export function WithdrawApplicationButton({ applicationId }: { applicationId: st
         Keep it
       </button>
       {error && (
-        <span role="alert" className="basis-full text-rose-600">
+        <span role="alert" className="basis-full text-rose-700">
           {error}
         </span>
       )}

@@ -40,7 +40,7 @@ export function PrimaryNavLinks({
     return (
       <nav
         aria-label="Main"
-        className="no-scrollbar flex gap-1 overflow-x-auto border-b border-line bg-white px-3 py-1.5 lg:hidden"
+        className="no-scrollbar flex gap-1 overflow-x-auto border-b border-line bg-surface px-3 py-1.5 lg:hidden"
       >
         {links.map((link) => {
           const current = isNavActive(link, pathname);

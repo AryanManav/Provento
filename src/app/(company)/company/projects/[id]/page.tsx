@@ -90,7 +90,7 @@ export default async function ManageProjectPage({
       <article
         key={application.id}
         className={cn(
-          "group relative space-y-fib5 rounded-2xl border bg-white p-fib6 shadow-xs transition-all",
+          "group relative space-y-fib5 rounded-2xl border bg-surface p-fib6 shadow-xs transition-all",
           selected && "hover:border-brand-300 hover:shadow-md",
           unreadLinks.has(applicantPath(application.id)) || updates > 0
             ? "border-brand-300 ring-2 ring-brand-100"
@@ -104,7 +104,7 @@ export default async function ManageProjectPage({
                 // Stretched over the whole card: a selected candidate opens their evaluation.
                 <Link
                   href={evaluationPath(application.candidateId)}
-                  className="font-semibold text-ink-900 after:absolute after:inset-0 after:rounded-2xl hover:text-brand-600"
+                  className="font-semibold text-ink-900 after:absolute after:inset-0 after:rounded-2xl hover:text-brand-700"
                 >
                   {application.candidateName}
                 </Link>
@@ -137,7 +137,7 @@ export default async function ManageProjectPage({
         <div className="flex flex-wrap items-center justify-between gap-fib4 border-t border-line pt-fib5">
           <Link
             href={applicantPath(application.id)}
-            className="relative z-10 text-sm font-semibold text-brand-600 hover:underline"
+            className="relative z-10 text-sm font-semibold text-brand-700 hover:underline"
           >
             View full profile →
           </Link>
@@ -147,7 +147,7 @@ export default async function ManageProjectPage({
               className="inline-flex items-center gap-fib3 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
             >
               Evaluate work
-              <CountBadge count={updates} className="bg-white text-brand-700" />
+              <CountBadge count={updates} className="bg-surface text-brand-700" />
               <ArrowRight className="h-4 w-4" />
             </span>
           ) : (
@@ -170,7 +170,7 @@ export default async function ManageProjectPage({
       <MarkNotificationsRead
         scopes={[{ linkPrefix: `${projectPath}/applicants/` }, { link: projectPath }]}
       />
-      <Link href="/company/projects" className="text-sm text-indigo-600">
+      <Link href="/company/projects" className="text-sm text-indigo-700">
         ← Projects
       </Link>
 
@@ -253,7 +253,7 @@ export default async function ManageProjectPage({
           </section>
 
           {closedApplicants.length > 0 && (
-            <details className="group rounded-2xl border border-line bg-white">
+            <details className="group rounded-2xl border border-line bg-surface">
               <summary className="cursor-pointer list-none px-fib6 py-fib5 text-sm font-semibold text-ink-600 hover:text-ink-900">
                 Rejected &amp; withdrawn · {closedApplicants.length}
                 <span className="ml-fib3 font-normal text-ink-400 group-open:hidden">

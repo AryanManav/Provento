@@ -38,14 +38,14 @@ export function VerifiedWorkList({
   return (
     <section
       aria-labelledby="verified-work"
-      className="rounded-xl border border-line bg-white"
+      className="rounded-xl border border-line bg-surface"
     >
       <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <h2
           id="verified-work"
           className="flex items-center gap-2 text-base font-semibold text-ink-900"
         >
-          <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden />
+          <ShieldCheck className="h-4 w-4 text-emerald-700" aria-hidden />
           Verified work
           <span className="tabular rounded bg-ink-100 px-1.5 text-2xs font-medium text-ink-500">
             {items.length}

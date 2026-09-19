@@ -197,7 +197,7 @@ export function FeaturedProjectsCard({
                           type="button"
                           onClick={() => setEditing(item)}
                           aria-label={`Edit ${item.title}`}
-                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-600"
+                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-700"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -206,7 +206,7 @@ export function FeaturedProjectsCard({
                           onClick={() => handleDelete(item.id)}
                           disabled={deletingId === item.id}
                           aria-label={`Delete ${item.title}`}
-                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                          className="rounded-md p-fib3 text-ink-400 transition-colors hover:bg-rose-50 hover:text-rose-700"
                         >
                           {deletingId === item.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -235,7 +235,7 @@ export function FeaturedProjectsCard({
                       href={item.repositoryUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-fib2 font-semibold text-ink-700 hover:text-brand-600"
+                      className="flex items-center gap-fib2 font-semibold text-ink-700 hover:text-brand-700"
                     >
                       <Github className="h-4 w-4" />
                       Code
@@ -246,7 +246,7 @@ export function FeaturedProjectsCard({
                       href={item.liveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-fib2 font-semibold text-brand-600 hover:underline"
+                      className="flex items-center gap-fib2 font-semibold text-brand-700 hover:underline"
                     >
                       <ExternalLink className="h-4 w-4" />
                       Demo

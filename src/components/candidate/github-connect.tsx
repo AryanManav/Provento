@@ -48,9 +48,9 @@ export function GitHubConnect({
   };
 
   return (
-    <section className="rounded-2xl border border-line bg-white p-fib6 shadow-xs">
+    <section className="rounded-2xl border border-line bg-surface p-fib6 shadow-xs">
       <div className="flex items-center gap-fib4">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-900 text-white">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-inverse text-inverse-fg">
           <Github className="h-5 w-5" />
         </span>
         <h2 className="font-semibold text-ink-900">GitHub</h2>

@@ -176,7 +176,7 @@ export function CandidateProfile({
 
           <p className="px-1 text-xs leading-relaxed text-ink-500">
             <BadgeCheck
-              className="mr-1 inline h-3.5 w-3.5 text-emerald-600"
+              className="mr-1 inline h-3.5 w-3.5 text-emerald-700"
               aria-hidden
             />
             <span className="font-medium text-ink-700">Verified work</span> is paid
@@ -192,7 +192,7 @@ export function CandidateProfile({
 /** What a hidden profile shows: that it exists, and nothing about the person. */
 export function PrivateProfile() {
   return (
-    <div className="mx-auto max-w-md rounded-xl border border-line bg-white px-6 py-12 text-center">
+    <div className="mx-auto max-w-md rounded-xl border border-line bg-surface px-6 py-12 text-center">
       <span className="mx-auto grid h-10 w-10 place-items-center rounded-lg border border-line bg-ink-50 text-ink-400">
         <Lock className="h-5 w-5" aria-hidden />
       </span>

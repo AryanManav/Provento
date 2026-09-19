@@ -57,7 +57,7 @@ export function CompanySetupForm({ company }: { company: CompanyView | null }) {
       <div className="grid items-start gap-fib6 lg:grid-cols-3">
         <form
           action={action}
-          className="space-y-fib5 rounded-2xl border border-line bg-white p-fib6 shadow-xs lg:col-span-2"
+          className="space-y-fib5 rounded-2xl border border-line bg-surface p-fib6 shadow-xs lg:col-span-2"
         >
           {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
 
@@ -144,7 +144,7 @@ export function CompanySetupForm({ company }: { company: CompanyView | null }) {
               className={cn(
                 "text-xs",
                 descriptionLength >= COMPANY_SETUP_MIN_DESCRIPTION
-                  ? "text-emerald-600"
+                  ? "text-emerald-700"
                   : "text-ink-400"
               )}
             >
@@ -159,10 +159,10 @@ export function CompanySetupForm({ company }: { company: CompanyView | null }) {
           </div>
         </form>
 
-        <aside className="space-y-fib5 rounded-2xl border border-line bg-white p-fib6 shadow-xs">
+        <aside className="space-y-fib5 rounded-2xl border border-line bg-surface p-fib6 shadow-xs">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-ink-900">Required</h2>
-            <span className="text-sm font-semibold text-brand-600">
+            <span className="text-sm font-semibold text-brand-700">
               {done}/{checklist.length}
             </span>
           </div>

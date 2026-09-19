@@ -37,8 +37,8 @@ export function WorkStepper({ status }: { status: SelectionWorkStatus }) {
                   "grid h-5 w-5 shrink-0 place-items-center rounded-full border text-2xs font-semibold",
                   done && "border-brand-600 bg-brand-600 text-white",
                   active &&
-                    "border-brand-600 bg-white text-brand-700 ring-4 ring-brand-100",
-                  !done && !active && "border-ink-300 bg-white text-ink-400"
+                    "border-brand-600 bg-surface text-brand-700 ring-4 ring-brand-100",
+                  !done && !active && "border-ink-300 bg-surface text-ink-400"
                 )}
                 aria-hidden
               >
