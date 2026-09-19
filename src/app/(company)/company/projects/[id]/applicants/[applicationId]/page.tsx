@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/company";
 import { HIRE_STAGE_DISPLAY, hireStage } from "@/lib/company";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { buttonVariants } from "@/components/ui/button";
 import { BriefList } from "@/components/projects/brief";
 import { HiringDecision } from "@/components/company/hiring-decision";
 import { ProfileIntroCard } from "@/components/candidate/profile-intro-card";
@@ -257,7 +258,7 @@ export default async function ApplicantProfilePage({
             ) : applicant.status === "selected" ? (
               <Link
                 href={`/company/projects/${project.id}/review/${applicant.profile.id}`}
-                className="inline-flex items-center gap-fib2 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-brand-700"
+                className={buttonVariants()}
               >
                 Evaluate work →
               </Link>

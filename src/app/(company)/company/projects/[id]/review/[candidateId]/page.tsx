@@ -81,7 +81,7 @@ export default async function CandidateEvaluationPage({
               aria-current={item.candidateId === candidateId ? "page" : undefined}
               className={
                 item.candidateId === candidateId
-                  ? "rounded-lg bg-brand-600 px-fib5 py-fib3 text-sm font-semibold text-white"
+                  ? "rounded-lg bg-ink-100 px-fib5 py-fib3 text-sm font-semibold text-ink-900 ring-1 ring-inset ring-line"
                   : "rounded-lg px-fib5 py-fib3 text-sm font-semibold text-ink-600 hover:bg-ink-50"
               }
             >

@@ -4,21 +4,27 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Product controls, not marketing: compact, 6px radius, medium weight. One
- * primary action per view (`default`); everything else steps down to
- * `outline` (bordered, neutral) or `ghost`. Colour variants are for outcomes,
- * not emphasis — `destructive` is a subtle red outline until hovered.
+ * Product controls, not marketing: compact, 6px radius, medium weight.
+ *
+ * The primary action is monochrome, not blue: the inverse of the page
+ * (charcoal on light, near-white on dark) with a hairline border and a soft
+ * top highlight, so it reads as a raised control. One per view; everything
+ * else steps down to `outline` (a quiet raised surface) or `ghost`. Colour is
+ * for outcomes only — `destructive` stays a subtle red outline until hovered.
  */
+
+/** The primary look, shared with links styled as buttons. */
+export const PRIMARY_BUTTON =
+  "border border-inverse bg-inverse bg-[linear-gradient(to_bottom,rgb(255_255_255/0.12),rgb(255_255_255/0))] text-inverse-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.14),0_1px_2px_rgb(0_0_0/0.16)] hover:bg-inverse/90 active:bg-inverse/80 dark:bg-[linear-gradient(to_bottom,rgb(255_255_255/0),rgb(0_0_0/0.08))] dark:shadow-[inset_0_-1px_0_rgb(0_0_0/0.14),0_1px_2px_rgb(0_0_0/0.4)]";
 const buttonVariants = cva(
-  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
+  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "border border-brand-700/20 bg-brand-600 text-white shadow-xs hover:bg-brand-500 active:bg-brand-700 dark:border-white/10",
+        default: PRIMARY_BUTTON,
         secondary: "bg-ink-100 text-ink-900 hover:bg-ink-200 active:bg-ink-300",
         outline:
-          "border border-line bg-ink-50 text-ink-900 shadow-xs hover:border-line-strong hover:bg-ink-100 active:bg-ink-200",
+          "border border-line bg-surface text-ink-900 shadow-[inset_0_1px_0_rgb(255_255_255/0.6),0_1px_2px_rgb(0_0_0/0.05)] hover:border-line-strong hover:bg-ink-50 active:bg-ink-100 dark:bg-raised dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05)] dark:hover:bg-ink-100",
         ghost: "text-ink-700 hover:bg-ink-100 hover:text-ink-900 active:bg-ink-200",
         destructive:
           "border border-line bg-ink-50 text-rose-700 shadow-xs hover:border-rose-600 hover:bg-rose-600 hover:text-white focus-visible:ring-rose-500/50",

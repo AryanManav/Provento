@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Loader2, Plus } from "lucide-react";
 import { setFollowAction } from "@/lib/actions/follows";
 import { cn } from "@/lib/utils";
+import { PRIMARY_BUTTON } from "@/components/ui/button";
 import type { FollowTarget } from "@/lib/validations";
 
 /**
@@ -99,7 +100,7 @@ export function FollowButton({
           height,
           following
             ? "border border-ink-200 bg-surface text-ink-800 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-            : "bg-brand-600 text-white shadow-xs hover:bg-brand-700"
+            : PRIMARY_BUTTON
         )}
       >
         {pending ? (

@@ -15,6 +15,7 @@ import { HiringPipeline } from "@/components/company/hiring-pipeline";
 import { AssessmentSummary } from "@/components/assessment/assessment-brief";
 import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { PageHeader } from "@/components/common/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { HIRE_TABS, type HireTab } from "@/lib/company";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { CountBadge } from "@/components/notifications/count-badge";
@@ -198,7 +199,7 @@ export default async function ManageProjectPage({
                 </h2>
               )}
               {application.status === "submitted" && (
-                <span className="rounded-md bg-brand-600 px-fib4 py-fib1 text-xs font-semibold text-white">
+                <span className="rounded-md border border-accent-200 bg-accent-50 px-fib4 py-fib1 text-xs font-semibold text-accent-800">
                   New
                 </span>
               )}
@@ -226,12 +227,9 @@ export default async function ManageProjectPage({
             View full profile →
           </Link>
           {selected ? (
-            <span
-              aria-hidden="true"
-              className="inline-flex items-center gap-fib3 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
-            >
+            <span aria-hidden="true" className={buttonVariants()}>
               Evaluate work
-              <CountBadge count={updates} className="bg-surface text-brand-700" />
+              <CountBadge count={updates} />
               <ArrowRight className="h-4 w-4" />
             </span>
           ) : (
