@@ -3,7 +3,8 @@ import { BadgeCheck, Clock, MapPin } from "lucide-react";
 import { Avatar } from "@/components/common/avatar";
 import { CompanyMark } from "@/components/common/company-mark";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { companyProfilePath } from "@/lib/constants";
+import { JOB_TYPES, WORK_ARRANGEMENTS, companyProfilePath } from "@/lib/constants";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { formatCurrency } from "@/lib/utils";
 import type { BrowseProjectView, SearchResult } from "@/lib/types/domain";
 import { RoleBadge } from "@/components/profile/role-badge";
@@ -61,27 +62,46 @@ export function ProjectResultRow({
   query?: string;
 }) {
   const open = project.availability === "open";
+  const hire = project.opportunityType === "hire";
   return (
     <li>
       <Link href={`/projects/${project.slug}`} className={rowClass}>
         <div className="flex min-w-0 flex-1 gap-3">
           <CompanyMark name={project.companyName ?? "Startup"} />
           <div className="min-w-0 space-y-1.5">
-            <p className="truncate text-sm font-medium text-ink-900 group-hover:text-brand-700">
-              {project.title}
+            <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink-900 group-hover:text-brand-700">
+              <span className="truncate">{project.title}</span>
+              <OpportunityBadge type={project.opportunityType} size="sm" />
             </p>
-            <p className="text-xs text-ink-500">{project.companyName ?? "Startup"}</p>
+            <p className="text-xs text-ink-500">
+              {project.companyName ?? "Startup"}
+              {hire &&
+                project.jobType &&
+                ` · ${JOB_TYPES[project.jobType]}${
+                  project.workArrangement
+                    ? ` · ${WORK_ARRANGEMENTS[project.workArrangement]}`
+                    : ""
+                }`}
+            </p>
             <SkillTags skills={project.stack} highlight={query} />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4 pl-12 sm:pl-0">
-          <span className="tabular text-sm font-semibold text-emerald-700">
-            {formatCurrency(project.paymentAmount, project.currency)}
-          </span>
-          <span className="flex items-center gap-1 text-sm text-ink-600">
-            <Clock className="h-3.5 w-3.5 text-ink-400" aria-hidden />
-            {project.expectedHours}h
-          </span>
+          {hire ? (
+            <span className="text-sm text-ink-600">
+              {project.openings} opening{project.openings === 1 ? "" : "s"}
+            </span>
+          ) : (
+            <>
+              <span className="tabular text-sm font-semibold text-emerald-700">
+                {formatCurrency(project.paymentAmount, project.currency)}
+              </span>
+              <span className="flex items-center gap-1 text-sm text-ink-600">
+                <Clock className="h-3.5 w-3.5 text-ink-400" aria-hidden />
+                {project.expectedHours}h
+              </span>
+            </>
+          )}
           <StatusBadge
             size="sm"
             tone={open ? "success" : "neutral"}

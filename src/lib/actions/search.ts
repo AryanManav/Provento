@@ -48,8 +48,11 @@ export async function quickSearchAction(query: unknown): Promise<QuickSearchResp
         id: project.id,
         title: project.title,
         meta: [
+          project.opportunityType === "hire" ? "Hire only" : "Build only",
           project.companyName ?? "Startup",
-          formatCurrency(project.paymentAmount, project.currency),
+          project.opportunityType === "hire"
+            ? `${project.openings} opening${project.openings === 1 ? "" : "s"}`
+            : formatCurrency(project.paymentAmount, project.currency),
           project.availability === "open" ? "Open" : "Closed to applications",
         ].join(" · "),
         href: `/projects/${project.slug}`,

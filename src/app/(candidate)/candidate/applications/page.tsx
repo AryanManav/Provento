@@ -6,6 +6,7 @@ import { getNotificationSummary } from "@/lib/data/notifications";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { EmptyState } from "@/components/common/empty-state";
 import { MyWorkHeader } from "@/components/candidate/my-work-header";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { CompanyMark } from "@/components/common/company-mark";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { Button } from "@/components/ui/button";
@@ -23,19 +24,23 @@ import {
   companyProfilePath,
 } from "@/lib/constants";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
-import type { ApplicationStatus } from "@/lib/types/database.types";
+import type { ApplicationStatus, OpportunityType } from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
 
 export const dynamic = "force-dynamic";
 
 const TABS = {
   all: { label: "All", stages: null },
-  pending: { label: "Pending", stages: ["applied", "reviewing", "shortlisted"] },
+  pending: {
+    label: "Pending",
+    stages: ["applied", "reviewing", "shortlisted", "interview"],
+  },
   active: {
     label: "Active",
     stages: ["building", "awaiting_review", "revision_requested"],
   },
   completed: { label: "Completed", stages: ["completed"] },
+  hired: { label: "Selected for a role", stages: ["hired"] },
   rejected: { label: "Rejected", stages: ["not_selected", "work_not_accepted"] },
 } as const satisfies Record<string, { label: string; stages: ApplicationStage[] | null }>;
 
@@ -48,6 +53,11 @@ function inTab(tab: TabId, application: ApplicationSummaryView): boolean {
 
 /** What the candidate should know or do next, for the stages that need a line. */
 const STAGE_NOTE: Partial<Record<ApplicationStage, string>> = {
+  shortlisted:
+    "You're on the shortlist. Next step: an interview, if the startup invites you.",
+  interview: "The startup wants to interview you — look out for their message.",
+  hired:
+    "You were selected for this role. The startup will be in touch about next steps.",
   building:
     "You were selected. The brief, submission form and message thread are in the workspace.",
   awaiting_review: "Your work is with the startup. You'll be notified when they decide.",
@@ -71,6 +81,10 @@ const EMPTY: Record<TabId, { title: string; description: string }> = {
   completed: {
     title: "No completed projects yet",
     description: "Work a startup accepts appears here and on your profile.",
+  },
+  hired: {
+    title: "No roles yet",
+    description: "Roles you're selected for through a hiring opportunity appear here.",
   },
   rejected: {
     title: "Nothing here",
@@ -113,6 +127,9 @@ function ApplicationRow({
                   {application.project?.title ?? "Project"}
                 </span>
               )}
+              {application.project && (
+                <OpportunityBadge type={application.project.opportunityType} size="sm" />
+              )}
               {changed && (
                 <span className="rounded bg-accent-100 px-1.5 text-2xs font-medium text-accent-800">
                   Updated
@@ -132,13 +149,17 @@ function ApplicationRow({
               )}
               <span aria-hidden>·</span>
               <span>Applied {formatDate(application.createdAt)}</span>
-              <span aria-hidden>·</span>
-              <span className="tabular font-medium text-ink-700">
-                {formatCurrency(
-                  application.project?.paymentAmount ?? 0,
-                  application.project?.currency ?? DEFAULT_CURRENCY
-                )}
-              </span>
+              {application.project?.opportunityType !== "hire" && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span className="tabular font-medium text-ink-700">
+                    {formatCurrency(
+                      application.project?.paymentAmount ?? 0,
+                      application.project?.currency ?? DEFAULT_CURRENCY
+                    )}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -183,10 +204,12 @@ function ApplicationRow({
 export default async function CandidateApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; kind?: string }>;
 }) {
-  const { tab: tabParam } = await searchParams;
+  const { tab: tabParam, kind: kindParam } = await searchParams;
   const tab: TabId = tabParam && tabParam in TABS ? (tabParam as TabId) : "all";
+  const kind: OpportunityType | null =
+    kindParam === "hire" || kindParam === "build" ? kindParam : null;
 
   const user = await requireCandidate();
   const candidateId = await getCandidateProfileId(user.id);
@@ -201,13 +224,45 @@ export default async function CandidateApplicationsPage({
       .map((marker) => marker.projectId)
   );
 
-  const shown = applications.filter((application) => inTab(tab, application));
+  const ofKind = kind
+    ? applications.filter((application) => application.project?.opportunityType === kind)
+    : applications;
+  const shown = ofKind.filter((application) => inTab(tab, application));
+  const hrefFor = (next: { tab?: TabId; kind?: OpportunityType | null }) => {
+    const url = new URLSearchParams();
+    const t = next.tab ?? tab;
+    const k = next.kind === undefined ? kind : next.kind;
+    if (t !== "all") url.set("tab", t);
+    if (k) url.set("kind", k);
+    const qs = url.toString();
+    return qs ? `/candidate/applications?${qs}` : "/candidate/applications";
+  };
   const tabs = (Object.keys(TABS) as TabId[]).map((id) => ({
     id,
     label: TABS[id].label,
-    href: id === "all" ? "/candidate/applications" : `/candidate/applications?tab=${id}`,
-    count: applications.filter((application) => inTab(id, application)).length,
+    href: hrefFor({ tab: id }),
+    count: ofKind.filter((application) => inTab(id, application)).length,
   }));
+  const kinds = [
+    {
+      id: "all",
+      label: "Everything",
+      href: hrefFor({ kind: null }),
+      count: applications.length,
+    },
+    {
+      id: "hire",
+      label: "Hire only",
+      href: hrefFor({ kind: "hire" }),
+      count: applications.filter((a) => a.project?.opportunityType === "hire").length,
+    },
+    {
+      id: "build",
+      label: "Build only",
+      href: hrefFor({ kind: "build" }),
+      count: applications.filter((a) => a.project?.opportunityType === "build").length,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -217,7 +272,14 @@ export default async function CandidateApplicationsPage({
         counts={{ applications: applications.length }}
       />
 
-      <FilterChips chips={tabs} active={tab} label="Filter applications by status" />
+      <div className="space-y-2">
+        <FilterChips
+          chips={kinds}
+          active={kind ?? "all"}
+          label="Filter by opportunity type"
+        />
+        <FilterChips chips={tabs} active={tab} label="Filter applications by status" />
+      </div>
 
       {shown.length === 0 ? (
         <EmptyState

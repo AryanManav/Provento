@@ -12,6 +12,10 @@ import type {
   ProjectSummaryView,
 } from "@/lib/types/domain";
 import type {
+  ExperienceLevel,
+  JobType,
+  OpportunityType,
+  WorkArrangement,
   ProjectCategory,
   ProjectPurpose,
   ProjectStatus,
@@ -19,7 +23,7 @@ import type {
 } from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, companies(name), project_skills(skill_name, is_required)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, companies(name), project_skills(skill_name, is_required)";
 
 interface RawProjectSummary {
   id: string;
@@ -38,6 +42,12 @@ interface RawProjectSummary {
   category: ProjectCategory;
   companies: { name: string | null } | { name: string | null }[] | null;
   project_skills?: { skill_name: string; is_required: boolean }[] | null;
+  opportunity_type?: OpportunityType | null;
+  job_type?: JobType | null;
+  work_arrangement?: WorkArrangement | null;
+  job_location?: string | null;
+  experience_level?: ExperienceLevel | null;
+  compensation?: string | null;
 }
 
 function toSummary(row: RawProjectSummary): ProjectSummaryView {
@@ -61,6 +71,12 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     stack: [...(row.project_skills ?? [])]
       .sort((a, b) => Number(b.is_required) - Number(a.is_required))
       .map((skill) => skill.skill_name),
+    opportunityType: row.opportunity_type ?? "build",
+    jobType: row.job_type ?? null,
+    workArrangement: row.work_arrangement ?? null,
+    jobLocation: row.job_location ?? null,
+    experienceLevel: row.experience_level ?? null,
+    compensation: row.compensation ?? null,
   };
 }
 
@@ -128,6 +144,8 @@ interface RawProjectDetail extends RawProjectSummary {
   acceptance_criteria: string[];
   evaluation_criteria: string[];
   project_deadline: string;
+  responsibilities?: string[] | null;
+  nice_to_have?: string[] | null;
   companies: RawDetailCompany | RawDetailCompany[] | null;
   project_skills: { skill_name: string; is_required: boolean }[] | null;
 }
@@ -154,7 +172,7 @@ export async function getBrowsableProjectBySlug(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, responsibilities, nice_to_have, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
     .in("status", [...BROWSABLE_PROJECT_STATUSES])
@@ -192,6 +210,8 @@ export async function getBrowsableProjectBySlug(
       name: skill.skill_name,
       required: skill.is_required,
     })),
+    responsibilities: row.responsibilities ?? [],
+    niceToHave: row.nice_to_have ?? [],
   };
 }
 

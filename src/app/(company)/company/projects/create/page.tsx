@@ -1,188 +1,157 @@
 import Link from "next/link";
-import { createProjectAction } from "@/lib/actions/company";
+import { ArrowRight, BriefcaseBusiness, Check, ChevronLeft, Hammer } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { OPPORTUNITY_TYPES } from "@/lib/constants";
+import { PageHeader } from "@/components/common/page-header";
 import { StatusBanner } from "@/components/common/status-banner";
-import { ProjectPurposeFields } from "@/components/company/project-purpose-fields";
-import { MAX_APPLICANTS_LIMIT, PROJECT_CATEGORIES, WORK_MODES } from "@/lib/constants";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
+import { CreateBuildForm } from "@/components/company/create-build-form";
+import { CreateHireForm } from "@/components/company/create-hire-form";
+import type { OpportunityType } from "@/lib/types/database.types";
 
-export default async function CreateProjectPage({
+const CHOICES: {
+  type: OpportunityType;
+  icon: typeof Hammer;
+  cta: string;
+  points: string[];
+}[] = [
+  {
+    type: "hire",
+    icon: BriefcaseBusiness,
+    cta: "Create hiring opportunity",
+    points: [
+      "Set how many people you'll hire",
+      "Cap how many can apply",
+      "Shortlist, interview and select",
+    ],
+  },
+  {
+    type: "build",
+    icon: Hammer,
+    cta: "Create build project",
+    points: [
+      "Requirements, deliverables and a fee",
+      "One selected candidate builds it",
+      "Evaluate the delivered work",
+    ],
+  },
+];
+
+/**
+ * Posting starts by choosing what you need — a hire or a build — before any
+ * type-specific field appears.
+ */
+export default async function CreateOpportunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ type?: string; error?: string }>;
 }) {
   await requireRole(["company", "admin"]);
-  const { error } = await searchParams;
-  const fields = [
-    { name: "requirements", label: "Requirements" },
-    { name: "deliverables", label: "Deliverables" },
-    { name: "acceptanceCriteria", label: "Acceptance criteria" },
-    { name: "evaluationCriteria", label: "Evaluation criteria" },
-    { name: "skills", label: "Required skills" },
-  ];
-  return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <Link href="/company/projects" className="text-sm text-indigo-700">
-          ← Projects
-        </Link>
-        <h1 className="text-2xl font-semibold mt-2">Create paid evaluation project</h1>
-      </div>
-      {error && <StatusBanner tone="error">{error}</StatusBanner>}
-      <form
-        action={createProjectAction}
-        className="rounded-xl border bg-surface p-6 space-y-5"
-      >
-        <Input name="title" placeholder="Project title" required />
-        <div className="space-y-fib2">
-          <label htmlFor="category" className="text-sm font-semibold text-ink-800">
-            Topic — where it&apos;s listed in Browse
-          </label>
-          <select
-            id="category"
-            name="category"
-            required
-            defaultValue=""
-            className="h-10 w-full rounded-lg border border-line bg-surface px-fib4 text-sm"
-          >
-            <option value="" disabled>
-              Choose a topic
-            </option>
-            {(Object.entries(PROJECT_CATEGORIES) as [string, { label: string }][]).map(
-              ([value, topic]) => (
-                <option key={value} value={value}>
-                  {topic.label}
-                </option>
-              )
-            )}
-          </select>
-        </div>
-        <ProjectPurposeFields />
-        <fieldset className="space-y-fib4">
-          <legend className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-            How will the candidate build this?
-          </legend>
-          <div className="grid gap-fib4 sm:grid-cols-2">
-            {(
-              Object.entries(WORK_MODES) as [
-                keyof typeof WORK_MODES,
-                (typeof WORK_MODES)[keyof typeof WORK_MODES],
-              ][]
-            ).map(([value, mode]) => (
-              <label
+  const { type, error } = await searchParams;
+  const chosen: OpportunityType | null =
+    type === "hire" || type === "build" ? type : null;
+
+  if (!chosen) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow={
+            <Link
+              href="/company/projects"
+              className="inline-flex items-center gap-1 hover:text-ink-900"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              Projects
+            </Link>
+          }
+          title="What are you looking to do?"
+          description="Hire for an open role, or get a real project built by one selected candidate."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          {CHOICES.map(({ type: value, icon: Icon, cta, points }) => {
+            const info = OPPORTUNITY_TYPES[value];
+            const hire = value === "hire";
+            return (
+              <Link
                 key={value}
-                className={
-                  mode.available
-                    ? "flex cursor-pointer gap-fib4 rounded-xl border border-line p-fib5 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"
-                    : "flex cursor-not-allowed gap-fib4 rounded-xl border border-dashed border-line p-fib5 opacity-60"
-                }
+                href={`/company/projects/create?type=${value}`}
+                className="group flex flex-col rounded-xl border border-line bg-surface p-6 transition-colors hover:border-ink-300 focus-visible:border-brand-400"
               >
-                <input
-                  type="radio"
-                  name="workMode"
-                  value={value}
-                  defaultChecked={value === "local"}
-                  disabled={!mode.available}
-                  className="mt-fib1"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-ink-900">
-                    {mode.label}
-                    {!mode.available && (
-                      <span className="ml-fib3 rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-medium text-ink-500">
-                        Coming soon
-                      </span>
-                    )}
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    className={
+                      hire
+                        ? "grid h-10 w-10 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700"
+                        : "grid h-10 w-10 place-items-center rounded-lg border border-brand-200 bg-brand-50 text-brand-700"
+                    }
+                  >
+                    <Icon className="h-5 w-5" aria-hidden />
                   </span>
-                  <span className="mt-fib1 block text-xs text-ink-500">
-                    {mode.description}
+                  <OpportunityBadge type={value} />
+                </div>
+                <h2 className="mt-5 text-lg font-semibold text-ink-900">{info.title}</h2>
+                <p className="mt-1 text-sm text-ink-600">{info.summary}</p>
+                <ul className="mt-4 flex-1 space-y-2">
+                  {points.map((point) => (
+                    <li
+                      key={point}
+                      className="flex items-start gap-2 text-sm text-ink-700"
+                    >
+                      <Check
+                        className="mt-0.5 h-4 w-4 shrink-0 text-ink-400"
+                        aria-hidden
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
+                  <span
+                    className={
+                      hire
+                        ? "text-sm font-semibold text-emerald-700"
+                        : "text-sm font-medium text-ink-700"
+                    }
+                  >
+                    {hire ? "Free" : "Paid project"}
                   </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <textarea
-          name="description"
-          rows={3}
-          required
-          className="w-full rounded-lg border p-3 text-sm"
-          placeholder="Short candidate-facing description"
-        />
-        <textarea
-          name="problemStatement"
-          rows={4}
-          required
-          className="w-full rounded-lg border p-3 text-sm"
-          placeholder="Problem statement"
-        />
-        <textarea
-          name="context"
-          rows={4}
-          required
-          className="w-full rounded-lg border p-3 text-sm"
-          placeholder="Business and engineering context"
-        />
-        {fields.map(({ name, label }) => (
-          <div key={name}>
-            <label className="text-sm font-semibold">
-              {label} <span className="font-normal text-slate-400">one per line</span>
-            </label>
-            <textarea
-              name={name}
-              rows={3}
-              required={name !== "skills"}
-              className="mt-1 w-full rounded-lg border p-3 text-sm"
-            />
-          </div>
-        ))}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Input
-            name="expectedHours"
-            type="number"
-            min="2"
-            max="40"
-            placeholder="Expected hours"
-            required
-          />
-          <Input
-            name="paymentAmount"
-            type="number"
-            min="1000"
-            placeholder="Payment amount (INR)"
-            required
-          />
-          <div className="sm:col-span-2">
-            <label className="text-sm" htmlFor="max-applicants">
-              Applicant limit <span className="text-slate-400">(optional)</span>
-            </label>
-            <Input
-              id="max-applicants"
-              name="maxApplicants"
-              type="number"
-              min="1"
-              max={MAX_APPLICANTS_LIMIT}
-              placeholder="e.g. 20 — leave empty for no limit"
-            />
-            <p className="mt-1 text-xs text-slate-400">
-              Once this many candidates apply, the project shows as Full and stops taking
-              applications. Withdrawn applications free their place.
-            </p>
-          </div>
-          <div>
-            <label className="text-sm">Application deadline</label>
-            <Input name="applicationDeadline" type="datetime-local" required />
-          </div>
-          <div>
-            <label className="text-sm">Project deadline</label>
-            <Input name="projectDeadline" type="datetime-local" required />
-          </div>
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-700">
+                    {cta}
+                    <ArrowRight
+                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
-        <div className="flex justify-end">
-          <Button type="submit">Publish project</Button>
-        </div>
-      </form>
+      </div>
+    );
+  }
+
+  const info = OPPORTUNITY_TYPES[chosen];
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={
+          <Link
+            href="/company/projects/create"
+            className="inline-flex items-center gap-1 hover:text-ink-900"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+            Change type
+          </Link>
+        }
+        title={
+          chosen === "hire" ? "Create a hiring opportunity" : "Create a build project"
+        }
+        description={`${info.summary} ${info.price}.`}
+        actions={<OpportunityBadge type={chosen} />}
+      />
+      {error && <StatusBanner tone="error">{error}</StatusBanner>}
+      {chosen === "hire" ? <CreateHireForm /> : <CreateBuildForm />}
     </div>
   );
 }

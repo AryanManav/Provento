@@ -1,11 +1,20 @@
 import { z } from "zod";
 import {
   DEFAULT_CURRENCY,
+  EXPERIENCE_LEVELS,
+  JOB_TYPES,
   MAX_APPLICANTS_LIMIT,
+  MAX_HIRE_OPENINGS,
   MAX_OPENINGS,
   PROJECT_CATEGORIES,
+  WORK_ARRANGEMENTS,
 } from "@/lib/constants";
-import type { ProjectCategory } from "@/lib/types/database.types";
+import type {
+  ExperienceLevel,
+  JobType,
+  ProjectCategory,
+  WorkArrangement,
+} from "@/lib/types/database.types";
 import { optionalNote } from "./application";
 
 export const createProjectSchema = z
@@ -51,7 +60,7 @@ export const createProjectSchema = z
       .enum(["hire", "build"], {
         errorMap: () => ({ message: "Choose whether you're hiring or only building" }),
       })
-      .default("hire"),
+      .default("build"),
     openings: z.coerce
       .number()
       .int("Openings must be a whole number")
@@ -81,6 +90,62 @@ export const createProjectSchema = z
   });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+
+/**
+ * A hire-only posting: a role, not a project — no fee, deliverables or
+ * evaluation. Openings (how many to hire) and the application limit (how
+ * many may apply) are separate numbers, and the limit can't be below the
+ * openings.
+ */
+export const createHiringSchema = z
+  .object({
+    title: z.string().min(3, "Give the role a title").max(150),
+    category: z.enum(
+      Object.keys(PROJECT_CATEGORIES) as [ProjectCategory, ...ProjectCategory[]],
+      { errorMap: () => ({ message: "Choose the role's area" }) }
+    ),
+    jobType: z.enum(Object.keys(JOB_TYPES) as [JobType, ...JobType[]], {
+      errorMap: () => ({ message: "Choose the job type" }),
+    }),
+    workArrangement: z.enum(
+      Object.keys(WORK_ARRANGEMENTS) as [WorkArrangement, ...WorkArrangement[]],
+      { errorMap: () => ({ message: "Choose remote, hybrid or on-site" }) }
+    ),
+    jobLocation: z.string().trim().max(120).optional(),
+    experienceLevel: z.enum(
+      Object.keys(EXPERIENCE_LEVELS) as [ExperienceLevel, ...ExperienceLevel[]],
+      { errorMap: () => ({ message: "Choose the experience level" }) }
+    ),
+    description: z.string().trim().min(20, "Summarise the role in a sentence or two"),
+    aboutRole: z.string().trim().min(30, "Describe the role in a little more detail"),
+    responsibilities: z
+      .array(z.string().min(2))
+      .min(1, "List at least one responsibility"),
+    requirements: z.array(z.string().min(2)).min(1, "List at least one requirement"),
+    niceToHave: z.array(z.string().min(2)).default([]),
+    compensation: z.string().trim().max(120).optional(),
+    openings: z.coerce
+      .number()
+      .int("Openings must be a whole number")
+      .min(1, "Hire at least 1 person")
+      .max(MAX_HIRE_OPENINGS, `At most ${MAX_HIRE_OPENINGS} openings`),
+    maxApplicants: z.coerce
+      .number()
+      .int("The application limit must be a whole number")
+      .min(1, "Allow at least 1 application")
+      .max(MAX_APPLICANTS_LIMIT, `At most ${MAX_APPLICANTS_LIMIT} applications`),
+    applicationDeadline: z.string().datetime({ message: "Invalid application deadline" }),
+  })
+  .refine((data) => data.maxApplicants >= data.openings, {
+    message: "The application limit must be at least the number of openings",
+    path: ["maxApplicants"],
+  })
+  .refine((data) => new Date(data.applicationDeadline).getTime() > Date.now(), {
+    message: "The application deadline must be in the future",
+    path: ["applicationDeadline"],
+  });
+
+export type CreateHiringInput = z.infer<typeof createHiringSchema>;
 
 export const projectVisibilitySchema = z.object({
   projectId: z.string().uuid("Invalid project"),

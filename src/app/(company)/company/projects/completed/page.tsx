@@ -3,8 +3,19 @@ import { CompanyProjectsScreen } from "@/components/company/company-projects-scr
 
 export const dynamic = "force-dynamic";
 
-/** Finished projects: evaluated (completed) or cancelled. */
-export default async function CompanyCompletedProjectsPage() {
+/** Finished: roles with every opening filled, and evaluated or cancelled projects. */
+export default async function CompanyCompletedProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
   const user = await requireRole(["company", "admin"]);
-  return <CompanyProjectsScreen userId={user.id} tab="completed" />;
+  const { type } = await searchParams;
+  return (
+    <CompanyProjectsScreen
+      userId={user.id}
+      tab="completed"
+      type={type === "hire" || type === "build" ? type : null}
+    />
+  );
 }

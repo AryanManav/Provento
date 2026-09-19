@@ -29,6 +29,7 @@ const application = (
     currency: "INR",
     companyId: "c1",
     companyName: "Acme",
+    opportunityType: "build",
   },
 });
 

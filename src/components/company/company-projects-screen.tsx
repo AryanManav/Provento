@@ -9,6 +9,11 @@ import { getNotificationSummary } from "@/lib/data/notifications";
 import { unreadByProject } from "@/lib/notifications";
 import { isClosedProject } from "@/lib/applications";
 import { COMPANY_PROJECT_STATUS, OUTCOME_LABEL } from "@/lib/company";
+import { JOB_TYPES, WORK_ARRANGEMENTS } from "@/lib/constants";
+import { getApplicationCounts } from "@/lib/data/project";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
+import { FilterChips } from "@/components/ui/filter-chips";
+import type { OpportunityType } from "@/lib/types/database.types";
 import { Button } from "@/components/ui/button";
 import { StatusBanner } from "@/components/common/status-banner";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -25,20 +30,26 @@ function ProjectRow({
   updateCount,
   latest,
   result,
+  applicationCount,
 }: {
   project: CompanyProjectView;
   updateCount: number;
   latest?: { title: string; createdAt: string };
   result?: CompanyProjectResult;
+  applicationCount: number;
 }) {
-  const status = COMPANY_PROJECT_STATUS[project.status];
+  const hire = project.opportunityType === "hire";
+  const status =
+    hire && project.status === "completed"
+      ? { label: "Hiring complete", tone: "success" as const }
+      : COMPANY_PROJECT_STATUS[project.status];
   const closed = isClosedProject(project.status);
 
   return (
     <li className={cn(updateCount > 0 && "bg-accent-50/40")}>
       <Link
         href={
-          closed
+          closed && !hire
             ? `/company/projects/${project.id}/review`
             : `/company/projects/${project.id}`
         }
@@ -49,6 +60,7 @@ function ProjectRow({
             <h2 className="text-sm font-medium text-ink-900 group-hover:text-brand-700">
               {project.title}
             </h2>
+            <OpportunityBadge type={project.opportunityType} size="sm" />
             {updateCount > 0 && (
               <span className="rounded bg-accent-100 px-1.5 text-2xs font-medium text-accent-800">
                 {updateCount} new
@@ -56,7 +68,26 @@ function ProjectRow({
             )}
           </div>
 
-          {closed ? (
+          {hire ? (
+            <p className="text-xs text-ink-500">
+              {[
+                project.jobType && JOB_TYPES[project.jobType],
+                project.workArrangement && WORK_ARRANGEMENTS[project.workArrangement],
+                `${project.openings} opening${project.openings === 1 ? "" : "s"}`,
+                project.maxApplicants !== null
+                  ? `${applicationCount} / ${project.maxApplicants} applications`
+                  : `${applicationCount} applications`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              {project.awaitingReview > 0 && (
+                <span className="font-medium text-accent-700">
+                  {" "}
+                  · {project.awaitingReview} new
+                </span>
+              )}
+            </p>
+          ) : closed ? (
             <p className="text-xs text-ink-500">
               {!result || result.candidates.length === 0
                 ? "No candidate completed it"
@@ -99,12 +130,16 @@ function ProjectRow({
         </div>
 
         <div className="flex shrink-0 items-center gap-4">
-          <span className="tabular text-sm font-medium text-emerald-700">
-            {formatCurrency(project.paymentAmount, project.currency)}
-          </span>
+          {hire ? (
+            <span className="text-sm font-medium text-emerald-700">Free</span>
+          ) : (
+            <span className="tabular text-sm font-medium text-emerald-700">
+              {formatCurrency(project.paymentAmount, project.currency)}
+            </span>
+          )}
           <StatusBadge size="sm" tone={status.tone} label={status.label} />
           <span className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-brand-700 md:ml-0">
-            {closed ? "Evaluations" : "Manage"}
+            {hire ? "Candidates" : closed ? "Evaluations" : "Manage"}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </span>
         </div>
@@ -120,21 +155,36 @@ function ProjectRow({
 export async function CompanyProjectsScreen({
   userId,
   tab,
+  type,
   created,
   deleted,
   error,
 }: {
   userId: string;
   tab: CompanyProjectsTab;
+  /** Only hiring roles, or only build projects; everything when null. */
+  type?: OpportunityType | null;
   created?: string;
   deleted?: string;
   error?: string;
 }) {
   const companyId = await getCompanyIdForUser(userId);
-  const [projects, notifications] = await Promise.all([
+  const [allProjects, notifications] = await Promise.all([
     companyId ? getCompanyProjects(companyId) : Promise.resolve([]),
     getNotificationSummary(userId),
   ]);
+  const typeCounts = {
+    hire: allProjects.filter((project) => project.opportunityType === "hire").length,
+    build: allProjects.filter((project) => project.opportunityType === "build").length,
+  };
+  const projects = type
+    ? allProjects.filter((project) => project.opportunityType === type)
+    : allProjects;
+  const applicationCounts = await getApplicationCounts(
+    projects.map((project) => project.id)
+  );
+  const basePath = tab === "active" ? "/company/projects" : "/company/projects/completed";
+  const withType = (path: string) => (type ? `${path}?type=${type}` : path);
 
   const active = projects.filter((project) => !isClosedProject(project.status));
   const completed = projects.filter((project) => isClosedProject(project.status));
@@ -156,12 +206,12 @@ export async function CompanyProjectsScreen({
       <div className="space-y-4">
         <PageHeader
           title="Projects"
-          description="Your paid projects: who's applying, who's building, and the work you've evaluated."
+          description="Your hiring roles and build projects — who's applying, who's being hired, who's building."
           actions={
             <Link href="/company/projects/create">
               <Button>
                 <Plus className="h-4 w-4" aria-hidden />
-                Post a project
+                Create opportunity
               </Button>
             </Link>
           }
@@ -173,38 +223,76 @@ export async function CompanyProjectsScreen({
             {
               id: "active",
               label: "Live",
-              href: "/company/projects",
+              href: withType("/company/projects"),
               count: counts.active,
             },
             {
               id: "completed",
               label: "Finished",
-              href: "/company/projects/completed",
+              href: withType("/company/projects/completed"),
               count: counts.completed,
             },
           ]}
         />
       </div>
 
+      <FilterChips
+        label="Opportunity type"
+        active={type ?? "all"}
+        chips={[
+          { id: "all", label: "All", href: basePath, count: allProjects.length },
+          {
+            id: "hire",
+            label: "Hiring",
+            href: `${basePath}?type=hire`,
+            count: typeCounts.hire,
+          },
+          {
+            id: "build",
+            label: "Build projects",
+            href: `${basePath}?type=build`,
+            count: typeCounts.build,
+          },
+        ]}
+      />
+
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
-      {deleted && <StatusBanner tone="success">Project deleted.</StatusBanner>}
+      {deleted && <StatusBanner tone="success">Deleted.</StatusBanner>}
       {created && (
         <StatusBanner tone="success">
-          Project published and open for applications.
+          {created === "hire"
+            ? "Role posted and open for applications. Posting a role is free."
+            : "Project published and open for applications."}
         </StatusBanner>
       )}
 
       {ordered.length === 0 ? (
         <EmptyState
           icon={FolderKanban}
-          title={tab === "active" ? "No live projects" : "No finished projects yet"}
-          description={
-            tab === "active"
-              ? "Post a paid project to start finding talent through real work."
-              : "Projects move here once every selected candidate's work is evaluated, or the project is cancelled."
+          title={
+            tab !== "active"
+              ? "Nothing finished yet"
+              : type === "hire"
+                ? "No active hiring opportunities"
+                : type === "build"
+                  ? "No active build projects"
+                  : "No live roles or projects"
           }
-          actionText={tab === "active" ? "Post a project" : undefined}
-          actionHref={tab === "active" ? "/company/projects/create" : undefined}
+          description={
+            tab !== "active"
+              ? "Roles move here once every opening is filled, and projects once their work is evaluated or they're cancelled."
+              : type === "hire"
+                ? "Create an opportunity to start receiving candidates."
+                : type === "build"
+                  ? "Create a project and find a candidate to complete it."
+                  : "Hire for a role for free, or post a paid project for one candidate to build."
+          }
+          actionText={tab === "active" ? "Create opportunity" : undefined}
+          actionHref={
+            tab === "active"
+              ? `/company/projects/create${type ? `?type=${type}` : ""}`
+              : undefined
+          }
         />
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
@@ -219,6 +307,7 @@ export async function CompanyProjectsScreen({
                 updateCount={updates[project.id] ?? 0}
                 latest={latest}
                 result={results.get(project.id)}
+                applicationCount={applicationCounts.get(project.id) ?? 0}
               />
             );
           })}

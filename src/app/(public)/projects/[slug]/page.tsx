@@ -14,6 +14,7 @@ import {
   ListChecks,
   Package,
   Scale,
+  Users,
 } from "lucide-react";
 import { getBrowsableProjectBySlug } from "@/lib/data/project";
 import {
@@ -25,6 +26,8 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { WORK_MODES, companyProfilePath } from "@/lib/constants";
 import { ApplicationForm } from "@/components/candidate/application-form";
+import { HireOpportunityDetail } from "@/components/projects/hire-detail";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { Avatar } from "@/components/common/avatar";
@@ -106,6 +109,17 @@ export default async function ProjectDetailPage({
     user.role === "candidate" && !existing && project.availability === "open";
   const company = project.companyName || "the startup";
 
+  // Hire only: a role, laid out as a role — no fee, deliverables or evaluation.
+  if (project.opportunityType === "hire") {
+    return (
+      <HireOpportunityDetail
+        project={project}
+        viewerRole={user.role}
+        existing={existing}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <Link
@@ -138,6 +152,7 @@ export default async function ProjectDetailPage({
         </h1>
         <p className="mt-3 max-w-3xl text-base text-ink-600">{project.description}</p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          <OpportunityBadge type="build" />
           <StatusBadge tone={availability.tone} label={availability.label} />
           <span className="rounded-md border border-line bg-surface px-2 py-0.5 text-xs font-medium text-ink-600">
             {purposeLabel(project)}
@@ -330,6 +345,7 @@ export default async function ProjectDetailPage({
                 label="Effort"
                 value={`${project.expectedHours} hours`}
               />
+              <Fact icon={Users} label="Selected" value="1 candidate" />
               <Fact
                 icon={CalendarClock}
                 label="Apply by"

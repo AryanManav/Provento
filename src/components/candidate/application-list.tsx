@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { ApplicationStageBadge } from "@/components/candidate/application-stage-badge";
 import { CompanyMark } from "@/components/common/company-mark";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { applicationHref, stageOf, STAGE_DISPLAY } from "@/lib/applications";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { DEFAULT_CURRENCY } from "@/lib/constants";
@@ -62,6 +63,12 @@ export function ApplicationList({
                     <span className="truncate">
                       {application.project?.title ?? "Project"}
                     </span>
+                    {application.project && (
+                      <OpportunityBadge
+                        type={application.project.opportunityType}
+                        size="sm"
+                      />
+                    )}
                     {changed && (
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500">
                         <span className="sr-only">Updated</span>
@@ -81,12 +88,14 @@ export function ApplicationList({
                 {formatDate(application.createdAt)}
               </span>
               <span className="tabular hidden text-right text-sm font-medium text-ink-800 md:block">
-                {application.project
-                  ? formatCurrency(
-                      application.project.paymentAmount,
-                      application.project.currency || DEFAULT_CURRENCY
-                    )
-                  : "—"}
+                {application.project?.opportunityType === "hire"
+                  ? "Role"
+                  : application.project
+                    ? formatCurrency(
+                        application.project.paymentAmount,
+                        application.project.currency || DEFAULT_CURRENCY
+                      )
+                    : "—"}
               </span>
               <span>
                 <ApplicationStageBadge stage={stage} size="sm" />

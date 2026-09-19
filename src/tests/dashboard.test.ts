@@ -39,6 +39,7 @@ const application = (
     currency: "INR",
     companyId: "c2",
     companyName: "Beta",
+    opportunityType: "build",
   },
 });
 
@@ -117,6 +118,9 @@ describe("browse filters", () => {
     expect(filters).toEqual({
       q: "react",
       category: null,
+      type: null,
+      jobType: null,
+      workArrangement: null,
       minPay: null,
       maxHours: 10,
       openOnly: true,

@@ -22,6 +22,10 @@ import type {
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
+  ExperienceLevel,
+  JobType,
+  OpportunityType,
+  WorkArrangement,
   ProjectOutcomeType,
   CompanyWorkStyle,
   ProjectCategory,
@@ -72,28 +76,26 @@ interface RawMembership {
   companies: RawCompanyRow | RawCompanyRow[] | null;
 }
 
+interface RawApplicantUser {
+  full_name: string;
+  email: string;
+  avatar_url?: string | null;
+}
+
+interface RawApplicantProfile {
+  headline: string | null;
+  users: RawApplicantUser | RawApplicantUser[] | null;
+  candidate_skills?: { skill_name: string }[] | null;
+}
+
 interface RawApplicant {
   id: string;
   candidate_id: string;
   status: ApplicationStatus;
   cover_message: string;
   relevant_experience: string | null;
-  candidate_profiles:
-    | {
-        headline: string | null;
-        users:
-          | { full_name: string; email: string }
-          | { full_name: string; email: string }[]
-          | null;
-      }
-    | {
-        headline: string | null;
-        users:
-          | { full_name: string; email: string }
-          | { full_name: string; email: string }[]
-          | null;
-      }[]
-    | null;
+  created_at: string;
+  candidate_profiles: RawApplicantProfile | RawApplicantProfile[] | null;
 }
 
 /**
@@ -160,7 +162,7 @@ export async function getCompanyProjects(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings, category"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation"
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -185,6 +187,12 @@ export async function getCompanyProjects(
     openings: row.openings ?? 1,
     category: (row.category ?? "other") as ProjectCategory,
     stack: [],
+    opportunityType: (row.opportunity_type ?? "build") as OpportunityType,
+    jobType: (row.job_type ?? null) as JobType | null,
+    workArrangement: (row.work_arrangement ?? null) as WorkArrangement | null,
+    jobLocation: row.job_location ?? null,
+    experienceLevel: (row.experience_level ?? null) as ExperienceLevel | null,
+    compensation: row.compensation ?? null,
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
 }
@@ -244,7 +252,7 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, candidate_id, status, cover_message, relevant_experience, candidate_profiles(headline, users(full_name, email))"
+      "id, candidate_id, status, cover_message, relevant_experience, created_at, candidate_profiles(headline, users(full_name, email, avatar_url), candidate_skills(skill_name))"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -271,6 +279,11 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
       candidateName: account?.full_name ?? "Candidate",
       candidateHeadline: candidate?.headline ?? null,
       candidateEmail: account?.email ?? null,
+      candidateAvatarUrl: account?.avatar_url ?? null,
+      candidateSkills: (candidate?.candidate_skills ?? []).map(
+        (skill) => skill.skill_name
+      ),
+      appliedAt: row.created_at,
     };
   });
 }
@@ -308,7 +321,7 @@ export async function getCompanyPipeline(companyId: string): Promise<PipelineEnt
   const supabase = await createClient();
   const { data: projectRows } = await supabase
     .from("projects")
-    .select("id, title, project_deadline")
+    .select("id, title, project_deadline, opportunity_type")
     .eq("company_id", companyId);
   const projects = new Map((projectRows ?? []).map((row) => [row.id, row]));
   if (projects.size === 0) return [];
@@ -349,6 +362,7 @@ export async function getCompanyPipeline(companyId: string): Promise<PipelineEnt
           projectId: row.project_id,
           projectTitle: project.title,
           projectDeadline: project.project_deadline,
+          opportunityType: (project.opportunity_type ?? "build") as OpportunityType,
           candidateId: row.candidate_id,
           candidateName: account?.full_name ?? "Candidate",
           candidateHeadline: profile?.headline ?? null,
@@ -371,12 +385,13 @@ export async function getProjectHeader(projectId: string): Promise<{
   applicationDeadline: string;
   purpose: ProjectPurpose;
   openings: number;
+  opportunityType: OpportunityType;
 } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings"
+      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings, opportunity_type"
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -392,6 +407,7 @@ export async function getProjectHeader(projectId: string): Promise<{
     applicationDeadline: data.application_deadline,
     purpose: (data.purpose ?? "hire") as ProjectPurpose,
     openings: data.openings ?? 1,
+    opportunityType: (data.opportunity_type ?? "build") as OpportunityType,
   };
 }
 

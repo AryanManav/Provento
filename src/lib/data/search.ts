@@ -11,6 +11,9 @@ export interface SearchResults {
 
 const NO_FILTERS: Omit<ProjectFilters, "q"> = {
   category: null,
+  type: null,
+  jobType: null,
+  workArrangement: null,
   minPay: null,
   maxHours: null,
   openOnly: false,

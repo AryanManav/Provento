@@ -5,8 +5,11 @@ import { requireRole } from "@/lib/auth/guards";
 import {
   getApplicantProfile,
   getCompanyIdForUser,
+  getProjectApplicants,
   getProjectHeader,
 } from "@/lib/data/company";
+import { HIRE_STAGE_DISPLAY } from "@/lib/company";
+import { HiringDecision } from "@/components/company/hiring-decision";
 import { ProfileIntroCard } from "@/components/candidate/profile-intro-card";
 import { ProfileAboutCard } from "@/components/candidate/profile-about-card";
 import { SkillsCard } from "@/components/candidate/skills-card";
@@ -47,6 +50,12 @@ export default async function ApplicantProfilePage({
   }
 
   const selfPath = `/company/projects/${project.id}/applicants/${applicant.applicationId}`;
+  const hire = project.opportunityType === "hire";
+  // Hire only: openings fill with selected applications, not project work.
+  const hiredCount = hire
+    ? (await getProjectApplicants(project.id)).filter((a) => a.status === "selected")
+        .length
+    : 0;
 
   return (
     <div className="space-y-fib6">
@@ -94,10 +103,19 @@ export default async function ApplicantProfilePage({
             <p className="text-sm text-ink-500">
               Status:{" "}
               <span className="font-semibold capitalize text-ink-800">
-                {applicant.status.replaceAll("_", " ")}
+                {hire
+                  ? HIRE_STAGE_DISPLAY[applicant.status].label
+                  : applicant.status.replaceAll("_", " ")}
               </span>
             </p>
-            {applicant.status === "selected" ? (
+            {hire ? (
+              <HiringDecision
+                applicationId={applicant.applicationId}
+                status={applicant.status}
+                openingsFilled={hiredCount >= project.openings}
+                returnTo={selfPath}
+              />
+            ) : applicant.status === "selected" ? (
               <Link
                 href={`/company/projects/${project.id}/review/${applicant.profile.id}`}
                 className="inline-flex items-center gap-fib2 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-brand-700"

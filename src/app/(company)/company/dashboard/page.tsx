@@ -13,7 +13,9 @@ import {
   getCompanyDashboardStats,
   getCompanyForUser,
   getCompanyPipeline,
+  getCompanyProjects,
 } from "@/lib/data/company";
+import { OpportunitySummary } from "@/components/company/opportunity-summary";
 import { getNotificationSummary } from "@/lib/data/notifications";
 import { pipelineStage } from "@/lib/company";
 import { greetingFor } from "@/lib/next-action";
@@ -36,18 +38,18 @@ const EMPTY_STATS = {
 const FIRST_STEPS = [
   {
     icon: ClipboardList,
-    title: "Post a paid project",
-    body: "A 5–10 hour brief with requirements, a fee, and how you'll evaluate it.",
+    title: "Post a role or a project",
+    body: "Hire for a role (free), or post a paid project for one candidate to build.",
   },
   {
     icon: Inbox,
     title: "Review applications",
-    body: "Candidates read the brief before applying. Select who should build it.",
+    body: "Shortlist, interview and select for roles; pick one candidate to build a project.",
   },
   {
     icon: FileCheck2,
-    title: "Evaluate real work",
-    body: "Judge the submission against your criteria, then interview or hire.",
+    title: "Hire, or evaluate real work",
+    body: "Fill your openings, or judge a delivered project against your criteria.",
   },
 ];
 
@@ -55,17 +57,17 @@ const FIRST_STEPS = [
 export default async function CompanyDashboardPage() {
   const user = await requireRole(["company", "admin"]);
   const company = await getCompanyForUser(user.id);
-  const [stats, pipeline, notifications] = await Promise.all([
+  const [stats, pipeline, notifications, projects] = await Promise.all([
     company ? getCompanyDashboardStats(company.id) : Promise.resolve(EMPTY_STATS),
     company ? getCompanyPipeline(company.id) : Promise.resolve([]),
     getNotificationSummary(user.id),
+    company ? getCompanyProjects(company.id) : Promise.resolve([]),
   ]);
 
   const stageOf = (entry: (typeof pipeline)[number]) =>
-    pipelineStage(entry.applicationStatus, entry.workStatus);
+    pipelineStage(entry.applicationStatus, entry.workStatus, entry.opportunityType);
   const toEvaluate = pipeline.filter((entry) => stageOf(entry) === "to_evaluate");
   const toReview = pipeline.filter((entry) => stageOf(entry) === "new");
-  const reviewing = pipeline.filter((entry) => stageOf(entry) === "reviewing");
   const building = pipeline.filter((entry) => stageOf(entry) === "building");
   const attention = [...toEvaluate, ...toReview];
   const evaluations = [...toEvaluate, ...building].sort(
@@ -80,26 +82,6 @@ export default async function CompanyDashboardPage() {
     toReview.length > 0 &&
       `${toReview.length} new application${toReview.length === 1 ? "" : "s"}`,
   ].filter(Boolean);
-
-  const metrics = [
-    { label: "Open projects", value: stats.activeProjects, href: "/company/projects" },
-    {
-      label: "To review",
-      value: toReview.length + reviewing.length,
-      href: "/company/candidates",
-    },
-    {
-      label: "Building",
-      value: building.length,
-      href: "/company/candidates?view=evaluation",
-    },
-    {
-      label: "To evaluate",
-      value: toEvaluate.length,
-      href: "/company/candidates?view=evaluation",
-    },
-    { label: "Hires", value: stats.hires, href: "/company/candidates?view=decided" },
-  ];
 
   return (
     <div className="space-y-6">
@@ -124,7 +106,7 @@ export default async function CompanyDashboardPage() {
           <Link href="/company/projects/create">
             <Button>
               <Plus className="h-4 w-4" aria-hidden />
-              Post a project
+              Create opportunity
             </Button>
           </Link>
         </div>
@@ -156,29 +138,13 @@ export default async function CompanyDashboardPage() {
           <Link href="/company/projects/create" className="mt-5 inline-block">
             <Button>
               <Plus className="h-4 w-4" aria-hidden />
-              Post your first project
+              Create your first opportunity
             </Button>
           </Link>
         </section>
       ) : (
         <>
-          <nav
-            aria-label="Pipeline at a glance"
-            className="grid grid-cols-2 divide-line overflow-hidden rounded-xl border border-line bg-surface sm:grid-cols-5 sm:divide-x"
-          >
-            {metrics.map((metric) => (
-              <Link
-                key={metric.label}
-                href={metric.href}
-                className="px-4 py-3 transition-colors hover:bg-ink-50"
-              >
-                <span className="block text-xs text-ink-500">{metric.label}</span>
-                <span className="tabular mt-0.5 block text-xl font-semibold text-ink-900">
-                  {metric.value}
-                </span>
-              </Link>
-            ))}
-          </nav>
+          <OpportunitySummary projects={projects} pipeline={pipeline} />
 
           <section aria-labelledby="attention" className="space-y-3">
             <div className="flex items-center justify-between gap-4">

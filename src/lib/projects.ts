@@ -1,5 +1,11 @@
 import { BROWSABLE_PROJECT_STATUSES, OPEN_PROJECT_STATUSES } from "@/lib/constants";
-import type { ProjectCategory, ProjectStatus } from "@/lib/types/database.types";
+import type {
+  JobType,
+  OpportunityType,
+  ProjectCategory,
+  ProjectStatus,
+  WorkArrangement,
+} from "@/lib/types/database.types";
 
 /**
  * Where a project stands for someone browsing:
@@ -42,20 +48,41 @@ export function spotsLeft(maxApplicants: number | null, applicationCount: number
   return maxApplicants === null ? null : Math.max(0, maxApplicants - applicationCount);
 }
 
-/** "Hiring · 2 openings" / "Paid build — no hiring", for Browse and the brief. */
+/**
+ * One line on what taking part means: "5 openings" for a hire posting, "One
+ * candidate is selected" for a build project. Legacy paid projects that
+ * recruited several candidates keep their openings.
+ */
 export function purposeLabel(project: {
+  opportunityType: OpportunityType;
   purpose: "hire" | "build";
   openings: number;
 }): string {
-  return project.purpose === "hire"
-    ? `Hiring · ${project.openings} opening${project.openings === 1 ? "" : "s"}`
-    : "Paid build — no hiring";
+  if (project.opportunityType === "hire" || project.purpose === "hire") {
+    return `${project.openings} opening${project.openings === 1 ? "" : "s"}`;
+  }
+  return "One candidate is selected";
+}
+
+/** "73 / 100 applications", for a posting with an application limit. */
+export function applicationsLabel(project: {
+  applicationCount: number;
+  maxApplicants: number | null;
+}): string | null {
+  return project.maxApplicants === null
+    ? null
+    : `${project.applicationCount} / ${project.maxApplicants} applications`;
 }
 
 /** Browse filters, parsed from the query string. Everything is optional. */
 export interface ProjectFilters {
   q: string;
   category: ProjectCategory | null;
+  /** Only hire-only roles, or only build-only projects. */
+  type: OpportunityType | null;
+  /** Role filters (hire only). */
+  jobType: JobType | null;
+  workArrangement: WorkArrangement | null;
   /** Minimum fee, in the project's currency units. */
   minPay: number | null;
   /** Maximum expected hours. */
@@ -85,10 +112,21 @@ export function parseProjectFilters(
   categories: readonly string[]
 ): ProjectFilters {
   const category = params.category;
+  const type = params.kind === "hire" || params.kind === "build" ? params.kind : null;
   return {
     q: (params.q ?? "").trim().slice(0, 80),
     category:
       category && categories.includes(category) ? (category as ProjectCategory) : null,
+    type,
+    jobType:
+      params.job &&
+      ["full_time", "part_time", "internship", "contract"].includes(params.job)
+        ? (params.job as JobType)
+        : null,
+    workArrangement:
+      params.where && ["remote", "hybrid", "onsite"].includes(params.where)
+        ? (params.where as WorkArrangement)
+        : null,
     minPay: positiveNumber(params.pay),
     maxHours: positiveNumber(params.hours),
     openOnly: params.open === "1",
@@ -99,6 +137,9 @@ export function parseProjectFilters(
 export function hasActiveFilters(filters: ProjectFilters): boolean {
   return (
     filters.q !== "" ||
+    filters.type !== null ||
+    filters.jobType !== null ||
+    filters.workArrangement !== null ||
     filters.minPay !== null ||
     filters.maxHours !== null ||
     filters.openOnly
@@ -116,14 +157,33 @@ export function filterProjects<
     paymentAmount: number;
     expectedHours: number;
     availability: ProjectAvailability;
+    opportunityType?: OpportunityType;
+    jobType?: JobType | null;
+    workArrangement?: WorkArrangement | null;
   },
 >(projects: T[], filters: ProjectFilters): T[] {
   const words = filters.q.toLowerCase().split(/\s+/).filter(Boolean);
   return projects.filter((project) => {
+    const type = project.opportunityType ?? "build";
     if (filters.category && project.category !== filters.category) return false;
-    if (filters.minPay !== null && project.paymentAmount < filters.minPay) return false;
-    if (filters.maxHours !== null && project.expectedHours > filters.maxHours)
+    if (filters.type && type !== filters.type) return false;
+    // Fee and effort describe paid projects; job type and arrangement describe roles.
+    if (
+      filters.minPay !== null &&
+      (type !== "build" || project.paymentAmount < filters.minPay)
+    ) {
       return false;
+    }
+    if (
+      filters.maxHours !== null &&
+      (type !== "build" || project.expectedHours > filters.maxHours)
+    ) {
+      return false;
+    }
+    if (filters.jobType && project.jobType !== filters.jobType) return false;
+    if (filters.workArrangement && project.workArrangement !== filters.workArrangement) {
+      return false;
+    }
     if (filters.openOnly && project.availability !== "open") return false;
     if (words.length === 0) return true;
     const haystack = [

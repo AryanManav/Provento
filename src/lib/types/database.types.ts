@@ -17,7 +17,19 @@ export type ProjectStatus =
   | "cancelled";
 
 export type ApplicationStatus =
-  "submitted" | "reviewing" | "shortlisted" | "selected" | "rejected" | "withdrawn";
+  | "submitted"
+  | "reviewing"
+  | "shortlisted"
+  | "interview"
+  | "selected"
+  | "rejected"
+  | "withdrawn";
+
+/** Build only: a paid project for one candidate. Hire only: a free job posting. */
+export type OpportunityType = "build" | "hire";
+export type JobType = "full_time" | "part_time" | "internship" | "contract";
+export type WorkArrangement = "remote" | "hybrid" | "onsite";
+export type ExperienceLevel = "entry" | "junior" | "mid" | "senior";
 
 /** The topic a project is listed under in Browse. */
 export type ProjectCategory =
@@ -375,6 +387,14 @@ export interface Database {
           application_deadline: string;
           project_deadline: string;
           status: ProjectStatus;
+          opportunity_type: OpportunityType;
+          job_type: JobType | null;
+          work_arrangement: WorkArrangement | null;
+          job_location: string | null;
+          experience_level: ExperienceLevel | null;
+          compensation: string | null;
+          responsibilities: string[];
+          nice_to_have: string[];
           created_at: string;
           updated_at: string;
         };
@@ -402,6 +422,14 @@ export interface Database {
           application_deadline: string;
           project_deadline: string;
           status?: ProjectStatus;
+          opportunity_type?: OpportunityType;
+          job_type?: JobType | null;
+          work_arrangement?: WorkArrangement | null;
+          job_location?: string | null;
+          experience_level?: ExperienceLevel | null;
+          compensation?: string | null;
+          responsibilities?: string[];
+          nice_to_have?: string[];
           created_at?: string;
           updated_at?: string;
         };

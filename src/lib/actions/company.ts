@@ -15,6 +15,7 @@ import {
   companyLinksSchema,
   companyProfileSchema,
   companySetupSchema,
+  createHiringSchema,
   createProjectSchema,
   deleteProjectSchema,
   projectVisibilitySchema,
@@ -131,9 +132,9 @@ export async function createProjectAction(formData: FormData) {
     currency: DEFAULT_CURRENCY,
     maxApplicants: formData.get("maxApplicants"),
     category: formData.get("category"),
-    purpose: formData.get("purpose") || "hire",
-    // Build-only projects always have one candidate, whatever was typed.
-    openings: formData.get("purpose") === "build" ? 1 : formData.get("openings") || 1,
+    // Build only: one candidate completes the project (the database enforces it too).
+    purpose: "build",
+    openings: 1,
     applicationDeadline: applicationDeadline.toISOString(),
     projectDeadline: projectDeadline.toISOString(),
   });
@@ -175,8 +176,9 @@ export async function createProjectAction(formData: FormData) {
       project_deadline: validated.data.projectDeadline,
       max_applicants: validated.data.maxApplicants ?? null,
       category: validated.data.category,
-      purpose: validated.data.purpose,
-      openings: validated.data.openings,
+      purpose: "build",
+      openings: 1,
+      opportunity_type: "build",
       status: "applications_open",
     })
     .select("id")
@@ -200,6 +202,102 @@ export async function createProjectAction(formData: FormData) {
   revalidatePath("/company/projects");
   revalidatePath("/projects");
   redirect("/company/projects?created=1");
+}
+
+/**
+ * Posts a hire-only opportunity: a role, free to post. There's no project,
+ * fee or trial — the database's normalize_opportunity clears those fields and
+ * the application triggers enforce the openings and application limits.
+ */
+export async function createHiringAction(formData: FormData) {
+  const user = await requireRole(["company", "admin"]);
+  const createPath = "/company/projects/create?type=hire";
+
+  const deadline = new Date(String(formData.get("applicationDeadline") || ""));
+  if (Number.isNaN(deadline.valueOf())) {
+    redirectWithError(createPath, "Please provide a valid application deadline");
+  }
+
+  const validated = createHiringSchema.safeParse({
+    title: formData.get("title"),
+    category: formData.get("category"),
+    jobType: formData.get("jobType"),
+    workArrangement: formData.get("workArrangement"),
+    jobLocation: formData.get("jobLocation") || undefined,
+    experienceLevel: formData.get("experienceLevel"),
+    description: formData.get("description"),
+    aboutRole: formData.get("aboutRole"),
+    responsibilities: toList(formData.get("responsibilities")),
+    requirements: toList(formData.get("requirements")),
+    niceToHave: toList(formData.get("niceToHave")),
+    compensation: formData.get("compensation") || undefined,
+    openings: formData.get("openings"),
+    maxApplicants: formData.get("maxApplicants"),
+    applicationDeadline: deadline.toISOString(),
+  });
+  if (!validated.success) {
+    redirectWithError(createPath, validated.error.errors[0].message);
+  }
+
+  if (user.role !== "admin" && !isCompanyReadyToPost(await getCompanyForUser(user.id))) {
+    redirect("/onboarding/company");
+  }
+  const companyId = await getCompanyIdForUser(user.id);
+  if (!companyId) {
+    redirectWithError("/company/profile", "Create your company profile before posting");
+  }
+
+  const role = validated.data;
+  const supabase = await createClient();
+  const { data: posting, error } = await supabase
+    .from("projects")
+    .insert({
+      company_id: companyId,
+      opportunity_type: "hire",
+      purpose: "hire",
+      slug: toSlug(role.title),
+      title: role.title,
+      category: role.category,
+      description: role.description,
+      problem_statement: role.aboutRole,
+      context: "",
+      requirements: role.requirements,
+      responsibilities: role.responsibilities,
+      nice_to_have: role.niceToHave,
+      job_type: role.jobType,
+      work_arrangement: role.workArrangement,
+      job_location: role.jobLocation ?? null,
+      experience_level: role.experienceLevel,
+      compensation: role.compensation ?? null,
+      openings: role.openings,
+      max_applicants: role.maxApplicants,
+      payment_amount: 0,
+      currency: DEFAULT_CURRENCY,
+      application_deadline: role.applicationDeadline,
+      project_deadline: role.applicationDeadline,
+      status: "applications_open",
+    })
+    .select("id")
+    .single();
+
+  if (error || !posting) {
+    redirectWithError(createPath, error?.message || "Could not post the role");
+  }
+
+  const skills = toList(formData.get("skills"));
+  if (skills.length) {
+    await supabase.from("project_skills").insert(
+      skills.map((skill) => ({
+        project_id: posting.id,
+        skill_name: skill,
+        is_required: true,
+      }))
+    );
+  }
+
+  revalidatePath("/company/projects");
+  revalidatePath("/projects");
+  redirect("/company/projects?created=hire");
 }
 
 export async function updateApplicationStatusAction(formData: FormData) {
@@ -250,9 +348,9 @@ export async function updateApplicationStatusAction(formData: FormData) {
     .update({
       status: validated.data.status,
       // A message only belongs with a final decision.
-      ...(validated.data.status === "reviewing"
-        ? {}
-        : { decision_note: validated.data.decisionNote ?? null }),
+      ...(validated.data.status === "selected" || validated.data.status === "rejected"
+        ? { decision_note: validated.data.decisionNote ?? null }
+        : {}),
     })
     .eq("id", validated.data.applicationId);
 
@@ -265,7 +363,12 @@ export async function updateApplicationStatusAction(formData: FormData) {
 
   revalidatePath(projectPath);
   revalidatePath(destination);
-  redirect(`${destination}?updated=${encodeURIComponent(validated.data.status)}`);
+  // Keep the hiring pipeline on the tab it was acted from (known tabs only).
+  const stage = String(formData.get("stage") || "");
+  const keepStage = /^[a-z]{3,12}$/.test(stage) ? `&stage=${stage}` : "";
+  redirect(
+    `${destination}?updated=${encodeURIComponent(validated.data.status)}${keepStage}`
+  );
 }
 
 /**

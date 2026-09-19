@@ -1,5 +1,9 @@
 import type {
   CompanyWorkStyle,
+  ExperienceLevel,
+  JobType,
+  OpportunityType,
+  WorkArrangement,
   ProjectCategory,
   SelectionWorkStatus,
   ApplicationStatus,
@@ -64,22 +68,84 @@ export const OPEN_PROJECT_STATUSES = [
   "applications_open",
 ] as const satisfies readonly ProjectStatus[];
 
-/** Application statuses a company reviewer is allowed to set by hand. */
-export const REVIEWABLE_APPLICATION_STATUSES = [
+/** Application statuses a company reviewer is allowed to set by hand, by type. */
+export const BUILD_DECISIONS = [
   "reviewing",
   "selected",
   "rejected",
 ] as const satisfies readonly ApplicationStatus[];
 
-/** Labels for the company's status dropdown. */
+/** The hiring pipeline: forward only, and Selected / Rejected are final. */
+export const HIRE_DECISIONS = [
+  "shortlisted",
+  "interview",
+  "selected",
+  "rejected",
+] as const satisfies readonly ApplicationStatus[];
+
+export const REVIEWABLE_APPLICATION_STATUSES = [
+  "reviewing",
+  "shortlisted",
+  "interview",
+  "selected",
+  "rejected",
+] as const satisfies readonly ApplicationStatus[];
+
+/** Labels for the company's decision controls. */
 export const REVIEWABLE_STATUS_LABELS: Record<
   (typeof REVIEWABLE_APPLICATION_STATUSES)[number],
   string
 > = {
   reviewing: "Reviewing",
-  selected: "Selected",
-  rejected: "Rejected",
+  shortlisted: "Shortlist",
+  interview: "Move to interview",
+  selected: "Select",
+  rejected: "Reject",
 };
+
+/**
+ * The two kinds of opportunity. Build only is Trialent's paid project: one
+ * selected candidate builds it and is paid. Hire only is a free job posting:
+ * candidates apply to a role, and up to N are hired — no project, no payment.
+ */
+export const OPPORTUNITY_TYPES = {
+  build: {
+    label: "Build only",
+    title: "Build a project",
+    summary: "Get a real project completed by one selected candidate.",
+    price: "Paid project · One candidate selected",
+  },
+  hire: {
+    label: "Hire only",
+    title: "Hire talent",
+    summary:
+      "Hire for an open role. Find candidates by their skills, experience and work.",
+    price: "Free to post",
+  },
+} as const satisfies Record<OpportunityType, Record<string, string>>;
+
+export const JOB_TYPES = {
+  full_time: "Full-time",
+  part_time: "Part-time",
+  internship: "Internship",
+  contract: "Contract",
+} as const satisfies Record<JobType, string>;
+
+export const WORK_ARRANGEMENTS = {
+  remote: "Remote",
+  hybrid: "Hybrid",
+  onsite: "On-site",
+} as const satisfies Record<WorkArrangement, string>;
+
+export const EXPERIENCE_LEVELS = {
+  entry: "Entry · 0–1 years",
+  junior: "Junior · 0–2 years",
+  mid: "Mid-level · 2–5 years",
+  senior: "Senior · 5+ years",
+} as const satisfies Record<ExperienceLevel, string>;
+
+/** Most people one hire-only posting can hire, and its application ceiling. */
+export const MAX_HIRE_OPENINGS = 100;
 
 /**
  * Applications a company has closed — kept, but moved out of the main list.
@@ -200,7 +266,7 @@ const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
       { label: "Candidates", href: "/company/candidates" },
       { label: "Discover talent", href: "/search?type=candidates", match: ["/search"] },
     ],
-    action: { label: "Post a project", href: "/company/projects/create" },
+    action: { label: "Create opportunity", href: "/company/projects/create" },
     bottom: [
       { label: "Home", href: "/company/dashboard", exact: true },
       { label: "Projects", href: "/company/projects" },

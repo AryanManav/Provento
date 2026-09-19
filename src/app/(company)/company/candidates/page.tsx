@@ -18,7 +18,9 @@ function inView(view: PipelineView, entry: PipelineEntry): boolean {
   const stages: readonly PipelineStage[] | null = PIPELINE_VIEWS[view].stages;
   return (
     stages === null ||
-    stages.includes(pipelineStage(entry.applicationStatus, entry.workStatus))
+    stages.includes(
+      pipelineStage(entry.applicationStatus, entry.workStatus, entry.opportunityType)
+    )
   );
 }
 

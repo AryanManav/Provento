@@ -55,18 +55,23 @@ describe("browse availability", () => {
 
 describe("company decisions", () => {
   const id = "9f59a967-7782-4975-bac4-1ff6cc8e765d";
-  it("offers reviewing, selected and rejected — not shortlisted", () => {
-    for (const status of ["reviewing", "selected", "rejected"]) {
+  it("accepts the build and hiring decisions, never a candidate's own status", () => {
+    for (const status of [
+      "reviewing",
+      "shortlisted",
+      "interview",
+      "selected",
+      "rejected",
+    ]) {
       expect(
         updateApplicationStatusSchema.safeParse({ applicationId: id, status }).success
       ).toBe(true);
     }
-    expect(
-      updateApplicationStatusSchema.safeParse({
-        applicationId: id,
-        status: "shortlisted",
-      }).success
-    ).toBe(false);
+    for (const status of ["submitted", "withdrawn"]) {
+      expect(
+        updateApplicationStatusSchema.safeParse({ applicationId: id, status }).success
+      ).toBe(false);
+    }
   });
 });
 
@@ -220,13 +225,17 @@ describe("hire vs build projects", () => {
     ).toBe(true);
   });
 
-  it("labels the purpose for candidates", async () => {
+  it("labels what taking part means, by type", async () => {
     const { purposeLabel } = await import("../lib/projects");
-    expect(purposeLabel({ purpose: "hire", openings: 1 })).toBe("Hiring · 1 opening");
-    expect(purposeLabel({ purpose: "hire", openings: 3 })).toBe("Hiring · 3 openings");
-    expect(purposeLabel({ purpose: "build", openings: 1 })).toBe(
-      "Paid build — no hiring"
+    expect(purposeLabel({ opportunityType: "hire", purpose: "hire", openings: 1 })).toBe(
+      "1 opening"
     );
+    expect(purposeLabel({ opportunityType: "hire", purpose: "hire", openings: 5 })).toBe(
+      "5 openings"
+    );
+    expect(
+      purposeLabel({ opportunityType: "build", purpose: "build", openings: 1 })
+    ).toBe("One candidate is selected");
   });
 });
 

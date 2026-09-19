@@ -8,7 +8,11 @@
  */
 import type {
   ApplicationStatus,
+  ExperienceLevel,
+  JobType,
+  OpportunityType,
   ProjectMessageAuthorRole,
+  WorkArrangement,
   ProjectOutcomeType,
   ProjectPurpose,
   ProjectCategory,
@@ -74,6 +78,14 @@ export interface ProjectSummaryView {
   category: ProjectCategory;
   /** The tech stack, required skills first. */
   stack: string[];
+  /** Build only (a paid project, one candidate) or hire only (a free job posting). */
+  opportunityType: OpportunityType;
+  /** Hire only; null on build projects. */
+  jobType: JobType | null;
+  workArrangement: WorkArrangement | null;
+  jobLocation: string | null;
+  experienceLevel: ExperienceLevel | null;
+  compensation: string | null;
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -112,6 +124,9 @@ export interface ProjectDetailView extends BrowseProjectView {
   evaluationCriteria: string[];
   projectDeadline: string;
   skills: { name: string; required: boolean }[];
+  /** Hire only. */
+  responsibilities: string[];
+  niceToHave: string[];
 }
 
 export interface ApplicationSummaryView {
@@ -132,6 +147,7 @@ export interface ApplicationSummaryView {
     currency: string;
     companyId: string;
     companyName: string | null;
+    opportunityType: OpportunityType;
   } | null;
 }
 
@@ -146,6 +162,9 @@ export interface ApplicantView {
   candidateName: string;
   candidateHeadline: string | null;
   candidateEmail: string | null;
+  candidateAvatarUrl: string | null;
+  candidateSkills: string[];
+  appliedAt: string;
 }
 
 /** One application in a company's hiring pipeline, across all its projects. */
@@ -156,6 +175,7 @@ export interface PipelineEntry {
   projectId: string;
   projectTitle: string;
   projectDeadline: string;
+  opportunityType: OpportunityType;
   candidateId: string;
   candidateName: string;
   candidateHeadline: string | null;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import {
@@ -11,6 +11,10 @@ import { StatusBanner } from "@/components/common/status-banner";
 import { EmptyState } from "@/components/common/empty-state";
 import { ApplicationStatusForm } from "@/components/company/application-status-form";
 import { ProjectControls } from "@/components/company/project-controls";
+import { HiringPipeline } from "@/components/company/hiring-pipeline";
+import { OpportunityBadge } from "@/components/projects/opportunity-badge";
+import { PageHeader } from "@/components/common/page-header";
+import { HIRE_TABS, type HireTab } from "@/lib/company";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { CountBadge } from "@/components/notifications/count-badge";
 import { getNotificationSummary } from "@/lib/data/notifications";
@@ -20,6 +24,13 @@ import type { ApplicantView } from "@/lib/types/domain";
 import type { ApplicationStatus } from "@/lib/types/database.types";
 
 export const dynamic = "force-dynamic";
+
+const HIRE_UPDATE_MESSAGES: Record<string, string> = {
+  shortlisted: "Candidate shortlisted. They've been notified.",
+  interview: "Candidate moved to interview. They've been notified.",
+  selected: "Candidate selected. They've been notified.",
+  rejected: "Application rejected. The candidate has been notified.",
+};
 
 const PROJECT_UPDATE_MESSAGES: Record<string, string> = {
   selected: "Candidate selected. They can now see the brief and submit their work.",
@@ -33,11 +44,11 @@ export default async function ManageProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ updated?: string; error?: string }>;
+  searchParams: Promise<{ updated?: string; error?: string; stage?: string }>;
 }) {
   const user = await requireRole(["company", "admin"]);
   const { id } = await params;
-  const { updated, error } = await searchParams;
+  const { updated, error, stage } = await searchParams;
 
   const project = await getProjectHeader(id);
   if (!project) notFound();
@@ -53,6 +64,61 @@ export default async function ManageProjectPage({
   ]);
 
   const projectPath = `/company/projects/${project.id}`;
+
+  // Hire only: a role's hiring pipeline, not a project's evaluation.
+  if (project.opportunityType === "hire") {
+    const tab: HireTab = stage && stage in HIRE_TABS ? (stage as HireTab) : "all";
+    const unreadApplicants = new Set(
+      applicants
+        .filter((a) =>
+          notifications.unread.some(
+            (marker) => marker.linkUrl === `${projectPath}/applicants/${a.id}`
+          )
+        )
+        .map((a) => a.id)
+    );
+    return (
+      <div className="space-y-6">
+        <MarkNotificationsRead
+          scopes={[{ linkPrefix: `${projectPath}/applicants/` }, { link: projectPath }]}
+        />
+        <PageHeader
+          eyebrow={
+            <Link
+              href="/company/projects"
+              className="inline-flex items-center gap-1 hover:text-ink-900"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              Projects
+            </Link>
+          }
+          title={project.title}
+          description="Review applicants, move them through hiring, and select up to your number of openings."
+          actions={<OpportunityBadge type="hire" />}
+        />
+        {error && <StatusBanner tone="error">{error}</StatusBanner>}
+        {updated && (
+          <StatusBanner tone="success">
+            {HIRE_UPDATE_MESSAGES[updated] ??
+              PROJECT_UPDATE_MESSAGES[updated] ??
+              "Application updated."}
+          </StatusBanner>
+        )}
+        <ProjectControls
+          projectId={project.id}
+          status={project.status}
+          applicationCount={applicants.length}
+        />
+        <HiringPipeline
+          project={project}
+          applicants={applicants}
+          tab={tab}
+          unreadApplicants={unreadApplicants}
+        />
+      </div>
+    );
+  }
+
   const evaluationPath = (candidateId: string) => `${projectPath}/review/${candidateId}`;
   const applicantPath = (applicationId: string) =>
     `${projectPath}/applicants/${applicationId}`;
@@ -183,7 +249,7 @@ export default async function ManageProjectPage({
           <div className="mt-fib3 flex flex-wrap gap-fib3 text-xs font-semibold">
             <span className="rounded-md bg-brand-50 px-fib4 py-fib2 text-brand-700">
               {project.purpose === "hire"
-                ? `Hiring · ${selectedApplicants.length} of ${project.openings} opening${project.openings === 1 ? "" : "s"} filled`
+                ? `${selectedApplicants.length} of ${project.openings} candidate${project.openings === 1 ? "" : "s"} selected`
                 : `Build only · ${selectedApplicants.length ? "candidate selected" : "no candidate yet"}`}
             </span>
             {project.maxApplicants !== null && (

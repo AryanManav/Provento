@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
+  OpportunityType,
   ProjectOutcomeType,
   ProjectStatus,
   SelectionWorkStatus,
@@ -37,6 +38,7 @@ interface RawApplicationProject {
   company_id: string;
   payment_amount: number;
   currency: string;
+  opportunity_type?: OpportunityType | null;
   companies: RawCompany | RawCompany[] | null;
 }
 
@@ -168,7 +170,7 @@ export async function getCandidateApplications(
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, decision_note, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, companies(name))"
+      "id, status, decision_note, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, opportunity_type, companies(name))"
     )
     .eq("candidate_id", candidateId)
     .order("created_at", { ascending: false });
@@ -203,6 +205,7 @@ export async function getCandidateApplications(
             currency: project.currency || DEFAULT_CURRENCY,
             companyId: project.company_id,
             companyName: one(project.companies)?.name ?? null,
+            opportunityType: project.opportunity_type ?? "build",
           }
         : null,
     };

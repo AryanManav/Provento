@@ -5,6 +5,7 @@ import {
 } from "@/lib/constants";
 import type {
   ApplicationStatus,
+  OpportunityType,
   ProjectStatus,
   SelectionWorkStatus,
 } from "@/lib/types/database.types";
@@ -20,6 +21,8 @@ export type ApplicationStage =
   | "applied"
   | "reviewing"
   | "shortlisted"
+  | "interview"
+  | "hired"
   | "building"
   | "awaiting_review"
   | "revision_requested"
@@ -50,15 +53,18 @@ export function applicationStage(
   applicationStatus: ApplicationStatus,
   projectStatus: ProjectStatus | null | undefined,
   /** The candidate's own selection status; wins over the project's once selected. */
-  workStatus?: SelectionWorkStatus | null
+  workStatus?: SelectionWorkStatus | null,
+  /** Hire-only applications have their own pipeline and never become work. */
+  opportunityType: OpportunityType = "build"
 ): ApplicationStage {
-  // A project cancelled before any decision (e.g. its company left) closes
+  // A posting cancelled before any decision (e.g. its company left) closes
   // every application still waiting on it.
   if (
     projectStatus === "cancelled" &&
     (applicationStatus === "submitted" ||
       applicationStatus === "reviewing" ||
-      applicationStatus === "shortlisted")
+      applicationStatus === "shortlisted" ||
+      applicationStatus === "interview")
   ) {
     return "cancelled";
   }
@@ -72,9 +78,13 @@ export function applicationStage(
       return "reviewing";
     case "shortlisted":
       return "shortlisted";
+    case "interview":
+      return "interview";
     case "submitted":
       return "applied";
     case "selected":
+      // Hire only: selected is the end — a hire, with no project to build.
+      if (opportunityType === "hire") return "hired";
       // Several candidates can work on one project, so their own cycle decides.
       if (workStatus) {
         if (workStatus === "completed") return "completed";
@@ -101,7 +111,8 @@ export function stageOf(application: ApplicationSummaryView): ApplicationStage {
   return applicationStage(
     application.status,
     application.project?.status,
-    application.workStatus
+    application.workStatus,
+    application.project?.opportunityType
   );
 }
 
@@ -113,7 +124,9 @@ export function stageOf(application: ApplicationSummaryView): ApplicationStage {
 export function applicationHref(application: ApplicationSummaryView): string | null {
   const project = application.project;
   if (!project) return null;
-  if (application.status === "selected") return `/candidate/trials/${project.id}`;
+  if (application.status === "selected" && project.opportunityType === "build") {
+    return `/candidate/trials/${project.id}`;
+  }
   return (BROWSABLE_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
     ? `/projects/${project.slug}`
     : null;
@@ -129,7 +142,9 @@ export const STAGE_DISPLAY: Record<
 > = {
   applied: { label: "Applied", tone: "info", action: "View brief" },
   reviewing: { label: "Under review", tone: "warning", action: "View brief" },
-  shortlisted: { label: "Shortlisted", tone: "active", action: "View brief" },
+  shortlisted: { label: "Shortlisted", tone: "active", action: "View role" },
+  interview: { label: "Interview", tone: "attention", action: "View role" },
+  hired: { label: "Selected", tone: "success", action: "View role" },
   building: { label: "Active", tone: "active", action: "Continue project" },
   awaiting_review: { label: "Submitted", tone: "warning", action: "Track evaluation" },
   revision_requested: {
@@ -162,7 +177,12 @@ export const WORK_STATUS_DISPLAY: Record<
   cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
-const PENDING_STAGES: ApplicationStage[] = ["applied", "reviewing", "shortlisted"];
+const PENDING_STAGES: ApplicationStage[] = [
+  "applied",
+  "reviewing",
+  "shortlisted",
+  "interview",
+];
 const ACTIVE_TRIAL_STAGES: ApplicationStage[] = [
   "building",
   "awaiting_review",

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Plus, Search, SearchX } from "lucide-react";
 import { getBrowseProjects } from "@/lib/data/project";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { PROJECT_CATEGORIES } from "@/lib/constants";
+import { JOB_TYPES, PROJECT_CATEGORIES, WORK_ARRANGEMENTS } from "@/lib/constants";
+import { FilterChips } from "@/components/ui/filter-chips";
 import {
   HOURS_FILTERS,
   PAY_FILTERS,
@@ -80,9 +81,9 @@ export default async function ProjectsDirectoryPage({
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-semibold text-ink-900">Browse projects</h1>
+          <h1 className="text-3xl font-semibold text-ink-900">Browse opportunities</h1>
           <p className="mt-1.5 text-sm text-ink-500">
-            Find paid projects that demonstrate what you can do.{" "}
+            Roles startups are hiring for, and paid projects that show what you can build.{" "}
             <span className="text-ink-700">{openCount} open right now.</span>
           </p>
         </div>
@@ -90,7 +91,7 @@ export default async function ProjectsDirectoryPage({
           <Link href={postHref} className="shrink-0">
             <Button variant="outline">
               <Plus className="h-4 w-4" aria-hidden />
-              Post a project
+              Create opportunity
             </Button>
           </Link>
         )}
@@ -106,6 +107,7 @@ export default async function ProjectsDirectoryPage({
             {filters.category && (
               <input type="hidden" name="category" value={filters.category} />
             )}
+            {filters.type && <input type="hidden" name="kind" value={filters.type} />}
             <label className="relative flex-1">
               <span className="sr-only">Search projects</span>
               <Search
@@ -116,41 +118,78 @@ export default async function ProjectsDirectoryPage({
                 type="search"
                 name="q"
                 defaultValue={filters.q}
-                placeholder="Search by title, company or technology"
+                placeholder="Search by title, company or skill"
                 className="h-9 w-full rounded-lg bg-transparent pl-9 pr-3 text-sm text-ink-900 outline-none placeholder:text-ink-400"
               />
             </label>
             <div className="flex flex-wrap items-center gap-2">
-              <label>
-                <span className="sr-only">Minimum fee</span>
-                <select
-                  name="pay"
-                  defaultValue={filters.minPay ? String(filters.minPay) : ""}
-                  className={selectClass}
-                >
-                  <option value="">Any fee</option>
-                  {PAY_FILTERS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span className="sr-only">Effort</span>
-                <select
-                  name="hours"
-                  defaultValue={filters.maxHours ? String(filters.maxHours) : ""}
-                  className={selectClass}
-                >
-                  <option value="">Any effort</option>
-                  {HOURS_FILTERS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {filters.type === "hire" ? (
+                <>
+                  <label>
+                    <span className="sr-only">Job type</span>
+                    <select
+                      name="job"
+                      defaultValue={filters.jobType ?? ""}
+                      className={selectClass}
+                    >
+                      <option value="">Any job type</option>
+                      {Object.entries(JOB_TYPES).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Work arrangement</span>
+                    <select
+                      name="where"
+                      defaultValue={filters.workArrangement ?? ""}
+                      className={selectClass}
+                    >
+                      <option value="">Remote, hybrid or on-site</option>
+                      {Object.entries(WORK_ARRANGEMENTS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              ) : filters.type === "build" ? (
+                <>
+                  <label>
+                    <span className="sr-only">Minimum fee</span>
+                    <select
+                      name="pay"
+                      defaultValue={filters.minPay ? String(filters.minPay) : ""}
+                      className={selectClass}
+                    >
+                      <option value="">Any fee</option>
+                      {PAY_FILTERS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Effort</span>
+                    <select
+                      name="hours"
+                      defaultValue={filters.maxHours ? String(filters.maxHours) : ""}
+                      className={selectClass}
+                    >
+                      <option value="">Any effort</option>
+                      {HOURS_FILTERS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              ) : null}
               <label className="flex h-9 items-center gap-2 rounded-lg border border-line px-2.5 text-sm text-ink-700">
                 <input
                   type="checkbox"
@@ -164,6 +203,39 @@ export default async function ProjectsDirectoryPage({
               <Button type="submit">Search</Button>
             </div>
           </form>
+
+          <FilterChips
+            label="Opportunity type"
+            active={filters.type ?? "all"}
+            chips={[
+              {
+                id: "all",
+                label: "All",
+                href: hrefWith(params, {
+                  kind: null,
+                  job: null,
+                  where: null,
+                  pay: null,
+                  hours: null,
+                }),
+                count: projects.length,
+              },
+              {
+                id: "hire",
+                label: "Hire only",
+                href: hrefWith(params, { kind: "hire", pay: null, hours: null }),
+                count: projects.filter((project) => project.opportunityType === "hire")
+                  .length,
+              },
+              {
+                id: "build",
+                label: "Build only",
+                href: hrefWith(params, { kind: "build", job: null, where: null }),
+                count: projects.filter((project) => project.opportunityType === "build")
+                  .length,
+              },
+            ]}
+          />
 
           <nav
             aria-label="Topics"

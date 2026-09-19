@@ -24,10 +24,18 @@ export function PipelineList({
   return (
     <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
       {entries.map((entry) => {
-        const stage = pipelineStage(entry.applicationStatus, entry.workStatus);
+        const stage = pipelineStage(
+          entry.applicationStatus,
+          entry.workStatus,
+          entry.opportunityType
+        );
         const display = PIPELINE_DISPLAY[stage];
         const urgent = stage === "new" || stage === "to_evaluate";
-        const due = detail === "deadline" ? dueLabel(entry.projectDeadline) : null;
+        // Hire postings have no work deadline — only build projects do.
+        const due =
+          detail === "deadline" && entry.opportunityType === "build"
+            ? dueLabel(entry.projectDeadline)
+            : null;
         return (
           <li key={entry.applicationId}>
             <Link
