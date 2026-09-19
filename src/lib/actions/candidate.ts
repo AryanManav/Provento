@@ -338,6 +338,11 @@ export async function saveProfileImageAction(kind: unknown): Promise<ActionRespo
 
   if (error) return { error: error.message };
 
+  const candidateId = await getCandidateProfileId(user.id);
+  if (candidateId) {
+    await recordActivity(supabase, candidateId, CANDIDATE_ACTIVITY_TYPES.profileUpdated);
+  }
+
   revalidatePath("/candidate", "layout");
   return { success: true };
 }

@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
+import { ACTIVITY_WEEKS, activityDay } from "@/lib/activity";
 import type {
   ApplicationSummaryView,
   CandidateDashboardStats,
@@ -341,12 +342,10 @@ export async function getCandidateProjectEvaluation(
   };
 }
 
-export async function getCandidateActivityDates(
-  candidateId: string,
-  days = 90
-): Promise<string[]> {
+/** Activity dates covering the dashboard calendar (plus a week of slack). */
+export async function getCandidateActivityDates(candidateId: string): Promise<string[]> {
   const supabase = await createClient();
-  const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const since = activityDay(new Date(Date.now() - (ACTIVITY_WEEKS + 1) * 7 * 86_400_000));
   const { data } = await supabase
     .from("candidate_activity")
     .select("activity_date")

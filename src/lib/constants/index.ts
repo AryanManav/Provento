@@ -128,6 +128,8 @@ export const CANDIDATE_ACTIVITY_TYPES = {
   portfolioUpdated: "portfolio_updated",
   applicationSubmitted: "application_submitted",
   workSubmitted: "project_submission",
+  /** A selected candidate posting on the project thread. */
+  workUpdate: "project_milestone",
   githubConnected: "github_connected",
 } as const;
 

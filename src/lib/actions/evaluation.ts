@@ -341,6 +341,9 @@ export async function postProjectMessageAction(
   });
   if (error) return { error: error.message };
 
+  if (authorRole === "candidate") {
+    await recordActivity(supabase, candidateId, CANDIDATE_ACTIVITY_TYPES.workUpdate);
+  }
   revalidatePath(`/candidate/trials/${projectId}`);
   revalidatePath(`/company/projects/${projectId}/review/${candidateId}`);
   return { success: true };
