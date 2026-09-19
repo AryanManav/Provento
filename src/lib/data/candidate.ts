@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
+  AssessmentStatus,
   OpportunityType,
   ProjectOutcomeType,
   ProjectStatus,
@@ -40,6 +41,7 @@ interface RawApplicationProject {
   currency: string;
   opportunity_type?: OpportunityType | null;
   companies: RawCompany | RawCompany[] | null;
+  assessment_title?: string | null;
 }
 
 interface RawApplication {
@@ -49,6 +51,8 @@ interface RawApplication {
   cover_message: string;
   created_at: string;
   projects: RawApplicationProject | RawApplicationProject[] | null;
+  assessment_submissions?:
+    { status: AssessmentStatus } | { status: AssessmentStatus }[] | null;
 }
 
 interface RawFeedbackProject {
@@ -170,7 +174,7 @@ export async function getCandidateApplications(
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, status, decision_note, cover_message, created_at, projects(id, slug, title, status, payment_amount, currency, company_id, opportunity_type, companies(name))"
+      "id, status, decision_note, cover_message, created_at, assessment_submissions(status), projects(id, slug, title, status, payment_amount, currency, company_id, opportunity_type, assessment_title, companies(name))"
     )
     .eq("candidate_id", candidateId)
     .order("created_at", { ascending: false });
@@ -195,6 +199,7 @@ export async function getCandidateApplications(
       workStatus: project ? (workByProject.get(project.id) ?? null) : null,
       coverMessage: row.cover_message,
       createdAt: row.created_at,
+      assessmentStatus: one(row.assessment_submissions)?.status ?? null,
       project: project
         ? {
             id: project.id,
@@ -206,6 +211,8 @@ export async function getCandidateApplications(
             companyId: project.company_id,
             companyName: one(project.companies)?.name ?? null,
             opportunityType: project.opportunity_type ?? "build",
+            hasAssessment:
+              project.opportunity_type === "hire" && !!project.assessment_title?.trim(),
           }
         : null,
     };

@@ -110,7 +110,7 @@ export function ActiveHiringList({ postings }: { postings: CompanyProjectView[] 
               <p className="text-xs text-ink-500">
                 {[
                   `${posting.openings} opening${posting.openings === 1 ? "" : "s"}`,
-                  `${posting.hired} filled`,
+                  `${posting.hired} / ${posting.openings} selected`,
                   posting.maxApplicants !== null
                     ? `${posting.activeApplications} / ${posting.maxApplicants} applications`
                     : `${posting.activeApplications} applications`,

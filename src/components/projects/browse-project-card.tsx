@@ -150,10 +150,26 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
         })}
       </dl>
 
+      {hire && project.assessmentTitle && (
+        <div className="mt-3 rounded-md border border-line bg-ink-50 px-3 py-2">
+          <p className="text-2xs text-ink-500">
+            Assessment · about {project.expectedHours}h
+          </p>
+          <p className="truncate text-sm font-medium text-ink-800">
+            {project.assessmentTitle}
+          </p>
+          {(project.assessmentTechnologies ?? []).length > 0 && (
+            <p className="mt-0.5 truncate font-mono text-[11px] text-ink-500">
+              {(project.assessmentTechnologies ?? []).slice(0, 4).join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+
       {project.availability === "full" && (
         <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
           {hire
-            ? "Applications for this role are currently full. If a place opens up, you can apply."
+            ? "This opportunity has reached its application limit. If a place opens up, you can apply."
             : "This project has reached its applicant limit."}
         </p>
       )}
@@ -161,8 +177,8 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
       <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-500">
         <span>
           {hire
-            ? (project.compensation ?? "Direct hire · no project")
-            : "Paid project · 1 candidate selected"}
+            ? (project.compensation ?? "Hired on an unpaid assessment")
+            : "Paid project · 1 candidate will be selected"}
         </span>
         <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-700">
           {hire ? "View opportunity" : "View project"}

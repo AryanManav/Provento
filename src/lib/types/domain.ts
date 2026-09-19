@@ -8,6 +8,8 @@
  */
 import type {
   ApplicationStatus,
+  AssessmentStatus,
+  AssessmentType,
   ExperienceLevel,
   JobType,
   OpportunityType,
@@ -88,6 +90,9 @@ export interface ProjectSummaryView {
   compensation: string | null;
   /** When it was posted; absent where a query doesn't select it. */
   postedAt?: string;
+  /** Hire only: the assessment candidates complete, for the listing. */
+  assessmentTitle?: string | null;
+  assessmentTechnologies?: string[];
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -116,6 +121,59 @@ export interface CompanyProjectResult {
   candidates: { name: string; outcome: ProjectOutcomeType | null }[];
 }
 
+/**
+ * A hire-only role's assessment: the unpaid project every candidate completes
+ * and is hired on. Null for build projects and for roles posted before
+ * assessments existed.
+ */
+export interface HiringAssessmentView {
+  title: string;
+  type: AssessmentType | null;
+  description: string;
+  requirements: string[];
+  technologies: string[];
+  deliverables: string[];
+  evaluationCriteria: string[];
+  /** Estimated time, in hours. */
+  expectedHours: number;
+  deadline: string;
+}
+
+/** What a candidate has done on an assessment so far. */
+export interface AssessmentSubmissionView {
+  status: AssessmentStatus;
+  repositoryUrl: string | null;
+  liveUrl: string | null;
+  notes: string | null;
+  /** Positions in the assessment's requirements the candidate has ticked. */
+  completedRequirements: number[];
+  startedAt: string;
+  submittedAt: string | null;
+}
+
+/** The candidate's assessment workspace for one role. */
+export interface CandidateAssessmentView {
+  project: {
+    id: string;
+    slug: string;
+    title: string;
+    status: ProjectStatus;
+    companyId: string;
+    companyName: string | null;
+    openings: number;
+    jobType: JobType | null;
+    workArrangement: WorkArrangement | null;
+  };
+  application: {
+    id: string;
+    status: ApplicationStatus;
+    decisionNote: string | null;
+    createdAt: string;
+  };
+  assessment: HiringAssessmentView;
+  submission: AssessmentSubmissionView | null;
+}
+
 export interface ProjectDetailView extends BrowseProjectView {
   workMode: ProjectWorkMode;
   companyLocation: string | null;
@@ -139,6 +197,8 @@ export interface ProjectDetailView extends BrowseProjectView {
   /** Hire only. */
   responsibilities: string[];
   niceToHave: string[];
+  /** Hire only; null for build projects and roles posted before assessments. */
+  assessment: HiringAssessmentView | null;
 }
 
 export interface ApplicationSummaryView {
@@ -150,6 +210,8 @@ export interface ApplicationSummaryView {
   workStatus: SelectionWorkStatus | null;
   coverMessage: string;
   createdAt: string;
+  /** Hire only: how far the candidate is with the assessment; null before starting. */
+  assessmentStatus?: AssessmentStatus | null;
   project: {
     id: string;
     slug: string;
@@ -160,6 +222,8 @@ export interface ApplicationSummaryView {
     companyId: string;
     companyName: string | null;
     opportunityType: OpportunityType;
+    /** Hire only: the role has an assessment to complete. */
+    hasAssessment?: boolean;
   } | null;
 }
 
@@ -179,6 +243,8 @@ export interface ApplicantView {
   appliedAt: string;
   /** Last change of status — for a selected hire, when they were hired. */
   updatedAt: string;
+  /** Hire only: their assessment, once started. */
+  assessment: AssessmentSubmissionView | null;
 }
 
 /** One application in a company's hiring pipeline, across all its projects. */
@@ -195,6 +261,10 @@ export interface PipelineEntry {
   candidateHeadline: string | null;
   candidateAvatarUrl: string | null;
   appliedAt: string;
+  /** Hire only: the assessment's progress; null before it's started. */
+  assessmentStatus?: AssessmentStatus | null;
+  /** Hire only: the role asks for an assessment. */
+  hasAssessment?: boolean;
 }
 
 /**
@@ -503,6 +573,8 @@ export interface CompanyHistoryEntry {
    * public profile never names them.
    */
   people: { candidateId: string; name: string; avatarUrl: string | null; at: string }[];
+  /** Hire only: the assessment candidates completed. */
+  assessmentTitle: string | null;
 }
 
 export interface AccountSettingsView {

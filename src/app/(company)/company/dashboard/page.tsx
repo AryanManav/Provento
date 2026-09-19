@@ -16,7 +16,12 @@ import {
   getCompanyProjects,
 } from "@/lib/data/company";
 import { getNotificationSummary } from "@/lib/data/notifications";
-import { hiringState, isActiveHiring, pipelineStage } from "@/lib/company";
+import {
+  hiringState,
+  isActiveHiring,
+  entryAssessment,
+  pipelineStage,
+} from "@/lib/company";
 import { isClosedProject } from "@/lib/applications";
 import { greetingFor } from "@/lib/next-action";
 import { formatMonth, formatRelativeTime } from "@/lib/utils";
@@ -62,7 +67,12 @@ export default async function CompanyDashboardPage() {
   ]);
 
   const stageOf = (entry: (typeof pipeline)[number]) =>
-    pipelineStage(entry.applicationStatus, entry.workStatus, entry.opportunityType);
+    pipelineStage(
+      entry.applicationStatus,
+      entry.workStatus,
+      entry.opportunityType,
+      entryAssessment(entry)
+    );
   const toEvaluate = pipeline.filter((entry) => stageOf(entry) === "to_evaluate");
   const toReview = pipeline.filter((entry) => stageOf(entry) === "new");
   const attention = [...toEvaluate, ...toReview];
@@ -78,7 +88,13 @@ export default async function CompanyDashboardPage() {
     (total, posting) => total + Math.max(0, posting.openings - posting.hired),
     0
   );
-  const completedWork = history.filter((entry) => entry.status === "completed").length;
+  const hiringApplications = activeHiring.reduce(
+    (total, posting) => total + posting.activeApplications,
+    0
+  );
+  const completedProjects = history.filter(
+    (entry) => entry.status === "completed" && entry.opportunityType === "build"
+  ).length;
 
   const summary = [
     toEvaluate.length > 0 &&
@@ -100,11 +116,20 @@ export default async function CompanyDashboardPage() {
       href: "/company/projects?type=hire",
     },
     {
+      label: "Applications",
+      value: hiringApplications,
+      href: "/company/candidates",
+    },
+    {
       label: "Active build projects",
       value: activeBuild.length,
       href: "/company/projects?type=build",
     },
-    { label: "Completed work", value: completedWork, href: "/company/history" },
+    {
+      label: "Completed projects",
+      value: completedProjects,
+      href: "/company/history?show=projects",
+    },
   ];
 
   return (
@@ -168,7 +193,7 @@ export default async function CompanyDashboardPage() {
         </section>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
             {metrics.map((metric) => (
               <Link
                 key={metric.label}
@@ -238,7 +263,7 @@ export default async function CompanyDashboardPage() {
             <section aria-labelledby="history" className="space-y-2 lg:col-span-2">
               <SectionHeading
                 id="history"
-                title="History"
+                title="Recent history"
                 count={history.length}
                 href="/company/history"
                 linkLabel="Open history"
@@ -265,7 +290,7 @@ export default async function CompanyDashboardPage() {
                         {entry.status === "cancelled"
                           ? "Closed"
                           : entry.opportunityType === "hire"
-                            ? `${entry.hired} / ${entry.openings} filled`
+                            ? `${entry.hired} candidate${entry.hired === 1 ? "" : "s"} hired`
                             : "Completed"}{" "}
                         · {formatMonth(entry.closedAt)}
                       </span>

@@ -7,14 +7,20 @@ import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { ApplicationStatus } from "@/lib/types/database.types";
 
+type Step = "reviewing" | "shortlisted" | "interview";
+
 /** Forward steps available from each stage of the hiring pipeline. */
-const NEXT_STEPS: Partial<Record<ApplicationStatus, ("shortlisted" | "interview")[]>> = {
-  submitted: ["shortlisted", "interview"],
+const NEXT_STEPS: Partial<Record<ApplicationStatus, Step[]>> = {
+  submitted: ["reviewing", "shortlisted", "interview"],
   reviewing: ["shortlisted", "interview"],
   shortlisted: ["interview"],
 };
 
-const STEP_LABEL = { shortlisted: "Shortlist", interview: "Interview" } as const;
+const STEP_LABEL: Record<Step, string> = {
+  reviewing: "Start review",
+  shortlisted: "Shortlist",
+  interview: "Interview",
+};
 
 /**
  * The company's move on one hire-only application. Shortlist and interview
@@ -26,6 +32,7 @@ export function HiringDecision({
   applicationId,
   status,
   openingsFilled,
+  awaitingAssessment = false,
   returnTo,
   stage,
   align = "end",
@@ -34,6 +41,11 @@ export function HiringDecision({
   status: ApplicationStatus;
   /** Every opening is filled, so nobody else can be selected. */
   openingsFilled: boolean;
+  /**
+   * The role has an assessment this candidate hasn't submitted: they can be
+   * turned down, but not moved forward (the database enforces the same).
+   */
+  awaitingAssessment?: boolean;
   returnTo?: string;
   /** The pipeline tab to come back to. */
   stage?: string;
@@ -116,6 +128,33 @@ export function HiringDecision({
     );
   }
 
+  const rejectButton = (
+    <Button
+      type="button"
+      size="sm"
+      variant="ghost"
+      className="text-ink-600 hover:text-rose-700"
+      onClick={() => setConfirming("rejected")}
+    >
+      Reject
+    </Button>
+  );
+
+  if (awaitingAssessment) {
+    return (
+      <div
+        className={
+          align === "end"
+            ? "flex flex-wrap items-center justify-end gap-2"
+            : "flex flex-wrap items-center gap-2"
+        }
+      >
+        <span className="text-xs text-ink-500">Waiting for the assessment</span>
+        {rejectButton}
+      </div>
+    );
+  }
+
   return (
     <div
       className={
@@ -145,15 +184,7 @@ export function HiringDecision({
         <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
         Select
       </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        className="text-ink-600 hover:text-rose-700"
-        onClick={() => setConfirming("rejected")}
-      >
-        Reject
-      </Button>
+      {rejectButton}
     </div>
   );
 }

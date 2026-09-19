@@ -5,6 +5,7 @@ import {
 } from "@/lib/constants";
 import type {
   ApplicationStatus,
+  AssessmentStatus,
   OpportunityType,
   ProjectStatus,
   SelectionWorkStatus,
@@ -19,6 +20,9 @@ import type { StatusTone } from "@/lib/status";
  */
 export type ApplicationStage =
   | "applied"
+  | "assessment_todo"
+  | "assessment_in_progress"
+  | "assessment_submitted"
   | "reviewing"
   | "shortlisted"
   | "interview"
@@ -55,7 +59,12 @@ export function applicationStage(
   /** The candidate's own selection status; wins over the project's once selected. */
   workStatus?: SelectionWorkStatus | null,
   /** Hire-only applications have their own pipeline and never become work. */
-  opportunityType: OpportunityType = "build"
+  opportunityType: OpportunityType = "build",
+  /**
+   * Hire only: the assessment's status — "not_started" when the role has one
+   * the candidate hasn't opened, null when it has none.
+   */
+  assessment: AssessmentStatus | "not_started" | null = null
 ): ApplicationStage {
   // A posting cancelled before any decision (e.g. its company left) closes
   // every application still waiting on it.
@@ -81,6 +90,15 @@ export function applicationStage(
     case "interview":
       return "interview";
     case "submitted":
+      if (opportunityType === "hire" && assessment === "not_started") {
+        return "assessment_todo";
+      }
+      if (opportunityType === "hire" && assessment === "in_progress") {
+        return "assessment_in_progress";
+      }
+      if (opportunityType === "hire" && assessment === "submitted") {
+        return "assessment_submitted";
+      }
       return "applied";
     case "selected":
       // Hire only: selected is the end — a hire, with no project to build.
@@ -112,7 +130,10 @@ export function stageOf(application: ApplicationSummaryView): ApplicationStage {
     application.status,
     application.project?.status,
     application.workStatus,
-    application.project?.opportunityType
+    application.project?.opportunityType,
+    application.project?.hasAssessment
+      ? (application.assessmentStatus ?? "not_started")
+      : null
   );
 }
 
@@ -126,6 +147,10 @@ export function applicationHref(application: ApplicationSummaryView): string | n
   if (!project) return null;
   if (application.status === "selected" && project.opportunityType === "build") {
     return `/candidate/trials/${project.id}`;
+  }
+  // Hire only: the assessment workspace, which stays readable after a decision.
+  if (project.opportunityType === "hire" && project.hasAssessment) {
+    return `/candidate/assessments/${project.id}`;
   }
   return (BROWSABLE_PROJECT_STATUSES as readonly ProjectStatus[]).includes(project.status)
     ? `/projects/${project.slug}`
@@ -141,6 +166,21 @@ export const STAGE_DISPLAY: Record<
   }
 > = {
   applied: { label: "Applied", tone: "info", action: "View brief" },
+  assessment_todo: {
+    label: "Assessment to do",
+    tone: "attention",
+    action: "Start assessment",
+  },
+  assessment_in_progress: {
+    label: "Assessment in progress",
+    tone: "active",
+    action: "Continue assessment",
+  },
+  assessment_submitted: {
+    label: "Assessment submitted",
+    tone: "warning",
+    action: "View submission",
+  },
   reviewing: { label: "Under review", tone: "warning", action: "View brief" },
   shortlisted: { label: "Shortlisted", tone: "active", action: "View role" },
   interview: { label: "Interview", tone: "attention", action: "View role" },
@@ -179,6 +219,9 @@ export const WORK_STATUS_DISPLAY: Record<
 
 const PENDING_STAGES: ApplicationStage[] = [
   "applied",
+  "assessment_todo",
+  "assessment_in_progress",
+  "assessment_submitted",
   "reviewing",
   "shortlisted",
   "interview",

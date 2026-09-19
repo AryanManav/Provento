@@ -40,11 +40,21 @@ export const HISTORY_GROUPS: Record<
 function summary(entry: CompanyHistoryEntry): string {
   const applications = `${entry.applications} application${entry.applications === 1 ? "" : "s"}`;
   if (entry.opportunityType === "hire") {
-    return [`${entry.hired} / ${entry.openings} positions filled`, applications].join(
-      " · "
-    );
+    return [
+      `${entry.hired} / ${entry.openings} candidates hired`,
+      applications,
+      entry.assessmentTitle && `Assessment: ${entry.assessmentTitle}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
   }
-  return [formatCurrency(entry.paymentAmount, entry.currency), applications].join(" · ");
+  return [
+    formatCurrency(entry.paymentAmount, entry.currency),
+    entry.accepted > 0 ? "1 candidate selected" : null,
+    applications,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function statusOf(entry: CompanyHistoryEntry) {

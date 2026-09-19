@@ -15,10 +15,16 @@ export function isSidebarLinkActive(
   params: URLSearchParams
 ): boolean {
   if (!isNavActive(link, pathname)) return false;
-  const query = link.href.split("?")[1];
+  const [path, query] = link.href.split("?");
   if (!query) return true;
-  return [...new URLSearchParams(query)].every(
-    ([key, value]) => params.get(key) === value
+  if (pathname === path) {
+    return [...new URLSearchParams(query)].every(
+      ([key, value]) => params.get(key) === value
+    );
+  }
+  // Elsewhere, only an explicit `match` prefix (not the href's own path) counts.
+  return (link.match ?? []).some(
+    (prefix) => prefix !== path && pathname.startsWith(`${prefix}/`)
   );
 }
 

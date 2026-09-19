@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Search, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCompanyIdForUser, getCompanyPipeline } from "@/lib/data/company";
-import { PIPELINE_VIEWS, pipelineStage, type PipelineView } from "@/lib/company";
+import {
+  PIPELINE_VIEWS,
+  entryAssessment,
+  pipelineStage,
+  type PipelineView,
+} from "@/lib/company";
 import { Button } from "@/components/ui/button";
 import { LinkTabs } from "@/components/ui/tabs";
 import { FilterChips } from "@/components/ui/filter-chips";
@@ -19,7 +24,12 @@ function inView(view: PipelineView, entry: PipelineEntry): boolean {
   return (
     stages === null ||
     stages.includes(
-      pipelineStage(entry.applicationStatus, entry.workStatus, entry.opportunityType)
+      pipelineStage(
+        entry.applicationStatus,
+        entry.workStatus,
+        entry.opportunityType,
+        entryAssessment(entry)
+      )
     )
   );
 }

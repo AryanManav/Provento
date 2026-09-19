@@ -31,6 +31,20 @@ export type JobType = "full_time" | "part_time" | "internship" | "contract";
 export type WorkArrangement = "remote" | "hybrid" | "onsite";
 export type ExperienceLevel = "entry" | "junior" | "mid" | "senior";
 
+/** What kind of work a hire-only role's assessment asks for. */
+export type AssessmentType =
+  | "coding"
+  | "frontend"
+  | "backend"
+  | "full_stack"
+  | "design"
+  | "data"
+  | "technical"
+  | "other";
+
+/** A candidate's hiring assessment: started, or handed in (final). */
+export type AssessmentStatus = "in_progress" | "submitted";
+
 /** The topic a project is listed under in Browse. */
 export type ProjectCategory =
   | "frontend"
@@ -396,6 +410,11 @@ export interface Database {
           responsibilities: string[];
           nice_to_have: string[];
           closed_at: string | null;
+          assessment_title: string | null;
+          assessment_type: AssessmentType | null;
+          assessment_description: string | null;
+          assessment_requirements: string[];
+          assessment_technologies: string[];
           created_at: string;
           updated_at: string;
         };
@@ -431,6 +450,11 @@ export interface Database {
           compensation?: string | null;
           responsibilities?: string[];
           nice_to_have?: string[];
+          assessment_title?: string | null;
+          assessment_type?: AssessmentType | null;
+          assessment_description?: string | null;
+          assessment_requirements?: string[];
+          assessment_technologies?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -511,6 +535,25 @@ export interface Database {
           decision_note?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      assessment_submissions: {
+        Row: {
+          id: string;
+          application_id: string;
+          project_id: string;
+          candidate_id: string;
+          status: AssessmentStatus;
+          repository_url: string | null;
+          live_url: string | null;
+          notes: string | null;
+          completed_requirements: number[];
+          started_at: string;
+          submitted_at: string | null;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       project_selections: {
@@ -909,6 +952,17 @@ export interface Database {
         Args: { target_company_id: string };
         Returns: boolean;
       };
+      save_assessment: {
+        Args: {
+          target_project_id: string;
+          repository: string | null;
+          live: string | null;
+          note: string | null;
+          done: number[];
+          submit: boolean;
+        };
+        Returns: AssessmentStatus;
+      };
       delete_project: {
         Args: { target_project_id: string };
         Returns: undefined;
@@ -945,6 +999,8 @@ export interface Database {
           currency: string;
           posted_at: string;
           closed_at: string;
+          /** Added by 20261007000000. */
+          assessment_title?: string | null;
         }[];
       };
       profile_social: {

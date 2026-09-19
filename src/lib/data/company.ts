@@ -1,6 +1,14 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
+import {
+  ASSESSMENT_COLUMNS,
+  SUBMISSION_COLUMNS,
+  toAssessment,
+  toSubmission,
+  type RawAssessmentColumns,
+  type RawSubmission,
+} from "@/lib/data/assessment";
 import { getBrowseProjects } from "@/lib/data/project";
 import {
   getCandidateProfileById,
@@ -17,12 +25,14 @@ import type {
   CompanyPublicView,
   CompanyDirectoryEntry,
   CompanyHistoryEntry,
+  HiringAssessmentView,
   CompanyTeamMember,
   CompanyView,
   PipelineEntry,
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
+  AssessmentStatus,
   ExperienceLevel,
   JobType,
   OpportunityType,
@@ -98,6 +108,7 @@ interface RawApplicant {
   created_at: string;
   updated_at: string;
   candidate_profiles: RawApplicantProfile | RawApplicantProfile[] | null;
+  assessment_submissions?: RawSubmission | RawSubmission[] | null;
 }
 
 /**
@@ -279,7 +290,7 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
   const { data } = await supabase
     .from("applications")
     .select(
-      "id, candidate_id, status, cover_message, relevant_experience, created_at, updated_at, candidate_profiles(headline, users(full_name, email, avatar_url), candidate_skills(skill_name))"
+      `id, candidate_id, status, cover_message, relevant_experience, created_at, updated_at, candidate_profiles(headline, users(full_name, email, avatar_url), candidate_skills(skill_name)), assessment_submissions(${SUBMISSION_COLUMNS})`
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -312,6 +323,7 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
       ),
       appliedAt: row.created_at,
       updatedAt: row.updated_at,
+      assessment: toSubmission(one(row.assessment_submissions)),
     };
   });
 }
@@ -338,6 +350,8 @@ interface RawPipelineApplication {
           | null;
       }[]
     | null;
+  assessment_submissions?:
+    { status: AssessmentStatus } | { status: AssessmentStatus }[] | null;
 }
 
 /**
@@ -349,7 +363,7 @@ export async function getCompanyPipeline(companyId: string): Promise<PipelineEnt
   const supabase = await createClient();
   const { data: projectRows } = await supabase
     .from("projects")
-    .select("id, title, project_deadline, opportunity_type")
+    .select("id, title, project_deadline, opportunity_type, assessment_title")
     .eq("company_id", companyId);
   const projects = new Map((projectRows ?? []).map((row) => [row.id, row]));
   if (projects.size === 0) return [];
@@ -359,7 +373,7 @@ export async function getCompanyPipeline(companyId: string): Promise<PipelineEnt
     supabase
       .from("applications")
       .select(
-        "id, project_id, candidate_id, status, created_at, candidate_profiles(headline, users(full_name, avatar_url))"
+        "id, project_id, candidate_id, status, created_at, assessment_submissions(status), candidate_profiles(headline, users(full_name, avatar_url))"
       )
       .in("project_id", ids)
       .order("created_at", { ascending: false }),
@@ -396,6 +410,9 @@ export async function getCompanyPipeline(companyId: string): Promise<PipelineEnt
           candidateHeadline: profile?.headline ?? null,
           candidateAvatarUrl: account?.avatar_url ?? null,
           appliedAt: row.created_at,
+          assessmentStatus: one(row.assessment_submissions)?.status ?? null,
+          hasAssessment:
+            project.opportunity_type === "hire" && !!project.assessment_title?.trim(),
         },
       ];
     }
@@ -416,12 +433,15 @@ export async function getProjectHeader(projectId: string): Promise<{
   opportunityType: OpportunityType;
   createdAt: string;
   closedAt: string | null;
+  /** Hire only: candidates complete an assessment before they can move forward. */
+  hasAssessment: boolean;
+  assessment: HiringAssessmentView | null;
 } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings, opportunity_type, created_at, closed_at"
+      `id, title, slug, status, company_id, max_applicants, application_deadline, purpose, openings, opportunity_type, created_at, closed_at, ${ASSESSMENT_COLUMNS}`
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -440,6 +460,11 @@ export async function getProjectHeader(projectId: string): Promise<{
     opportunityType: (data.opportunity_type ?? "build") as OpportunityType,
     createdAt: data.created_at,
     closedAt: data.closed_at ?? null,
+    hasAssessment: data.opportunity_type === "hire" && !!data.assessment_title?.trim(),
+    assessment:
+      data.opportunity_type === "hire"
+        ? toAssessment(data as unknown as RawAssessmentColumns)
+        : null,
   };
 }
 
@@ -662,6 +687,7 @@ export async function getCompanyHistory(
     currency: row.currency || DEFAULT_CURRENCY,
     postedAt: row.posted_at,
     closedAt: row.closed_at,
+    assessmentTitle: row.assessment_title ?? null,
     people: people.get(row.project_id) ?? [],
   }));
 }

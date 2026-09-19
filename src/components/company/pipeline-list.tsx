@@ -2,7 +2,12 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Avatar } from "@/components/common/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { PIPELINE_DISPLAY, pipelineHref, pipelineStage } from "@/lib/company";
+import {
+  PIPELINE_DISPLAY,
+  pipelineHref,
+  entryAssessment,
+  pipelineStage,
+} from "@/lib/company";
 import { dueLabel } from "@/lib/next-action";
 import { cn, formatDate } from "@/lib/utils";
 import type { PipelineEntry } from "@/lib/types/domain";
@@ -27,7 +32,8 @@ export function PipelineList({
         const stage = pipelineStage(
           entry.applicationStatus,
           entry.workStatus,
-          entry.opportunityType
+          entry.opportunityType,
+          entryAssessment(entry)
         );
         const display = PIPELINE_DISPLAY[stage];
         const urgent = stage === "new" || stage === "to_evaluate";

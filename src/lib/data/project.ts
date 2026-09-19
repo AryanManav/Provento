@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/data/utils";
+import { toAssessment, type RawAssessmentColumns } from "@/lib/data/assessment";
 import {
   BROWSABLE_PROJECT_STATUSES,
   DEFAULT_CURRENCY,
@@ -23,7 +24,7 @@ import type {
 } from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, created_at, companies(name), project_skills(skill_name, is_required)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, created_at, assessment_title, assessment_technologies, companies(name), project_skills(skill_name, is_required)";
 
 interface RawProjectSummary {
   id: string;
@@ -49,6 +50,8 @@ interface RawProjectSummary {
   experience_level?: ExperienceLevel | null;
   compensation?: string | null;
   created_at?: string;
+  assessment_title?: string | null;
+  assessment_technologies?: string[] | null;
 }
 
 function toSummary(row: RawProjectSummary): ProjectSummaryView {
@@ -79,6 +82,8 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     experienceLevel: row.experience_level ?? null,
     compensation: row.compensation ?? null,
     postedAt: row.created_at,
+    assessmentTitle: row.assessment_title ?? null,
+    assessmentTechnologies: row.assessment_technologies ?? [],
   };
 }
 
@@ -137,7 +142,13 @@ export async function getOpenProjects(
   return limit ? open.slice(0, limit) : open;
 }
 
-interface RawProjectDetail extends RawProjectSummary {
+interface RawProjectDetail
+  extends
+    RawProjectSummary,
+    Omit<
+      RawAssessmentColumns,
+      "deliverables" | "evaluation_criteria" | "project_deadline" | "expected_hours"
+    > {
   work_mode: ProjectWorkMode;
   problem_statement: string;
   context: string;
@@ -174,7 +185,7 @@ export async function getBrowsableProjectBySlug(
   const { data } = await supabase
     .from("projects")
     .select(
-      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, responsibilities, nice_to_have, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
+      "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, opportunity_type, job_type, work_arrangement, job_location, experience_level, compensation, responsibilities, nice_to_have, created_at, assessment_title, assessment_type, assessment_description, assessment_requirements, assessment_technologies, project_deadline, work_mode, problem_statement, context, requirements, deliverables, acceptance_criteria, evaluation_criteria, companies(name, location, description, website, industry, company_size, logo_url, verified), project_skills(skill_name, is_required)"
     )
     .eq("slug", slug)
     .in("status", [...BROWSABLE_PROJECT_STATUSES])
@@ -214,6 +225,7 @@ export async function getBrowsableProjectBySlug(
     })),
     responsibilities: row.responsibilities ?? [],
     niceToHave: row.nice_to_have ?? [],
+    assessment: summary.opportunityType === "hire" ? toAssessment(row) : null,
   };
 }
 

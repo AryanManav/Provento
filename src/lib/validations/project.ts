@@ -1,7 +1,9 @@
 import { z } from "zod";
 import {
+  ASSESSMENT_TYPES,
   DEFAULT_CURRENCY,
   EXPERIENCE_LEVELS,
+  MAX_ASSESSMENT_HOURS,
   JOB_TYPES,
   MAX_APPLICANTS_LIMIT,
   MAX_HIRE_OPENINGS,
@@ -10,6 +12,7 @@ import {
   WORK_ARRANGEMENTS,
 } from "@/lib/constants";
 import type {
+  AssessmentType,
   ExperienceLevel,
   JobType,
   ProjectCategory,
@@ -135,7 +138,45 @@ export const createHiringSchema = z
       .min(1, "Allow at least 1 application")
       .max(MAX_APPLICANTS_LIMIT, `At most ${MAX_APPLICANTS_LIMIT} applications`),
     applicationDeadline: z.string().datetime({ message: "Invalid application deadline" }),
+
+    // The hiring assessment — required: candidates are hired on this work.
+    assessmentTitle: z.string().trim().min(3, "Give the assessment a title").max(150),
+    assessmentType: z.enum(
+      Object.keys(ASSESSMENT_TYPES) as [AssessmentType, ...AssessmentType[]],
+      { errorMap: () => ({ message: "Choose the kind of assessment" }) }
+    ),
+    assessmentDescription: z
+      .string()
+      .trim()
+      .min(30, "Describe the assessment so candidates know what to build")
+      .max(10000),
+    assessmentRequirements: z
+      .array(z.string().min(2))
+      .min(1, "List at least one assessment requirement"),
+    deliverables: z
+      .array(z.string().min(2))
+      .min(1, "List what candidates hand in, e.g. a repository and a README"),
+    assessmentTechnologies: z.array(z.string().min(1)).default([]),
+    evaluationCriteria: z.array(z.string().min(2)).default([]),
+    expectedHours: z.coerce
+      .number()
+      .int("Estimated time must be whole hours")
+      .min(1, "Estimate at least 1 hour")
+      .max(
+        MAX_ASSESSMENT_HOURS,
+        `Keep the assessment to ${MAX_ASSESSMENT_HOURS} hours or less`
+      ),
+    assessmentDeadline: z.string().datetime({ message: "Invalid assessment deadline" }),
   })
+  .refine(
+    (data) =>
+      new Date(data.assessmentDeadline).getTime() >=
+      new Date(data.applicationDeadline).getTime(),
+    {
+      message: "The assessment deadline can't be before the application deadline",
+      path: ["assessmentDeadline"],
+    }
+  )
   .refine((data) => data.maxApplicants >= data.openings, {
     message: "The application limit must be at least the number of openings",
     path: ["maxApplicants"],

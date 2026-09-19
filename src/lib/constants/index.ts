@@ -1,4 +1,5 @@
 import type {
+  AssessmentType,
   CompanyWorkStyle,
   ExperienceLevel,
   JobType,
@@ -77,6 +78,7 @@ export const BUILD_DECISIONS = [
 
 /** The hiring pipeline: forward only, and Selected / Rejected are final. */
 export const HIRE_DECISIONS = [
+  "reviewing",
   "shortlisted",
   "interview",
   "selected",
@@ -105,22 +107,23 @@ export const REVIEWABLE_STATUS_LABELS: Record<
 
 /**
  * The two kinds of opportunity. Build only is Trialent's paid project: one
- * selected candidate builds it and is paid. Hire only is a free job posting:
- * candidates apply to a role, and up to N are hired — no project, no payment.
+ * selected candidate builds it and is paid. Hire only is free to post:
+ * candidates apply to a role, complete its unpaid hiring assessment, and up to
+ * N are hired on the work they submit.
  */
 export const OPPORTUNITY_TYPES = {
   build: {
     label: "Build only",
     title: "Build a project",
     summary: "Get a real project completed by one selected candidate.",
-    price: "Paid project · One candidate selected",
+    price: "Paid project · one candidate",
   },
   hire: {
     label: "Hire only",
     title: "Hire talent",
     summary:
-      "Hire for an open role. Find candidates by their skills, experience and work.",
-    price: "Free to post",
+      "Evaluate candidates through a project or assessment and hire the strongest for your openings.",
+    price: "Free · several hires",
   },
 } as const satisfies Record<OpportunityType, Record<string, string>>;
 
@@ -143,6 +146,21 @@ export const EXPERIENCE_LEVELS = {
   mid: "Mid-level · 2–5 years",
   senior: "Senior · 5+ years",
 } as const satisfies Record<ExperienceLevel, string>;
+
+/** What a hire-only role's assessment asks candidates to do. */
+export const ASSESSMENT_TYPES = {
+  coding: "Coding project",
+  frontend: "Frontend task",
+  backend: "Backend task",
+  full_stack: "Full-stack task",
+  design: "Design task",
+  data: "Data task",
+  technical: "Technical assignment",
+  other: "Other professional assessment",
+} as const satisfies Record<AssessmentType, string>;
+
+/** Longest estimate a hiring assessment may carry — it's unpaid, so keep it short. */
+export const MAX_ASSESSMENT_HOURS = 40;
 
 /** Most people one hire-only posting can hire, and its application ceiling. */
 export const MAX_HIRE_OPENINGS = 100;
@@ -241,7 +259,12 @@ const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
     sidebar: [
       { label: "Dashboard", href: "/candidate/dashboard", exact: true },
       { label: "Browse", href: "/projects" },
-      { label: "My applications", href: "/candidate/applications" },
+      { label: "My applications", href: "/candidate/applications", exact: true },
+      {
+        label: "Assessments",
+        href: "/candidate/applications?kind=hire",
+        match: ["/candidate/applications", "/candidate/assessments"],
+      },
       { label: "Active trials", href: "/candidate/trials" },
       { label: "Completed projects", href: "/candidate/completed" },
       { label: "My profile", href: "/candidate/profile" },

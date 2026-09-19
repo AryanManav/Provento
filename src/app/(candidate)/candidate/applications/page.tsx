@@ -31,9 +31,13 @@ export const dynamic = "force-dynamic";
 
 const TABS = {
   all: { label: "All", stages: null },
+  assessment: {
+    label: "Assessments to do",
+    stages: ["assessment_todo", "assessment_in_progress"],
+  },
   pending: {
     label: "Pending",
-    stages: ["applied", "reviewing", "shortlisted", "interview"],
+    stages: ["applied", "assessment_submitted", "reviewing", "shortlisted", "interview"],
   },
   active: {
     label: "Active",
@@ -53,6 +57,11 @@ function inTab(tab: TabId, application: ApplicationSummaryView): boolean {
 
 /** What the candidate should know or do next, for the stages that need a line. */
 const STAGE_NOTE: Partial<Record<ApplicationStage, string>> = {
+  assessment_todo:
+    "Next: complete the hiring assessment. The startup hires on the work you submit.",
+  assessment_in_progress: "Your assessment is saved. Submit it before the deadline.",
+  assessment_submitted:
+    "Your assessment is in. You'll be notified as the startup reviews candidates.",
   shortlisted:
     "You're on the shortlist. Next step: an interview, if the startup invites you.",
   interview: "The startup wants to interview you — look out for their message.",
@@ -68,7 +77,12 @@ const EMPTY: Record<TabId, { title: string; description: string }> = {
   all: {
     title: "No applications yet",
     description:
-      "Apply to a paid project that matches your skills. Every one you complete becomes verified evidence.",
+      "Apply to a role or a paid project that matches your skills. Every one you complete becomes verified evidence.",
+  },
+  assessment: {
+    title: "No assessments to do",
+    description:
+      "When you apply to a hire-only role, its hiring assessment appears here until you submit it.",
   },
   pending: {
     title: "Nothing pending",

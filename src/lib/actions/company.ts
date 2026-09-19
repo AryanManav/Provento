@@ -217,6 +217,10 @@ export async function createHiringAction(formData: FormData) {
   if (Number.isNaN(deadline.valueOf())) {
     redirectWithError(createPath, "Please provide a valid application deadline");
   }
+  const assessmentDeadline = new Date(String(formData.get("assessmentDeadline") || ""));
+  if (Number.isNaN(assessmentDeadline.valueOf())) {
+    redirectWithError(createPath, "Please provide a valid assessment deadline");
+  }
 
   const validated = createHiringSchema.safeParse({
     title: formData.get("title"),
@@ -234,6 +238,15 @@ export async function createHiringAction(formData: FormData) {
     openings: formData.get("openings"),
     maxApplicants: formData.get("maxApplicants"),
     applicationDeadline: deadline.toISOString(),
+    assessmentTitle: formData.get("assessmentTitle"),
+    assessmentType: formData.get("assessmentType"),
+    assessmentDescription: formData.get("assessmentDescription"),
+    assessmentRequirements: toList(formData.get("assessmentRequirements")),
+    deliverables: toList(formData.get("deliverables")),
+    assessmentTechnologies: toList(formData.get("assessmentTechnologies")),
+    evaluationCriteria: toList(formData.get("evaluationCriteria")),
+    expectedHours: formData.get("expectedHours"),
+    assessmentDeadline: assessmentDeadline.toISOString(),
   });
   if (!validated.success) {
     redirectWithError(createPath, validated.error.errors[0].message);
@@ -274,7 +287,16 @@ export async function createHiringAction(formData: FormData) {
       payment_amount: 0,
       currency: DEFAULT_CURRENCY,
       application_deadline: role.applicationDeadline,
-      project_deadline: role.applicationDeadline,
+      // The hiring assessment. Unpaid: it is part of the hiring process.
+      assessment_title: role.assessmentTitle,
+      assessment_type: role.assessmentType,
+      assessment_description: role.assessmentDescription,
+      assessment_requirements: role.assessmentRequirements,
+      assessment_technologies: role.assessmentTechnologies,
+      deliverables: role.deliverables,
+      evaluation_criteria: role.evaluationCriteria,
+      expected_hours: role.expectedHours,
+      project_deadline: role.assessmentDeadline,
       status: "applications_open",
     })
     .select("id")

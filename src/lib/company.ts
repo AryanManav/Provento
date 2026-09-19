@@ -1,5 +1,6 @@
 import type {
   ApplicationStatus,
+  AssessmentStatus,
   OpportunityType,
   ProjectOutcomeType,
   ProjectStatus,
@@ -89,6 +90,7 @@ export function isCompanyReadyToPost(
  * candidate is selected, their own work status decides.
  */
 export type PipelineStage =
+  | "assessment"
   | "new"
   | "reviewing"
   | "shortlisted"
@@ -105,8 +107,18 @@ export type PipelineStage =
 export function pipelineStage(
   applicationStatus: ApplicationStatus,
   workStatus: SelectionWorkStatus | null,
-  opportunityType: OpportunityType = "build"
+  opportunityType: OpportunityType = "build",
+  /** Hire only: nothing is new to the company until the assessment is in. */
+  assessment: AssessmentProgress = null
 ): PipelineStage {
+  if (
+    opportunityType === "hire" &&
+    applicationStatus === "submitted" &&
+    assessment !== null &&
+    assessment !== "submitted"
+  ) {
+    return "assessment";
+  }
   if (applicationStatus === "withdrawn") return "withdrawn";
   if (applicationStatus === "rejected") return "rejected";
   if (applicationStatus === "shortlisted") return "shortlisted";
@@ -135,6 +147,7 @@ export const PIPELINE_DISPLAY: Record<
   PipelineStage,
   { label: string; tone: StatusTone; action: string }
 > = {
+  assessment: { label: "In assessment", tone: "neutral", action: "View application" },
   new: { label: "New application", tone: "attention", action: "Review application" },
   reviewing: { label: "Reviewing", tone: "warning", action: "Decide" },
   shortlisted: { label: "Shortlisted", tone: "active", action: "Review candidate" },
@@ -154,7 +167,7 @@ export const PIPELINE_VIEWS = {
   all: { label: "All", stages: null },
   review: {
     label: "To review",
-    stages: ["new", "reviewing", "shortlisted", "interview"],
+    stages: ["assessment", "new", "reviewing", "shortlisted", "interview"],
   },
   evaluation: { label: "In evaluation", stages: ["building", "to_evaluate"] },
   decided: {
@@ -178,38 +191,90 @@ export function pipelineHref(entry: {
     : `/company/projects/${entry.projectId}/applicants/${entry.applicationId}`;
 }
 
-/** A hire-only application as the company sees it in the hiring pipeline. */
-export const HIRE_STAGE_DISPLAY: Record<
-  ApplicationStatus,
-  { label: string; tone: StatusTone }
-> = {
-  submitted: { label: "New", tone: "attention" },
-  reviewing: { label: "New", tone: "attention" },
-  shortlisted: { label: "Shortlisted", tone: "active" },
-  interview: { label: "Interview", tone: "warning" },
-  selected: { label: "Selected", tone: "success" },
-  rejected: { label: "Rejected", tone: "danger" },
-  withdrawn: { label: "Withdrawn", tone: "neutral" },
-};
+/**
+ * Where a candidate stands in a hire-only role, from their application and
+ * their assessment together:
+ *   Applied → Assessment in progress → Assessment submitted → Under review
+ *   → Shortlisted → Interview → Selected (or Not selected / Withdrawn)
+ * `assessment` is the submission's status, "not_started" when the role has an
+ * assessment the candidate hasn't opened, and null when it has none.
+ */
+export type HireStage =
+  | "applied"
+  | "assessment_in_progress"
+  | "assessment_submitted"
+  | "under_review"
+  | "shortlisted"
+  | "interview"
+  | "selected"
+  | "not_selected"
+  | "withdrawn";
 
-/** The hiring pipeline's tabs, and the application statuses each shows. */
+export type AssessmentProgress = AssessmentStatus | "not_started" | null;
+
+/** A pipeline entry's assessment progress, for pipelineStage and hireStage. */
+export function entryAssessment(entry: {
+  hasAssessment?: boolean;
+  assessmentStatus?: AssessmentStatus | null;
+}): AssessmentProgress {
+  return entry.hasAssessment ? (entry.assessmentStatus ?? "not_started") : null;
+}
+
+export function hireStage(
+  status: ApplicationStatus,
+  assessment: AssessmentProgress
+): HireStage {
+  switch (status) {
+    case "withdrawn":
+      return "withdrawn";
+    case "rejected":
+      return "not_selected";
+    case "selected":
+      return "selected";
+    case "interview":
+      return "interview";
+    case "shortlisted":
+      return "shortlisted";
+    case "reviewing":
+      return "under_review";
+    case "submitted":
+      if (assessment === "submitted") return "assessment_submitted";
+      if (assessment === "in_progress") return "assessment_in_progress";
+      return "applied";
+  }
+}
+
+/** A hire-only application as the company sees it in the hiring pipeline. */
+export const HIRE_STAGE_DISPLAY: Record<HireStage, { label: string; tone: StatusTone }> =
+  {
+    applied: { label: "Applied", tone: "info" },
+    assessment_in_progress: { label: "Assessment in progress", tone: "neutral" },
+    assessment_submitted: { label: "Assessment submitted", tone: "attention" },
+    under_review: { label: "Under review", tone: "warning" },
+    shortlisted: { label: "Shortlisted", tone: "active" },
+    interview: { label: "Interview", tone: "warning" },
+    selected: { label: "Selected", tone: "success" },
+    not_selected: { label: "Not selected", tone: "danger" },
+    withdrawn: { label: "Withdrawn", tone: "neutral" },
+  };
+
+/** The hiring pipeline's tabs, and the stages each shows. */
 export const HIRE_TABS = {
-  all: { label: "All", statuses: null },
-  new: { label: "New", statuses: ["submitted", "reviewing"] },
-  shortlisted: { label: "Shortlisted", statuses: ["shortlisted"] },
-  interview: { label: "Interview", statuses: ["interview"] },
-  selected: { label: "Selected", statuses: ["selected"] },
-  rejected: { label: "Rejected", statuses: ["rejected"] },
-} as const satisfies Record<
-  string,
-  { label: string; statuses: ApplicationStatus[] | null }
->;
+  all: { label: "All", stages: null },
+  assessment: { label: "In assessment", stages: ["applied", "assessment_in_progress"] },
+  submitted: { label: "Submitted", stages: ["assessment_submitted"] },
+  review: { label: "Under review", stages: ["under_review"] },
+  shortlisted: { label: "Shortlisted", stages: ["shortlisted"] },
+  interview: { label: "Interview", stages: ["interview"] },
+  selected: { label: "Selected", stages: ["selected"] },
+  rejected: { label: "Not selected", stages: ["not_selected"] },
+} as const satisfies Record<string, { label: string; stages: HireStage[] | null }>;
 
 export type HireTab = keyof typeof HIRE_TABS;
 
-export function inHireTab(tab: HireTab, status: ApplicationStatus): boolean {
-  const statuses: readonly ApplicationStatus[] | null = HIRE_TABS[tab].statuses;
-  return statuses === null || statuses.includes(status);
+export function inHireTab(tab: HireTab, stage: HireStage): boolean {
+  const stages: readonly HireStage[] | null = HIRE_TABS[tab].stages;
+  return stages === null || stages.includes(stage);
 }
 
 /**

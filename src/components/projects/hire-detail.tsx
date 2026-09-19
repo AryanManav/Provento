@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Building2,
+  ClipboardList,
   CalendarClock,
   ChevronLeft,
   Code2,
@@ -24,6 +25,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { RoleBadge } from "@/components/profile/role-badge";
 import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { BriefList, BriefSection, StackList } from "@/components/projects/brief";
+import { AssessmentBrief } from "@/components/assessment/assessment-brief";
 import {
   EXPERIENCE_LEVELS,
   JOB_TYPES,
@@ -41,9 +43,9 @@ const CLOSED_NOTE = {
 } as const;
 
 /**
- * A hire-only opportunity: a role, not a project. No fee, deliverables, trial
- * or evaluation — the role, what it asks for, how many are being hired, and
- * how many have applied.
+ * A hire-only opportunity: a role with several openings, filled on the work
+ * candidates submit for its (unpaid) hiring assessment — the role, the
+ * assessment, how many are being hired, and how many have applied.
  */
 export function HireOpportunityDetail({
   project,
@@ -150,6 +152,19 @@ export function HireOpportunityDetail({
             </BriefSection>
           )}
 
+          {project.assessment && (
+            <BriefSection
+              id="assessment"
+              title="Hiring assessment"
+              icon={ClipboardList}
+              description="Every candidate completes this. It's how the company decides who to hire."
+            >
+              <div className="rounded-lg border border-line bg-surface p-4">
+                <AssessmentBrief assessment={project.assessment} />
+              </div>
+            </BriefSection>
+          )}
+
           {project.skills.length > 0 && (
             <BriefSection id="skills" title="Skills" icon={Code2}>
               <StackList skills={project.skills} />
@@ -209,15 +224,32 @@ export function HireOpportunityDetail({
               <p className="text-sm text-ink-600">
                 You applied on {formatDate(existing.createdAt)}.{" "}
                 <Link
-                  href="/candidate/applications"
+                  href={
+                    project.assessment
+                      ? `/candidate/assessments/${project.id}`
+                      : "/candidate/applications"
+                  }
                   className="font-medium text-brand-700 hover:underline"
                 >
-                  Track it in My work
+                  {project.assessment ? "Open your assessment" : "Track it in My work"}
                 </Link>
               </p>
             ) : open ? (
               <div className="rounded-xl border border-line bg-surface p-5">
-                <ApplicationForm projectId={project.id} kind="hire" />
+                {project.assessment && (
+                  <p className="mb-4 text-sm text-ink-600">
+                    After you apply, you&apos;ll complete the hiring assessment:{" "}
+                    <span className="font-medium text-ink-900">
+                      {project.assessment.title}
+                    </span>
+                    .
+                  </p>
+                )}
+                <ApplicationForm
+                  projectId={project.id}
+                  kind="hire"
+                  hasAssessment={project.assessment !== null}
+                />
               </div>
             ) : (
               <p className="text-sm text-ink-600">
@@ -314,9 +346,18 @@ export function HireOpportunityDetail({
                   </Button>
                 </a>
               ) : existing ? (
-                <Link href="/candidate/applications" className="block">
+                <Link
+                  href={
+                    project.assessment
+                      ? `/candidate/assessments/${project.id}`
+                      : "/candidate/applications"
+                  }
+                  className="block"
+                >
                   <Button className="w-full" variant="outline">
-                    View your application
+                    {project.assessment
+                      ? "Open your assessment"
+                      : "View your application"}
                   </Button>
                 </Link>
               ) : viewerRole !== "candidate" ? (
@@ -337,9 +378,25 @@ export function HireOpportunityDetail({
                 </div>
               )}
             </div>
-            <p className="mt-3 text-xs text-ink-500">
-              A direct hire — no project to build and nothing to pay.
-            </p>
+            {project.assessment ? (
+              <a
+                href="#assessment"
+                className="mt-4 block rounded-md border border-line bg-ink-50 p-3 hover:border-line-strong"
+              >
+                <span className="block text-xs text-ink-500">Hiring assessment</span>
+                <span className="mt-0.5 block text-sm font-medium text-ink-900">
+                  {project.assessment.title}
+                </span>
+                <span className="mt-1 block text-xs text-ink-500">
+                  About {project.assessment.expectedHours} hours · unpaid, part of hiring
+                </span>
+                <span className="mt-1.5 block text-xs font-medium text-brand-700">
+                  View assessment
+                </span>
+              </a>
+            ) : (
+              <p className="mt-3 text-xs text-ink-500">Free to apply.</p>
+            )}
           </div>
         </aside>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { createApplicationAction } from "@/lib/actions/candidate";
@@ -33,13 +34,26 @@ const COPY: Record<
 export function ApplicationForm({
   projectId,
   kind = "build",
+  hasAssessment = false,
 }: {
   projectId: string;
   kind?: OpportunityType;
+  /** Hire only: after applying, the candidate goes on to the assessment. */
+  hasAssessment?: boolean;
 }) {
   const [state, action, pending] = useActionState(createApplicationAction, null);
   const copy = COPY[kind];
 
+  if (state?.success && kind === "hire" && hasAssessment)
+    return (
+      <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <p className="font-semibold">Application submitted</p>
+        <p>You are now taking part in the hiring assessment.</p>
+        <Link href={`/candidate/assessments/${projectId}`} className="inline-block">
+          <Button size="sm">Start assessment</Button>
+        </Link>
+      </div>
+    );
   if (state?.success)
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">

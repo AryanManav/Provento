@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { ExternalLink, GitBranch, Users } from "lucide-react";
 import { Avatar } from "@/components/common/avatar";
 import { EmptyState } from "@/components/common/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -12,6 +12,7 @@ import {
   HIRE_STAGE_DISPLAY,
   HIRE_TABS,
   HIRING_STATE_DISPLAY,
+  hireStage,
   hiringState,
   inHireTab,
   type HireTab,
@@ -39,7 +40,8 @@ const STATE_NOTE: Record<HiringState, string> = {
  * A hire-only posting's applicants: where the posting stands, how many of the
  * openings are filled, how close it is to its application limit, when things
  * happened, and each candidate moving through
- * Applied → Shortlisted → Interview → Selected, as a dense table.
+ * Applied → Assessment → Under review → Shortlisted → Interview → Selected,
+ * as a dense table with their assessment and submitted work alongside.
  */
 export function HiringPipeline({
   project,
@@ -55,6 +57,10 @@ export function HiringPipeline({
     applicationDeadline: string;
     createdAt: string;
     closedAt: string | null;
+    /** Candidates complete an assessment before they can move forward. */
+    hasAssessment: boolean;
+    /** How many requirements the assessment lists, for "3 / 5 done". */
+    requirementCount: number;
   };
   applicants: ApplicantView[];
   tab: HireTab;
@@ -75,7 +81,12 @@ export function HiringPipeline({
   const display = HIRING_STATE_DISPLAY[state];
   const filled = hires.length >= project.openings;
   const finished = state === "completed" || state === "closed";
-  const shown = applicants.filter((a) => inHireTab(tab, a.status));
+  const stageOf = (a: ApplicantView) =>
+    hireStage(
+      a.status,
+      project.hasAssessment ? (a.assessment?.status ?? "not_started") : null
+    );
+  const shown = applicants.filter((a) => inHireTab(tab, stageOf(a)));
 
   const timeline = [
     { label: "Posted", value: formatDate(project.createdAt) },
@@ -180,7 +191,7 @@ export function HiringPipeline({
           id,
           label: HIRE_TABS[id].label,
           href: id === "all" ? projectPath : `${projectPath}?stage=${id}`,
-          count: applicants.filter((a) => inHireTab(id, a.status)).length,
+          count: applicants.filter((a) => inHireTab(id, stageOf(a))).length,
         }))}
       />
 
@@ -200,19 +211,29 @@ export function HiringPipeline({
       ) : (
         <div className="overflow-hidden rounded-lg border border-line bg-surface">
           <table className="w-full text-left text-sm">
-            <thead className="hidden border-b border-line bg-ink-50 text-xs text-ink-500 md:table-header-group">
+            <thead className="hidden border-b border-line bg-ink-50 text-xs text-ink-500 lg:table-header-group">
               <tr>
                 <th scope="col" className="px-4 py-2 font-medium">
                   Candidate
+                </th>
+                {project.hasAssessment && (
+                  <>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      Assessment
+                    </th>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      Submission
+                    </th>
+                  </>
+                )}
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Skills
                 </th>
                 <th scope="col" className="px-3 py-2 font-medium">
                   Applied
                 </th>
                 <th scope="col" className="px-3 py-2 font-medium">
                   Status
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  Relevant skills
                 </th>
                 <th scope="col" className="px-4 py-2 text-right font-medium">
                   Actions
@@ -221,17 +242,19 @@ export function HiringPipeline({
             </thead>
             <tbody className="divide-y divide-line">
               {shown.map((applicant) => {
-                const stage = HIRE_STAGE_DISPLAY[applicant.status];
+                const stage = HIRE_STAGE_DISPLAY[stageOf(applicant)];
                 const applicantPath = `${projectPath}/applicants/${applicant.id}`;
+                const work = applicant.assessment;
+                const awaiting = project.hasAssessment && work?.status !== "submitted";
                 return (
                   <tr
                     key={applicant.id}
                     className={cn(
-                      "flex flex-col gap-2 px-4 py-3 align-middle md:table-row md:px-0 md:py-0",
+                      "flex flex-col gap-2 px-4 py-3 align-middle lg:table-row lg:px-0 lg:py-0",
                       unreadApplicants.has(applicant.id) && "bg-accent-50/40"
                     )}
                   >
-                    <td className="md:px-4 md:py-2.5">
+                    <td className="lg:px-4 lg:py-2.5">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <Avatar
                           name={applicant.candidateName}
@@ -248,32 +271,94 @@ export function HiringPipeline({
                             </Link>
                             <RoleBadge role="candidate" size="sm" />
                           </div>
-                          <p className="max-w-[16rem] truncate text-xs text-ink-500">
+                          <p className="max-w-[14rem] truncate text-xs text-ink-500">
                             {applicant.candidateHeadline ?? "Candidate"}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap text-xs text-ink-600 md:px-3 md:py-2.5">
-                      <span className="md:hidden">Applied </span>
-                      {formatDate(applicant.appliedAt)}
-                    </td>
-                    <td className="md:px-3 md:py-2.5">
-                      <StatusBadge size="sm" tone={stage.tone} label={stage.label} />
-                    </td>
-                    <td className="md:px-3 md:py-2.5">
+                    {project.hasAssessment && (
+                      <>
+                        <td className="text-xs text-ink-600 lg:px-3 lg:py-2.5">
+                          {!work ? (
+                            <span className="text-ink-500">Not started</span>
+                          ) : work.status === "submitted" ? (
+                            <span className="font-medium text-ink-900">
+                              Submitted
+                              {work.submittedAt && (
+                                <span className="font-normal text-ink-500">
+                                  {" "}
+                                  · {formatDate(work.submittedAt)}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span>
+                              In progress
+                              {project.requirementCount > 0 && (
+                                <span className="tabular text-ink-500">
+                                  {" "}
+                                  · {work.completedRequirements.length} /{" "}
+                                  {project.requirementCount}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-xs lg:px-3 lg:py-2.5">
+                          {work?.status === "submitted" &&
+                          (work.repositoryUrl || work.liveUrl) ? (
+                            <span className="flex flex-wrap gap-x-3 gap-y-1">
+                              {work.repositoryUrl && (
+                                <a
+                                  href={work.repositoryUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline"
+                                >
+                                  <GitBranch className="h-3.5 w-3.5" aria-hidden />
+                                  Repository
+                                </a>
+                              )}
+                              {work.liveUrl && (
+                                <a
+                                  href={work.liveUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                                  Live
+                                </a>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-ink-400">—</span>
+                          )}
+                        </td>
+                      </>
+                    )}
+                    <td className="lg:px-3 lg:py-2.5">
                       {applicant.candidateSkills.length > 0 ? (
                         <SkillTags skills={applicant.candidateSkills} limit={3} />
                       ) : (
                         <span className="text-xs text-ink-400">No skills listed</span>
                       )}
                     </td>
-                    <td className="md:px-4 md:py-2.5">
-                      <div className="flex flex-col items-start gap-1 md:items-end">
+                    <td className="whitespace-nowrap text-xs text-ink-600 lg:px-3 lg:py-2.5">
+                      <span className="lg:hidden">Applied </span>
+                      {formatDate(applicant.appliedAt)}
+                    </td>
+                    <td className="lg:px-3 lg:py-2.5">
+                      <StatusBadge size="sm" tone={stage.tone} label={stage.label} />
+                    </td>
+                    <td className="lg:px-4 lg:py-2.5">
+                      <div className="flex flex-col items-start gap-1 lg:items-end">
                         <HiringDecision
                           applicationId={applicant.id}
                           status={applicant.status}
                           openingsFilled={filled || state === "closed"}
+                          awaitingAssessment={awaiting}
                           stage={tab === "all" ? undefined : tab}
                           align="end"
                         />
@@ -281,7 +366,9 @@ export function HiringPipeline({
                           href={applicantPath}
                           className="text-xs font-medium text-brand-700 hover:underline"
                         >
-                          View
+                          {work?.status === "submitted"
+                            ? "View assessment"
+                            : "View application"}
                         </Link>
                       </div>
                     </td>

@@ -39,3 +39,28 @@ export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatu
 export const withdrawApplicationSchema = z.object({
   applicationId: z.string().uuid("Invalid application ID"),
 });
+
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value === "" || /^https?:\/\//i.test(value), {
+    message: "Links must start with http:// or https://",
+  })
+  .transform((value) => value || null);
+
+/** Saving or submitting a hiring assessment. The database re-checks everything. */
+export const saveAssessmentSchema = z.object({
+  projectId: z.string().uuid("Invalid role"),
+  repositoryUrl: optionalUrl,
+  liveUrl: optionalUrl,
+  notes: z
+    .string()
+    .trim()
+    .max(5000, "Keep notes under 5,000 characters")
+    .transform((value) => value || null),
+  completedRequirements: z.array(z.coerce.number().int().min(0)).max(100),
+  submit: z.boolean(),
+});
+
+export type SaveAssessmentInput = z.infer<typeof saveAssessmentSchema>;

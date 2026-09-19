@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ApplicationStatusForm } from "@/components/company/application-status-form";
 import { ProjectControls } from "@/components/company/project-controls";
 import { HiringPipeline } from "@/components/company/hiring-pipeline";
+import { AssessmentSummary } from "@/components/assessment/assessment-brief";
 import { OpportunityBadge } from "@/components/projects/opportunity-badge";
 import { PageHeader } from "@/components/common/page-header";
 import { HIRE_TABS, type HireTab } from "@/lib/company";
@@ -26,9 +27,11 @@ import type { ApplicationStatus } from "@/lib/types/database.types";
 export const dynamic = "force-dynamic";
 
 const HIRE_UPDATE_MESSAGES: Record<string, string> = {
+  reviewing: "Marked under review. The candidate has been notified.",
   shortlisted: "Candidate shortlisted. They've been notified.",
   interview: "Candidate moved to interview. They've been notified.",
-  selected: "Candidate selected. They've been notified.",
+  selected:
+    "Candidate selected. They've been notified. If that filled the last opening, hiring is complete and everyone still in the running was told.",
   rejected: "Application rejected. The candidate has been notified.",
   withdrawn: "Hiring closed. Candidates still in the running were notified.",
   private: "Role is now private — hidden from Browse, applications paused.",
@@ -113,8 +116,19 @@ export default async function ManageProjectPage({
           applicationCount={applicants.length}
           kind="hire"
         />
+        {project.assessment ? (
+          <AssessmentSummary assessment={project.assessment} />
+        ) : (
+          <StatusBanner tone="info">
+            This role was posted before hiring assessments, so candidates go straight to
+            review.
+          </StatusBanner>
+        )}
         <HiringPipeline
-          project={project}
+          project={{
+            ...project,
+            requirementCount: project.assessment?.requirements.length ?? 0,
+          }}
           applicants={applicants}
           tab={tab}
           unreadApplicants={unreadApplicants}

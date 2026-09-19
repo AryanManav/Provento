@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 const TONES = {
   error: "border-rose-200 bg-rose-50 text-rose-700",
   success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  info: "border-line bg-ink-50 text-ink-700",
 } as const;
 
 /**
