@@ -30,6 +30,7 @@ import {
 } from "@/components/candidate/profile-image-upload";
 import type { CandidateProfileView } from "@/lib/types/domain";
 import type { ActionResponse } from "@/lib/types/actions";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 const LINK_FIELDS = [
   {
@@ -185,6 +186,7 @@ export function ProfileIntroCard({
           <h1 className="text-2xl font-semibold text-ink-900 sm:text-3xl">
             {user.fullName}
           </h1>
+          <RoleBadge role="candidate" />
           {verifiedCount > 0 && (
             <span className="inline-flex items-center gap-fib2 rounded-md bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700">
               <BadgeCheck className="h-3.5 w-3.5" />

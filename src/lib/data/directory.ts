@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import type { CandidatePublicView, FollowStats, SearchResult } from "@/lib/types/domain";
+import type {
+  CandidatePublicView,
+  ConnectionView,
+  FollowStats,
+  ProfileSocial,
+  SearchResult,
+} from "@/lib/types/domain";
 import type { ProjectCategory } from "@/lib/types/database.types";
 
 /** Shortest query worth sending — search_directory ignores anything shorter. */
@@ -38,6 +44,8 @@ export async function searchDirectory(
 
 interface RawPublicProfile {
   id: string;
+  /** Hidden from search: only the id comes back. */
+  private?: boolean;
   full_name: string;
   avatar_url: string | null;
   banner_url: string | null;
@@ -59,6 +67,7 @@ interface RawPublicProfile {
     live_url: string | null;
   }[];
   verified_projects: number;
+  activity_dates?: string[] | null;
   verified_work?: {
     project_id: string;
     title: string;
@@ -72,18 +81,20 @@ interface RawPublicProfile {
 }
 
 /**
- * A candidate's public profile, or null when they've turned off "Show my
- * profile in search" (or don't exist). Contact details are never included.
+ * A candidate's public profile; "private" when they've turned off "Show my
+ * profile in search"; null when there's no such candidate. Contact details are
+ * never included.
  */
 export async function getCandidatePublicProfile(
   candidateId: string
-): Promise<CandidatePublicView | null> {
+): Promise<CandidatePublicView | "private" | null> {
   const supabase = await createClient();
   const { data } = await supabase.rpc("candidate_public_profile", {
     target_candidate_id: candidateId,
   });
   const row = data as unknown as RawPublicProfile | null;
   if (!row) return null;
+  if (row.private) return "private";
 
   return {
     id: row.id,
@@ -108,6 +119,7 @@ export async function getCandidatePublicProfile(
       liveUrl: project.live_url,
     })),
     verifiedProjects: row.verified_projects ?? 0,
+    activityDates: row.activity_dates ?? [],
     verifiedWork: (row.verified_work ?? []).map((work) => ({
       projectId: work.project_id,
       title: work.title,
@@ -188,11 +200,13 @@ export async function getFollowing(userId: string): Promise<SearchResult[]> {
 
   // Candidate names aren't readable directly; the public-profile function
   // returns them (and hides anyone who has turned discoverability off).
-  const candidates = await Promise.all(
-    rows
-      .filter((row) => row.candidate_id)
-      .map(async (row) => getCandidatePublicProfile(row.candidate_id as string))
-  );
+  const candidates = (
+    await Promise.all(
+      rows
+        .filter((row) => row.candidate_id)
+        .map(async (row) => getCandidatePublicProfile(row.candidate_id as string))
+    )
+  ).map((candidate) => (candidate === "private" ? null : candidate));
 
   return [
     ...companies,
@@ -215,4 +229,49 @@ export async function getFollowing(userId: string): Promise<SearchResult[]> {
         : []
     ),
   ];
+}
+
+/** Followers and following counts, and whether the viewer follows the profile. */
+export async function getProfileSocial(target: {
+  companyId?: string;
+  candidateId?: string;
+}): Promise<ProfileSocial> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("profile_social", {
+    target_company_id: target.companyId ?? null,
+    target_candidate_id: target.candidateId ?? null,
+  });
+  if (error) {
+    // Before the social-graph migration: fall back to the older counts.
+    const stats = await getFollowStats(target);
+    return { followers: stats.followers, following: 0, viewerFollows: stats.following };
+  }
+  const row = data?.[0];
+  return {
+    followers: row?.followers ?? 0,
+    following: row?.following ?? 0,
+    viewerFollows: row?.viewer_follows ?? false,
+  };
+}
+
+/** A profile's followers, or what a candidate follows — visible profiles only. */
+export async function getProfileConnections(
+  direction: "followers" | "following",
+  target: { companyId?: string; candidateId?: string }
+): Promise<ConnectionView[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("profile_connections", {
+    direction,
+    target_company_id: target.companyId ?? null,
+    target_candidate_id: target.candidateId ?? null,
+  });
+  return (data ?? []).map((row) => ({
+    kind: row.kind === "company" ? "company" : "candidate",
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle,
+    imageUrl: row.image_url,
+    viewerFollows: row.viewer_follows,
+    isViewer: row.is_viewer,
+  }));
 }

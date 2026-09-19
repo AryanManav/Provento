@@ -434,6 +434,8 @@ export interface CompanyPublicView {
     hires: number;
     interviews: number;
     cancelledProjects: number;
+    /** Null until the social-graph migration runs. */
+    projectsPosted: number | null;
   };
   openProjects: BrowseProjectView[];
 }
@@ -523,4 +525,29 @@ export interface CandidatePublicView {
   }[];
   verifiedProjects: number;
   verifiedWork: VerifiedWorkView[];
+  /** Days with recorded progress (a day repeats per kind of progress). */
+  activityDates: string[];
+}
+
+/** Who a profile belongs to, as the rest of the product labels it. */
+export type ProfileRole = "candidate" | "company";
+
+/** Follower and following counts for a profile, and whether the viewer follows it. */
+export interface ProfileSocial {
+  followers: number;
+  /** What this profile follows; companies don't follow, so always 0 for them. */
+  following: number;
+  viewerFollows: boolean;
+}
+
+/** One row in a followers / following list. */
+export interface ConnectionView {
+  kind: ProfileRole;
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  viewerFollows: boolean;
+  /** The row is the viewer themself (no follow button). */
+  isViewer: boolean;
 }

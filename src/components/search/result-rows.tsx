@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { companyProfilePath } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import type { BrowseProjectView, SearchResult } from "@/lib/types/domain";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 /** Up to `limit` skills as compact mono tags, plus "+n". */
 export function SkillTags({
@@ -110,8 +111,9 @@ export function CandidateResultRow({
           />
           <div className="min-w-0 space-y-1.5">
             <div>
-              <p className="truncate text-sm font-medium text-ink-900 group-hover:text-brand-700">
-                {candidate.title}
+              <p className="flex items-center gap-2 text-sm font-medium text-ink-900 group-hover:text-brand-700">
+                <span className="truncate">{candidate.title}</span>
+                <RoleBadge role="candidate" size="sm" />
               </p>
               <p className="truncate text-xs text-ink-500">
                 {candidate.subtitle ?? "Candidate"}
@@ -166,8 +168,9 @@ export function CompanyResultRow({
           />
           <div className="min-w-0 space-y-1.5">
             <div>
-              <p className="truncate text-sm font-medium text-ink-900 group-hover:text-brand-700">
-                {company.title}
+              <p className="flex items-center gap-2 text-sm font-medium text-ink-900 group-hover:text-brand-700">
+                <span className="truncate">{company.title}</span>
+                <RoleBadge role="company" size="sm" />
               </p>
               <p className="truncate text-xs text-ink-500">{meta || "Startup"}</p>
             </div>

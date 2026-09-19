@@ -36,6 +36,7 @@ import {
   StackList,
 } from "@/components/projects/brief";
 import type { BrowseProjectView } from "@/lib/types/domain";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,7 @@ export default async function ProjectDetailPage({
           >
             {project.companyName || "Startup"}
           </Link>
+          <RoleBadge role="company" size="sm" />
           {project.company.verified && (
             <BadgeCheck
               className="h-4 w-4 text-emerald-600"

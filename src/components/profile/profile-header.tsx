@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { ExternalLink, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/common/avatar";
 import { cn } from "@/lib/utils";
+import { RoleBadge } from "@/components/profile/role-badge";
+import type { ProfileRole } from "@/lib/types/domain";
 
 export interface ProfileLink {
   label: string;
@@ -18,14 +20,20 @@ export function ProfileHeader({
   imageUrl,
   bannerUrl,
   shape = "round",
+  role,
   headline,
   badges,
+  social,
   facts,
   links,
   stats,
   actions,
 }: {
   name: string;
+  /** Candidate or company — always shown, right under the name. */
+  role: ProfileRole;
+  /** Followers / following, directly under the headline. */
+  social?: ReactNode;
   imageUrl: string | null;
   bannerUrl?: string | null;
   /** People are round, companies are square. */
@@ -62,11 +70,15 @@ export function ProfileHeader({
         </div>
 
         <div className="mt-3 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="space-y-1.5">
             <h1 className="text-2xl font-semibold text-ink-900">{name}</h1>
-            {badges}
+            <div className="flex flex-wrap items-center gap-2">
+              <RoleBadge role={role} />
+              {badges}
+            </div>
           </div>
           {headline && <p className="max-w-2xl text-base text-ink-700">{headline}</p>}
+          {social}
           {facts && facts.length > 0 && (
             <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-500">
               {facts.map((fact) => {
@@ -103,11 +115,14 @@ export function ProfileHeader({
         {stats && stats.length > 0 && (
           <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex items-baseline gap-1.5">
+              <div
+                key={stat.label}
+                className="flex flex-row-reverse items-baseline gap-1.5"
+              >
+                <dt className="text-sm text-ink-500">{stat.label}</dt>
                 <dd className="tabular text-sm font-semibold text-ink-900">
                   {stat.value}
                 </dd>
-                <dt className="text-sm text-ink-500">{stat.label}</dt>
               </div>
             ))}
           </dl>

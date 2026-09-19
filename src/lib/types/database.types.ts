@@ -896,6 +896,29 @@ export interface Database {
           hires: number;
           interviews: number;
           cancelled_projects: number;
+          /** Added by 20261004000000; absent until that migration runs. */
+          projects_posted?: number | null;
+        }[];
+      };
+      profile_social: {
+        Args: { target_company_id?: string | null; target_candidate_id?: string | null };
+        Returns: { followers: number; following: number; viewer_follows: boolean }[];
+      };
+      profile_connections: {
+        Args: {
+          direction: string;
+          target_company_id?: string | null;
+          target_candidate_id?: string | null;
+        };
+        Returns: {
+          kind: string;
+          id: string;
+          title: string;
+          subtitle: string | null;
+          image_url: string | null;
+          viewer_follows: boolean;
+          is_viewer: boolean;
+          followed_at: string;
         }[];
       };
       candidate_github_username: {

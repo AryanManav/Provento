@@ -563,6 +563,7 @@ export async function getCompanyPublicProfile(
       hires: counts?.hires ?? 0,
       interviews: counts?.interviews ?? 0,
       cancelledProjects: counts?.cancelled_projects ?? 0,
+      projectsPosted: counts?.projects_posted ?? null,
     },
     openProjects,
   };

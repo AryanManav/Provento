@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { formatDate } from "@/lib/utils";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,10 @@ export default async function CandidateEvaluationPage({
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Candidate under evaluation
           </h2>
-          <p className="font-semibold mt-1">{evaluation.candidate.name}</p>
+          <p className="mt-1 flex items-center gap-2 font-semibold">
+            {evaluation.candidate.name}
+            <RoleBadge role="candidate" size="sm" />
+          </p>
           <p className="text-sm text-slate-500">
             {evaluation.candidate.headline || evaluation.candidate.email}
           </p>

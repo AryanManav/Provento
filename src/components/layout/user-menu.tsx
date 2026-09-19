@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { navigationFor } from "@/lib/constants";
 import { Avatar } from "@/components/common/avatar";
 import type { CurrentUser } from "@/lib/auth/guards";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 const MENU_ICONS: Record<string, LucideIcon> = {
   "My profile": UserRound,
@@ -26,12 +27,6 @@ const MENU_ICONS: Record<string, LucideIcon> = {
   Team: Users,
   Settings,
 };
-
-const ROLE_LABEL = {
-  candidate: "Candidate",
-  company: "Startup",
-  admin: "Admin",
-} as const;
 
 export function UserMenu({ user }: { user: CurrentUser }) {
   const [open, setOpen] = useState(false);
@@ -96,9 +91,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           <div className="border-b border-line px-3 pb-2.5 pt-2">
             <p className="truncate text-sm font-medium text-ink-900">{user.fullName}</p>
             <p className="truncate text-xs text-ink-500">{user.email}</p>
-            <p className="mt-1 text-2xs font-medium uppercase tracking-wider text-ink-400">
-              {ROLE_LABEL[user.role]}
-            </p>
+            {user.role === "admin" ? (
+              <p className="mt-1 text-2xs font-medium uppercase tracking-wider text-ink-400">
+                Admin
+              </p>
+            ) : (
+              <RoleBadge role={user.role} size="sm" className="mt-1.5" />
+            )}
           </div>
 
           {menu.map((item) => {

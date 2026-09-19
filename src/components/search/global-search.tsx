@@ -33,6 +33,7 @@ import {
   searchHref,
 } from "@/components/search/search-history";
 import type { UserRole } from "@/lib/types/database.types";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 const KIND_ICON = { project: FolderKanban, candidate: UserRound, company: Building2 };
 
@@ -330,8 +331,11 @@ export function GlobalSearch({ role }: { role: UserRole }) {
                           />
                         )}
                         <span className="min-w-0">
-                          <span className="block truncate font-medium text-ink-900">
-                            {item.title}
+                          <span className="flex items-center gap-2 font-medium text-ink-900">
+                            <span className="truncate">{item.title}</span>
+                            {item.kind !== "project" && (
+                              <RoleBadge role={item.kind} size="sm" />
+                            )}
                           </span>
                           <span className="block truncate text-xs text-ink-500">
                             {item.meta}

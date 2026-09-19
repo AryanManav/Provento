@@ -10,6 +10,7 @@ import { StatusBanner } from "@/components/common/status-banner";
 import { cn } from "@/lib/utils";
 import type { ProjectMessageView } from "@/lib/types/domain";
 import type { ActionResponse } from "@/lib/types/actions";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 function timestamp(iso: string): string {
   return new Date(iso).toLocaleString("en-IN", {
@@ -87,7 +88,18 @@ export function ProjectThread({
                       message.mine ? "text-brand-100" : "text-ink-400"
                     )}
                   >
-                    {message.mine ? "You" : otherParty} · {timestamp(message.createdAt)}
+                    <span className="inline-flex items-center gap-1.5">
+                      {message.mine ? "You" : otherParty}
+                      <RoleBadge
+                        size="sm"
+                        role={
+                          (viewer === "candidate") === message.mine
+                            ? "candidate"
+                            : "company"
+                        }
+                      />
+                      · {timestamp(message.createdAt)}
+                    </span>
                   </p>
                 </div>
               </li>

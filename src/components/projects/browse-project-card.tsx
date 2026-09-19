@@ -5,6 +5,7 @@ import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { purposeLabel, spotsLeft } from "@/lib/projects";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { BrowseProjectView } from "@/lib/types/domain";
+import { RoleBadge } from "@/components/profile/role-badge";
 
 const AVAILABILITY: Record<
   BrowseProjectView["availability"],
@@ -33,6 +34,7 @@ export function BrowseProjectCard({ project }: { project: BrowseProjectView }) {
           <span className="truncate text-sm text-ink-600">
             {project.companyName || "Startup"}
           </span>
+          <RoleBadge role="company" size="sm" />
         </div>
         <StatusBadge size="sm" tone={status.tone} label={status.label} />
       </div>
