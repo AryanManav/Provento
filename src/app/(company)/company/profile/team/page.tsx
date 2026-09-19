@@ -15,7 +15,7 @@ export default async function CompanyTeamPage() {
   return (
     <section className="space-y-fib5 rounded-2xl border border-line bg-white p-fib6 shadow-xs">
       <div>
-        <h2 className="text-lg font-bold text-ink-900">Team · {team.length}</h2>
+        <h2 className="text-lg font-semibold text-ink-900">Team · {team.length}</h2>
         <p className="text-sm text-ink-500">
           People who can post projects, review applicants and evaluate work for your
           company.
@@ -41,7 +41,7 @@ export default async function CompanyTeamPage() {
                 {member.email} · joined {formatDate(member.joinedAt)}
               </p>
             </div>
-            <span className="inline-flex shrink-0 items-center gap-fib2 rounded-full bg-ink-100 px-fib4 py-fib1 text-xs font-semibold capitalize text-ink-700">
+            <span className="inline-flex shrink-0 items-center gap-fib2 rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-semibold capitalize text-ink-700">
               {member.role === "owner" ? (
                 <Crown className="h-3.5 w-3.5 text-accent-600" />
               ) : (

@@ -53,7 +53,7 @@ export function GitHubConnect({
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-900 text-white">
           <Github className="h-5 w-5" />
         </span>
-        <h2 className="font-bold text-ink-900">GitHub</h2>
+        <h2 className="font-semibold text-ink-900">GitHub</h2>
       </div>
 
       {verifiedUsername ? (

@@ -84,14 +84,14 @@ export function NotificationBell({ initial }: { initial: NotificationSummary }) 
         aria-expanded={open}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
         className={cn(
-          "relative flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink-600 transition-colors hover:bg-ink-50 hover:text-ink-900",
-          unread > 0 && "text-brand-600"
+          "relative grid h-9 w-9 place-items-center rounded-lg text-ink-600 transition-colors hover:bg-ink-100 hover:text-ink-900",
+          open && "bg-ink-100 text-ink-900"
         )}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-4 w-4" aria-hidden />
         <CountBadge
           count={unread}
-          className="absolute -right-1 -top-1 ring-2 ring-white"
+          className="absolute -right-0.5 -top-0.5 ring-2 ring-white"
         />
       </button>
 
@@ -99,7 +99,7 @@ export function NotificationBell({ initial }: { initial: NotificationSummary }) 
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-fib4 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-white shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-[22rem] animate-fade-in max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-white shadow-lg"
         >
           <div className="flex items-center justify-between border-b border-line px-fib5 py-fib4">
             <p className="text-sm font-semibold text-ink-900">

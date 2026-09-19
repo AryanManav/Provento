@@ -32,7 +32,7 @@ export default function HowItWorksPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 space-y-12">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">
           The Trialent Evaluation Loop
         </h1>
         <p className="text-slate-600 max-w-xl mx-auto">
@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
         {steps.map((step) => (
           <Card key={step.num} className="border-slate-200">
             <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-              <div className="h-10 w-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center font-bold text-indigo-700 shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center font-semibold text-indigo-700 shrink-0">
                 {step.num}
               </div>
               <div>

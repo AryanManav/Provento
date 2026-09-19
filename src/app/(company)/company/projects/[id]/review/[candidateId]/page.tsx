@@ -58,7 +58,7 @@ export default async function CandidateEvaluationPage({
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{evaluation.title}</h1>
+          <h1 className="text-2xl font-semibold">{evaluation.title}</h1>
           <p className="text-sm text-slate-500 mt-1">
             Evaluate delivered work · Due {formatDate(evaluation.projectDeadline)}
           </p>
@@ -95,7 +95,7 @@ export default async function CandidateEvaluationPage({
 
       <>
         <section className="rounded-xl border bg-white p-5">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Candidate under evaluation
           </h2>
           <p className="font-semibold mt-1">{evaluation.candidate.name}</p>
@@ -119,7 +119,7 @@ export default async function CandidateEvaluationPage({
         />
 
         <section className="rounded-xl border bg-white p-5 space-y-3">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-lg font-semibold">
             Submitted work ({evaluation.submissions.length})
           </h2>
 
@@ -191,7 +191,7 @@ export default async function CandidateEvaluationPage({
         </section>
 
         <section className="rounded-xl border bg-white p-5 space-y-4">
-          <h2 className="text-lg font-bold">Evaluation</h2>
+          <h2 className="text-lg font-semibold">Evaluation</h2>
           {evaluation.feedback ? (
             <div className="space-y-2 text-sm">
               <div className="flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ export default async function CandidateEvaluationPage({
 
         {evaluation.purpose === "hire" && (
           <section className="rounded-xl border bg-white p-5 space-y-4">
-            <h2 className="text-lg font-bold">Outcome</h2>
+            <h2 className="text-lg font-semibold">Outcome</h2>
             {evaluation.outcome ? (
               <div className="text-sm space-y-1">
                 <Badge variant="success" className="capitalize">

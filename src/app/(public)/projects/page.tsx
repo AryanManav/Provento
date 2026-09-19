@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Search, SearchX } from "lucide-react";
 import { getBrowseProjects } from "@/lib/data/project";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { PROJECT_CATEGORIES } from "@/lib/constants";
+import {
+  HOURS_FILTERS,
+  PAY_FILTERS,
+  filterProjects,
+  hasActiveFilters,
+  parseProjectFilters,
+} from "@/lib/projects";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { BrowseProjectCard } from "@/components/projects/browse-project-card";
@@ -14,20 +21,33 @@ export const dynamic = "force-dynamic";
 
 const CATEGORY_ORDER = Object.keys(PROJECT_CATEGORIES) as ProjectCategory[];
 
-function isCategory(value: string | undefined): value is ProjectCategory {
-  return !!value && (CATEGORY_ORDER as string[]).includes(value);
+const selectClass =
+  "h-9 rounded-lg border border-line bg-white px-2.5 text-sm text-ink-800 shadow-xs outline-none transition-colors hover:border-ink-300 focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-100";
+
+/** A URL for the current filters with one value changed. */
+function hrefWith(
+  params: Record<string, string | undefined>,
+  changes: Record<string, string | null>
+): string {
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries({ ...params, ...changes })) {
+    if (value) next.set(key, value);
+  }
+  const query = next.toString();
+  return query ? `/projects?${query}` : "/projects";
 }
 
 /**
- * Browse, in sections by topic. A chip narrows it to one topic.
+ * The project marketplace. With no search or filter it's sectioned by topic;
+ * any filter switches to one ranked result list.
  */
 export default async function ProjectsDirectoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const { category } = await searchParams;
-  const selected = isCategory(category) ? category : null;
+  const params = await searchParams;
+  const filters = parseProjectFilters(params, CATEGORY_ORDER);
   const [projects, user] = await Promise.all([getBrowseProjects(), getCurrentUser()]);
 
   // Posting is for startups and visitors; candidates only browse here.
@@ -38,99 +58,204 @@ export default async function ProjectsDirectoryPage({
         ? null
         : "/signup?role=company";
 
+  const filtered = filterProjects(projects, filters);
+  const flat = hasActiveFilters(filters);
   const byCategory = new Map<ProjectCategory, BrowseProjectView[]>();
-  for (const project of projects) {
+  for (const project of filtered) {
     const list = byCategory.get(project.category) ?? [];
     list.push(project);
     byCategory.set(project.category, list);
   }
-  const sections = CATEGORY_ORDER.filter(
-    (key) => (byCategory.get(key)?.length ?? 0) > 0 && (!selected || key === selected)
-  );
+  const countByCategory = new Map<ProjectCategory, number>();
+  for (const project of projects) {
+    countByCategory.set(
+      project.category,
+      (countByCategory.get(project.category) ?? 0) + 1
+    );
+  }
+  const sections = CATEGORY_ORDER.filter((key) => (byCategory.get(key)?.length ?? 0) > 0);
   const openCount = projects.filter((project) => project.availability === "open").length;
-  const firstName = user?.role === "candidate" ? user.fullName.split(" ")[0] : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-fib6 px-fib5 py-fib7 sm:px-fib6">
-      <div className="flex flex-col justify-between gap-fib5 border-b border-line pb-fib6 md:flex-row md:items-end">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-ink-900">
-            {firstName ? `Find your next project, ${firstName}` : "Browse projects"}
-          </h1>
-          <p className="mt-fib2 text-sm text-ink-500">
-            {openCount} paid project{openCount === 1 ? "" : "s"} open right now, from
-            startups that evaluate real work before they hire.
+          <h1 className="text-3xl font-semibold text-ink-900">Browse projects</h1>
+          <p className="mt-1.5 text-sm text-ink-500">
+            Find paid projects that demonstrate what you can do.{" "}
+            <span className="text-ink-700">{openCount} open right now.</span>
           </p>
         </div>
         {postHref && (
-          <Link href={postHref}>
-            <Button variant="outline" className="gap-fib2">
-              <Plus className="h-4 w-4" />
+          <Link href={postHref} className="shrink-0">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" aria-hidden />
               Post a project
             </Button>
           </Link>
         )}
-      </div>
+      </header>
 
       {projects.length > 0 && (
-        <nav aria-label="Topics" className="flex gap-fib2 overflow-x-auto pb-fib1">
-          <Link
-            href="/projects"
-            aria-current={!selected ? "page" : undefined}
-            className={cn(
-              "shrink-0 rounded-full border px-fib5 py-fib2 text-sm font-semibold transition-colors",
-              !selected
-                ? "border-brand-600 bg-brand-600 text-white"
-                : "border-line bg-white text-ink-600 hover:border-ink-300"
-            )}
+        <div className="space-y-3">
+          <form
+            action="/projects"
+            role="search"
+            className="flex flex-col gap-2 rounded-xl border border-line bg-white p-2 sm:flex-row sm:items-center"
           >
-            All · {projects.length}
-          </Link>
-          {CATEGORY_ORDER.filter((key) => byCategory.has(key)).map((key) => (
+            {filters.category && (
+              <input type="hidden" name="category" value={filters.category} />
+            )}
+            <label className="relative flex-1">
+              <span className="sr-only">Search projects</span>
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+                aria-hidden
+              />
+              <input
+                type="search"
+                name="q"
+                defaultValue={filters.q}
+                placeholder="Search by title, company or technology"
+                className="h-9 w-full rounded-lg bg-transparent pl-9 pr-3 text-sm text-ink-900 outline-none placeholder:text-ink-400"
+              />
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <label>
+                <span className="sr-only">Minimum fee</span>
+                <select
+                  name="pay"
+                  defaultValue={filters.minPay ? String(filters.minPay) : ""}
+                  className={selectClass}
+                >
+                  <option value="">Any fee</option>
+                  {PAY_FILTERS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="sr-only">Effort</span>
+                <select
+                  name="hours"
+                  defaultValue={filters.maxHours ? String(filters.maxHours) : ""}
+                  className={selectClass}
+                >
+                  <option value="">Any effort</option>
+                  {HOURS_FILTERS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex h-9 items-center gap-2 rounded-lg border border-line px-2.5 text-sm text-ink-700">
+                <input
+                  type="checkbox"
+                  name="open"
+                  value="1"
+                  defaultChecked={filters.openOnly}
+                  className="h-4 w-4 accent-brand-600"
+                />
+                Open only
+              </label>
+              <Button type="submit">Search</Button>
+            </div>
+          </form>
+
+          <nav
+            aria-label="Topics"
+            className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+          >
             <Link
-              key={key}
-              href={`/projects?category=${key}`}
-              aria-current={selected === key ? "page" : undefined}
+              href={hrefWith(params, { category: null })}
+              aria-current={!filters.category ? "page" : undefined}
               className={cn(
-                "shrink-0 rounded-full border px-fib5 py-fib2 text-sm font-semibold transition-colors",
-                selected === key
-                  ? "border-brand-600 bg-brand-600 text-white"
-                  : "border-line bg-white text-ink-600 hover:border-ink-300"
+                "shrink-0 rounded-md border px-2.5 py-1 text-sm transition-colors",
+                !filters.category
+                  ? "border-ink-900 bg-ink-900 font-medium text-white"
+                  : "border-line bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900"
               )}
             >
-              {PROJECT_CATEGORIES[key].label} · {byCategory.get(key)?.length}
+              All <span className="tabular opacity-70">{projects.length}</span>
             </Link>
-          ))}
-        </nav>
+            {CATEGORY_ORDER.filter((key) => countByCategory.has(key)).map((key) => (
+              <Link
+                key={key}
+                href={hrefWith(params, { category: key })}
+                aria-current={filters.category === key ? "page" : undefined}
+                className={cn(
+                  "shrink-0 rounded-md border px-2.5 py-1 text-sm transition-colors",
+                  filters.category === key
+                    ? "border-ink-900 bg-ink-900 font-medium text-white"
+                    : "border-line bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900"
+                )}
+              >
+                {PROJECT_CATEGORIES[key].label}{" "}
+                <span className="tabular opacity-70">{countByCategory.get(key)}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
       )}
 
       {projects.length === 0 ? (
         <EmptyState
+          icon={Search}
           title="No open projects right now"
-          description="Startups post new paid trial projects regularly. Check back soon — every open project is listed here."
+          description="Startups post new paid projects regularly. Every open project is listed here."
         />
-      ) : sections.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
-          title="Nothing in this topic yet"
-          description="No open projects in this topic right now. Browse all topics instead."
-          actionText="Show all projects"
+          icon={SearchX}
+          title="No projects match these filters"
+          description="Try fewer words, a different topic, or a wider fee and effort range."
+          actionText="Clear filters"
           actionHref="/projects"
         />
+      ) : flat || filters.category ? (
+        <section aria-label="Results" className="space-y-3">
+          <p className="text-sm text-ink-500">
+            {filtered.length} project{filtered.length === 1 ? "" : "s"}
+            {filters.category && ` in ${PROJECT_CATEGORIES[filters.category].label}`}
+            {flat && (
+              <>
+                {" · "}
+                <Link
+                  href={hrefWith({}, { category: filters.category })}
+                  className="font-medium text-brand-700 hover:underline"
+                >
+                  Clear filters
+                </Link>
+              </>
+            )}
+          </p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((project) => (
+              <BrowseProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        </section>
       ) : (
         sections.map((key) => (
-          <section key={key} className="space-y-fib4" aria-labelledby={`topic-${key}`}>
-            <div className="flex items-end justify-between gap-fib4">
+          <section key={key} className="space-y-3" aria-labelledby={`topic-${key}`}>
+            <div className="flex items-end justify-between gap-4 border-b border-line pb-2">
               <div>
-                <h2 id={`topic-${key}`} className="text-xl font-bold text-ink-900">
+                <h2 id={`topic-${key}`} className="text-base font-semibold text-ink-900">
                   {PROJECT_CATEGORIES[key].label}
                 </h2>
                 <p className="text-sm text-ink-500">{PROJECT_CATEGORIES[key].blurb}</p>
               </div>
-              <span className="shrink-0 text-sm font-semibold text-ink-400">
-                {byCategory.get(key)?.length}
-              </span>
+              <Link
+                href={hrefWith(params, { category: key })}
+                className="shrink-0 text-sm font-medium text-brand-700 hover:underline"
+              >
+                View {byCategory.get(key)?.length}
+              </Link>
             </div>
-            <div className="grid gap-fib5 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {byCategory.get(key)?.map((project) => (
                 <BrowseProjectCard key={project.id} project={project} />
               ))}

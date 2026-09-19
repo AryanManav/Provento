@@ -176,7 +176,7 @@ export function SignupForm({ providers }: { providers: OAuthProviderStatus }) {
                 >
                   <span
                     className={cn(
-                      "grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] font-bold",
+                      "grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
                       met ? "bg-emerald-100 text-emerald-600" : "bg-ink-200 text-ink-400"
                     )}
                   >

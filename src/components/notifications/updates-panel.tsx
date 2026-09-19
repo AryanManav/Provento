@@ -24,7 +24,7 @@ export function UpdatesPanel({
           <BellRing className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-base font-bold text-ink-900">What&apos;s new</h2>
+          <h2 className="text-base font-semibold text-ink-900">What&apos;s new</h2>
           <p className="text-xs text-ink-500">
             {items.length > 0
               ? "Since you last looked — open one to act on it."

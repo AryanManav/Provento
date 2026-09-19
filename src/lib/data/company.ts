@@ -18,6 +18,7 @@ import type {
   CompanyDirectoryEntry,
   CompanyTeamMember,
   CompanyView,
+  PipelineEntry,
 } from "@/lib/types/domain";
 import type {
   ApplicationStatus,
@@ -183,6 +184,7 @@ export async function getCompanyProjects(
     purpose: (row.purpose ?? "hire") as ProjectPurpose,
     openings: row.openings ?? 1,
     category: (row.category ?? "other") as ProjectCategory,
+    stack: [],
     awaitingReview: awaiting.get(row.id) ?? 0,
   }));
 }
@@ -271,6 +273,91 @@ export async function getProjectApplicants(projectId: string): Promise<Applicant
       candidateEmail: account?.email ?? null,
     };
   });
+}
+
+interface RawPipelineApplication {
+  id: string;
+  project_id: string;
+  candidate_id: string;
+  status: ApplicationStatus;
+  created_at: string;
+  candidate_profiles:
+    | {
+        headline: string | null;
+        users:
+          | { full_name: string; avatar_url: string | null }
+          | { full_name: string; avatar_url: string | null }[]
+          | null;
+      }
+    | {
+        headline: string | null;
+        users:
+          | { full_name: string; avatar_url: string | null }
+          | { full_name: string; avatar_url: string | null }[]
+          | null;
+      }[]
+    | null;
+}
+
+/**
+ * Every application across the company's projects, newest first, with each
+ * selected candidate's work status — the Candidates page and the dashboard's
+ * attention queue are both views of this.
+ */
+export async function getCompanyPipeline(companyId: string): Promise<PipelineEntry[]> {
+  const supabase = await createClient();
+  const { data: projectRows } = await supabase
+    .from("projects")
+    .select("id, title, project_deadline")
+    .eq("company_id", companyId);
+  const projects = new Map((projectRows ?? []).map((row) => [row.id, row]));
+  if (projects.size === 0) return [];
+  const ids = [...projects.keys()];
+
+  const [{ data: applicationRows }, { data: selectionRows }] = await Promise.all([
+    supabase
+      .from("applications")
+      .select(
+        "id, project_id, candidate_id, status, created_at, candidate_profiles(headline, users(full_name, avatar_url))"
+      )
+      .in("project_id", ids)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("project_selections")
+      .select("project_id, candidate_id, status")
+      .in("project_id", ids),
+  ]);
+
+  const work = new Map(
+    (selectionRows ?? []).map((row) => [
+      `${row.project_id}:${row.candidate_id}`,
+      row.status as SelectionWorkStatus,
+    ])
+  );
+
+  return ((applicationRows ?? []) as unknown as RawPipelineApplication[]).flatMap(
+    (row) => {
+      const project = projects.get(row.project_id);
+      if (!project) return [];
+      const profile = one(row.candidate_profiles);
+      const account = one(profile?.users);
+      return [
+        {
+          applicationId: row.id,
+          applicationStatus: row.status,
+          workStatus: work.get(`${row.project_id}:${row.candidate_id}`) ?? null,
+          projectId: row.project_id,
+          projectTitle: project.title,
+          projectDeadline: project.project_deadline,
+          candidateId: row.candidate_id,
+          candidateName: account?.full_name ?? "Candidate",
+          candidateHeadline: profile?.headline ?? null,
+          candidateAvatarUrl: account?.avatar_url ?? null,
+          appliedAt: row.created_at,
+        },
+      ];
+    }
+  );
 }
 
 /** Title + owning company for a project, used to authorize company screens. */

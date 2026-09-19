@@ -53,7 +53,7 @@ function Section({
       <div className="space-y-fib2">
         <h2
           className={cn(
-            "flex items-center gap-fib3 font-bold",
+            "flex items-center gap-fib3 font-semibold",
             tone === "danger" ? "text-rose-700" : "text-ink-900"
           )}
         >
@@ -233,7 +233,8 @@ function DeleteAccount({ role, blockers }: { role: UserRole; blockers: string[] 
           {state?.error && <StatusBanner tone="error">{state.error}</StatusBanner>}
           <div className="space-y-fib3">
             <Label htmlFor="settings-delete">
-              Type <span className="font-mono font-bold">{DELETE_ACCOUNT_PHRASE}</span> to
+              Type{" "}
+              <span className="font-mono font-semibold">{DELETE_ACCOUNT_PHRASE}</span> to
               confirm
             </Label>
             <Input
@@ -248,7 +249,7 @@ function DeleteAccount({ role, blockers }: { role: UserRole; blockers: string[] 
           <button
             type="submit"
             disabled={confirmation.trim() !== DELETE_ACCOUNT_PHRASE || pending}
-            className="inline-flex items-center gap-fib3 rounded-full bg-rose-600 px-fib6 py-fib4 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-fib3 rounded-md bg-rose-600 px-fib6 py-fib4 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -277,7 +278,7 @@ export function AccountSettings({
   return (
     <div className="space-y-fib6 pb-fib8">
       <div className="border-b border-line pb-fib6">
-        <h1 className="text-2xl font-bold text-ink-900">Settings</h1>
+        <h1 className="text-2xl font-semibold text-ink-900">Settings</h1>
         <p className="mt-fib2 text-sm text-ink-500">
           Your account, how you sign in, and your data.
         </p>
@@ -326,7 +327,7 @@ export function AccountSettings({
             settings.signInMethods.map((method) => (
               <span
                 key={method.provider}
-                className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700"
+                className="inline-flex items-center gap-fib2 rounded-md bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {method.label}

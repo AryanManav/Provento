@@ -27,7 +27,7 @@ export default async function CompanyLinksPage({
       {saved && <StatusBanner tone="success">Links saved.</StatusBanner>}
 
       <div>
-        <h2 className="text-lg font-bold text-ink-900">Links</h2>
+        <h2 className="text-lg font-semibold text-ink-900">Links</h2>
         <p className="text-sm text-ink-500">
           Real links help candidates check you&apos;re a genuine company. Your website is
           on the Overview tab.

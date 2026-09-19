@@ -1,12 +1,12 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BriefcaseBusiness,
-  ChevronRight,
-  Clock,
+  CheckCircle2,
+  FileText,
   Hammer,
   IndianRupee,
-  ShieldCheck,
+  Inbox,
+  Search,
 } from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
 import {
@@ -16,23 +16,33 @@ import {
   getCandidateProfile,
   getGithubIdentity,
 } from "@/lib/data/candidate";
+import { getCandidateTrials } from "@/lib/data/trial";
 import { getOpenProjects } from "@/lib/data/project";
+import { getUnreadNotifications } from "@/lib/data/notifications";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/common/stat-card";
 import { EmptyState } from "@/components/common/empty-state";
+import { CompanyMark } from "@/components/common/company-mark";
 import { ActivityStreak } from "@/components/candidate/activity-streak";
+import { ApplicationList } from "@/components/candidate/application-list";
 import { GitHubConnect } from "@/components/candidate/github-connect";
 import { GithubLinkBanner } from "@/components/candidate/github-link-banner";
+import { NextUpCard } from "@/components/candidate/next-up-card";
 import { ProfileStrengthCard } from "@/components/candidate/profile-strength-card";
-import { ApplicationStageBadge } from "@/components/candidate/application-stage-badge";
-import { applicationHref, stageOf, summarizeApplications } from "@/lib/applications";
 import { UpdatesPanel } from "@/components/notifications/updates-panel";
-import { getUnreadNotifications } from "@/lib/data/notifications";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { summarizeApplications } from "@/lib/applications";
+import { greetingFor, nextActionFor } from "@/lib/next-action";
+import { formatCurrency } from "@/lib/utils";
 import { DEFAULT_CURRENCY } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
+function firstName(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0] ?? "";
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
+
+/** Answers "what should I do next?" first, then the numbers behind it. */
 export default async function CandidateDashboardPage({
   searchParams,
 }: {
@@ -42,195 +52,184 @@ export default async function CandidateDashboardPage({
   const { github } = await searchParams;
   const profile = await getCandidateProfile(user.id);
 
-  const [applications, activityDates, stats, openProjects, githubUsername, updates] =
-    await Promise.all([
-      profile ? getCandidateApplications(profile.id) : [],
-      profile ? getCandidateActivityDates(profile.id) : [],
-      getCandidateDashboardStats(profile),
-      getOpenProjects(3),
-      getGithubIdentity(),
-      getUnreadNotifications(user.id),
-    ]);
+  const [
+    applications,
+    trials,
+    activityDates,
+    stats,
+    openProjects,
+    githubUsername,
+    updates,
+  ] = await Promise.all([
+    profile ? getCandidateApplications(profile.id) : [],
+    profile ? getCandidateTrials(profile.id) : [],
+    profile ? getCandidateActivityDates(profile.id) : [],
+    getCandidateDashboardStats(profile),
+    getOpenProjects(4),
+    getGithubIdentity(),
+    getUnreadNotifications(user.id),
+  ]);
 
   const summary = summarizeApplications(applications);
+  const next = nextActionFor(trials, applications);
 
   return (
-    <div className="space-y-fib7">
+    <div className="space-y-6">
       <GithubLinkBanner status={github} />
-      <div className="flex flex-col justify-between gap-fib5 border-b border-line pb-fib6 sm:flex-row sm:items-center">
+
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-2xl font-bold text-ink-900">
-            Welcome back, {user.fullName.split(" ")[0]}
+          <h1 className="text-2xl font-semibold text-ink-900">
+            {greetingFor()}, {firstName(user.fullName)}
           </h1>
-          <p className="mt-fib2 text-sm text-ink-500">
-            {profile?.headline || "Prove your ability through real, paid projects."}
+          <p className="mt-1 text-sm text-ink-500">
+            Here&apos;s what needs your attention.
           </p>
         </div>
-        <Link href="/projects">
-          <Button className="gap-fib3">
-            <span>Browse projects</span>
-            <ArrowRight className="h-4 w-4" />
+        <Link href="/projects" className="shrink-0">
+          <Button variant="outline">
+            <Search className="h-4 w-4" aria-hidden />
+            Browse projects
           </Button>
         </Link>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 gap-fib5 sm:grid-cols-2 lg:grid-cols-4">
+      <NextUpCard action={next} />
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="Pending applications"
+          label="Applications"
           value={summary.pending}
-          hint={`Awaiting a decision · ${summary.total} sent in total`}
-          icon={Clock}
+          hint={`Pending review · ${summary.total} sent`}
+          icon={FileText}
+          href="/candidate/applications"
         />
         <StatCard
-          label="Active trials"
+          label="Active work"
           value={summary.activeTrials}
-          hint="Selected and in progress"
+          hint={summary.activeTrials > 0 ? "Currently in progress" : "None in progress"}
           icon={Hammer}
+          tone={summary.activeTrials > 0 ? "attention" : "default"}
+          href="/candidate/trials"
         />
         <StatCard
           label="Completed projects"
           value={summary.completed}
           hint="Work accepted by the startup"
-          icon={ShieldCheck}
+          icon={CheckCircle2}
+          href="/candidate/completed"
         />
         <StatCard
-          label="Completed project value"
+          label="Project earnings"
           value={formatCurrency(summary.completedValue, DEFAULT_CURRENCY)}
-          hint="Agreed fees of completed projects"
+          hint="Agreed fees of accepted work"
           icon={IndianRupee}
           tone="positive"
         />
       </div>
 
-      <UpdatesPanel
-        items={updates}
-        emptyText="When a startup reviews your application, selects you, messages you or evaluates your work, it shows up here."
-      />
+      {updates.length > 0 && (
+        <UpdatesPanel
+          items={updates}
+          emptyText="When a startup reviews your application, selects you, messages you or evaluates your work, it shows up here."
+        />
+      )}
 
-      <div className="grid items-start gap-fib6 lg:grid-cols-3">
-        <div className="space-y-fib6 lg:col-span-2">
-          <section className="space-y-fib5">
-            <div className="flex items-center justify-between gap-fib5">
-              <h2 className="text-lg font-bold text-ink-900">Recent applications</h2>
-              <Link
-                href="/candidate/applications"
-                className="text-sm font-semibold text-brand-600 hover:underline"
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <section aria-labelledby="recent-applications" className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <h2
+                id="recent-applications"
+                className="text-base font-semibold text-ink-900"
               >
-                View all ({applications.length})
-              </Link>
+                Recent applications
+              </h2>
+              {applications.length > 0 && (
+                <Link
+                  href="/candidate/applications"
+                  className="text-sm font-medium text-brand-700 hover:underline"
+                >
+                  View all ({applications.length})
+                </Link>
+              )}
             </div>
-
             {applications.length === 0 ? (
               <EmptyState
-                title="No applications submitted yet"
-                description="Find a project matching your skills and send a proposal — every one you complete becomes verified proof."
-                actionText="Explore opportunities"
+                icon={Inbox}
+                title="No applications yet"
+                description="Apply to a paid project that matches your skills. Every one you complete becomes verified evidence."
+                actionText="Browse projects"
                 actionHref="/projects"
               />
             ) : (
-              <div className="space-y-fib4">
-                {applications.slice(0, 4).map((application) => {
-                  const stage = stageOf(application);
-                  const href = applicationHref(application);
-                  const body = (
-                    <>
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-ink-900">
-                          {application.project?.title ?? "Project"}
-                        </p>
-                        <p className="mt-fib2 text-xs text-ink-400">
-                          {application.project?.companyName ?? "Startup"} · Applied{" "}
-                          {formatDate(application.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-fib4">
-                        <ApplicationStageBadge stage={stage} />
-                        {href && (
-                          <ChevronRight className="h-4 w-4 text-ink-300 transition-colors group-hover:text-brand-600" />
-                        )}
-                      </div>
-                    </>
-                  );
-                  const cardClass =
-                    "group flex flex-col justify-between gap-fib4 rounded-2xl border border-line bg-white p-fib6 shadow-xs sm:flex-row sm:items-center";
-                  return href ? (
-                    <Link
-                      key={application.id}
-                      href={href}
-                      className={`${cardClass} transition-colors hover:border-brand-300`}
-                    >
-                      {body}
-                    </Link>
-                  ) : (
-                    <article key={application.id} className={cardClass}>
-                      {body}
-                    </article>
-                  );
-                })}
-              </div>
+              <ApplicationList applications={applications.slice(0, 5)} />
             )}
           </section>
 
-          <section className="space-y-fib5">
-            <div className="flex items-center justify-between gap-fib5">
-              <h2 className="text-lg font-bold text-ink-900">Recommended projects</h2>
+          <section aria-labelledby="recommended" className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <h2 id="recommended" className="text-base font-semibold text-ink-900">
+                Open projects
+              </h2>
               <Link
                 href="/projects"
-                className="text-sm font-semibold text-brand-600 hover:underline"
+                className="text-sm font-medium text-brand-700 hover:underline"
               >
-                Explore directory
+                Browse all
               </Link>
             </div>
-
             {openProjects.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-line p-fib7 text-center text-sm text-ink-400">
-                Startups are currently creating new projects. Check back shortly.
-              </div>
+              <EmptyState
+                compact
+                icon={Search}
+                title="No open projects right now"
+                description="Startups post new paid projects regularly. Check back soon."
+              />
             ) : (
-              <div className="space-y-fib4">
+              <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
                 {openProjects.map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/projects/${project.slug}`}
-                    className="flex flex-col justify-between gap-fib4 rounded-2xl border border-line bg-white p-fib6 shadow-xs transition-colors hover:border-brand-300 sm:flex-row sm:items-center"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-ink-900">
-                        {project.title}
-                      </p>
-                      <p className="mt-fib2 text-xs text-ink-400">
-                        {project.companyName ?? "Startup"} · {project.expectedHours}h
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-sm font-bold text-emerald-600">
-                      {formatCurrency(project.paymentAmount, project.currency)}
-                    </span>
-                  </Link>
+                  <li key={project.id}>
+                    <Link
+                      href={`/projects/${project.slug}`}
+                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-ink-50"
+                    >
+                      <CompanyMark name={project.companyName ?? "Startup"} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink-900">
+                          {project.title}
+                        </p>
+                        <p className="truncate text-xs text-ink-500">
+                          {project.companyName ?? "Startup"} · {project.expectedHours}h of
+                          work
+                        </p>
+                      </div>
+                      <span className="tabular shrink-0 text-sm font-medium text-emerald-700">
+                        {formatCurrency(project.paymentAmount, project.currency)}
+                      </span>
+                      <ArrowRight
+                        aria-hidden
+                        className="hidden h-4 w-4 text-ink-300 group-hover:text-ink-600 sm:block"
+                      />
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </section>
         </div>
 
-        <div className="space-y-fib5">
+        <aside className="space-y-4">
           <ProfileStrengthCard
             value={stats.profileStrength}
-            action={
-              <Link href="/candidate/profile">
-                <Button variant="outline" size="sm" className="mt-fib5 w-full gap-fib3">
-                  <BriefcaseBusiness className="h-4 w-4" />
-                  View &amp; edit profile
-                </Button>
-              </Link>
-            }
+            checklist={stats.checklist}
           />
-
           <ActivityStreak activityDates={activityDates} />
           <GitHubConnect
             verifiedUsername={githubUsername}
             reportedUrl={profile?.githubUrl ?? null}
           />
-        </div>
+        </aside>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ export default async function AdminOverviewPage() {
             System Administration
           </Badge>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 mt-2">
           Platform Governance & Metrics
         </h1>
         <p className="text-sm text-slate-600 mt-1">
@@ -39,7 +39,7 @@ export default async function AdminOverviewPage() {
             <span>Total Candidates</span>
             <Users className="h-4 w-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">0</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2">0</div>
           <div className="text-xs text-slate-400 mt-1">Registered users</div>
         </Card>
 
@@ -48,7 +48,7 @@ export default async function AdminOverviewPage() {
             <span>Registered Startups</span>
             <Building className="h-4 w-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">0</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2">0</div>
           <div className="text-xs text-slate-400 mt-1">Company profiles</div>
         </Card>
 
@@ -57,7 +57,7 @@ export default async function AdminOverviewPage() {
             <span>Published Projects</span>
             <FileText className="h-4 w-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">0</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2">0</div>
           <div className="text-xs text-slate-400 mt-1">Active paid sprints</div>
         </Card>
 
@@ -66,7 +66,7 @@ export default async function AdminOverviewPage() {
             <span>Interviews & Hires</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-bold text-emerald-600 mt-2">0 / 0</div>
+          <div className="text-2xl font-semibold text-emerald-600 mt-2">0 / 0</div>
           <div className="text-xs text-slate-400 mt-1">Outcomes achieved</div>
         </Card>
       </div>

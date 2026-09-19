@@ -6,9 +6,11 @@ import { ACTIVITY_WEEKS, activityDay } from "@/lib/activity";
 import type {
   ApplicationSummaryView,
   CandidateDashboardStats,
+  CandidateEvaluationView,
   CandidateProfileView,
   CandidateProjectView,
   CandidateSkillView,
+  ProfileChecklistItem,
   VerifiedTrialView,
 } from "@/lib/types/domain";
 import type {
@@ -307,19 +309,22 @@ export async function getCandidateVerifiedTrials(
   });
 }
 
-/** Written feedback and outcome on one of the candidate's projects, if recorded. */
+/**
+ * The startup's evaluation of one of the candidate's projects, if recorded.
+ * The reviewer's private hiring recommendation is left out; the outcome is the
+ * decision the startup shares.
+ */
 export async function getCandidateProjectEvaluation(
   candidateId: string,
   projectId: string
-): Promise<{
-  feedback: VerifiedTrialView["feedback"];
-  outcome: ProjectOutcomeType | null;
-}> {
+): Promise<CandidateEvaluationView> {
   const supabase = await createClient();
   const [{ data: feedback }, { data: outcome }] = await Promise.all([
     supabase
       .from("project_feedback")
-      .select("requirements_completed, technical_quality, written_feedback")
+      .select(
+        "requirements_completed, technical_quality, completeness, testing_quality, documentation_quality, deadline_met, revisions_required, written_feedback, what_was_missing, created_at"
+      )
       .eq("candidate_id", candidateId)
       .eq("project_id", projectId)
       .maybeSingle(),
@@ -335,7 +340,14 @@ export async function getCandidateProjectEvaluation(
       ? {
           requirementsCompleted: feedback.requirements_completed,
           technicalQuality: feedback.technical_quality,
+          completeness: feedback.completeness,
+          testingQuality: feedback.testing_quality,
+          documentationQuality: feedback.documentation_quality,
+          deadlineMet: feedback.deadline_met,
+          revisionsRequired: feedback.revisions_required,
           writtenFeedback: feedback.written_feedback,
+          whatWasMissing: feedback.what_was_missing,
+          recordedAt: feedback.created_at,
         }
       : null,
     outcome: (outcome?.outcome as ProjectOutcomeType | undefined) ?? null,
@@ -355,24 +367,55 @@ export async function getCandidateActivityDates(candidateId: string): Promise<st
   return (data ?? []).map((row) => row.activity_date);
 }
 
-function calculateProfileStrength(
+/**
+ * Profile strength: a baseline for the account, plus each item below. The
+ * weights reflect what a startup looks at first.
+ */
+export function profileChecklist(
   profile: CandidateProfileView | null,
   skillsCount: number
-): number {
-  let strength = 20; // baseline for a created account
-  if (profile?.headline) strength += 20;
-  if (profile?.bio) strength += 15;
-  if (skillsCount > 0) strength += 20;
-  if (profile?.githubUrl) strength += 15;
-  if (profile?.resumeUrl) strength += 10;
-  return strength;
+): { strength: number; checklist: ProfileChecklistItem[] } {
+  const items: (ProfileChecklistItem & { weight: number })[] = [
+    {
+      label: "Headline",
+      done: !!profile?.headline,
+      href: "/candidate/profile",
+      weight: 20,
+    },
+    { label: "About you", done: !!profile?.bio, href: "/candidate/profile", weight: 15 },
+    {
+      label: "Skills",
+      done: skillsCount > 0,
+      href: "/candidate/profile#skills",
+      weight: 20,
+    },
+    {
+      label: "GitHub",
+      done: !!profile?.githubUrl,
+      href: "/candidate/profile",
+      weight: 15,
+    },
+    {
+      label: "Resume",
+      done: !!profile?.resumeUrl,
+      href: "/candidate/profile",
+      weight: 10,
+    },
+  ];
+  const strength =
+    20 + items.reduce((total, item) => total + (item.done ? item.weight : 0), 0);
+  return {
+    strength,
+    checklist: items.map(({ label, done, href }) => ({ label, done, href })),
+  };
 }
 
 export async function getCandidateDashboardStats(
   profile: CandidateProfileView | null
 ): Promise<CandidateDashboardStats> {
   if (!profile) {
-    return { skillsCount: 0, profileStrength: calculateProfileStrength(null, 0) };
+    const { strength, checklist } = profileChecklist(null, 0);
+    return { skillsCount: 0, profileStrength: strength, checklist };
   }
 
   // Application and trial counts are derived from the applications list itself
@@ -385,7 +428,8 @@ export async function getCandidateDashboardStats(
     .eq("candidate_id", profile.id);
 
   const skillsCount = count ?? 0;
-  return { skillsCount, profileStrength: calculateProfileStrength(profile, skillsCount) };
+  const { strength, checklist } = profileChecklist(profile, skillsCount);
+  return { skillsCount, profileStrength: strength, checklist };
 }
 
 /**

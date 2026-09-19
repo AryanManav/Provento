@@ -9,9 +9,12 @@ export function SectionCard({
   icon: Icon,
   count,
   action,
+  description,
   className,
   children,
 }: {
+  /** One line under the title: what this section is, or where it comes from. */
+  description?: ReactNode;
   /** Anchor target, e.g. for /candidate/profile#skills. */
   id?: string;
   title: string;
@@ -24,24 +27,22 @@ export function SectionCard({
   return (
     <section
       id={id}
-      className={cn(
-        "scroll-mt-32 rounded-2xl border border-line bg-white p-fib6 shadow-xs",
-        className
-      )}
+      className={cn("scroll-mt-20 rounded-xl border border-line bg-white p-5", className)}
     >
-      <header className="flex items-center justify-between gap-fib5 border-b border-line pb-fib5">
-        <div className="flex min-w-0 items-center gap-fib4">
-          {Icon && <Icon className="h-5 w-5 shrink-0 text-brand-600" />}
-          <h2 className="truncate text-lg font-bold text-ink-900">{title}</h2>
+      <header className="flex items-center justify-between gap-4 border-b border-line pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {Icon && <Icon className="h-4 w-4 shrink-0 text-ink-400" aria-hidden />}
+          <h2 className="truncate text-base font-semibold text-ink-900">{title}</h2>
           {count !== undefined && (
-            <span className="rounded-full bg-ink-100 px-fib4 py-fib1 text-xs font-semibold text-ink-500">
+            <span className="tabular rounded bg-ink-100 px-1.5 text-2xs font-medium text-ink-500">
               {count}
             </span>
           )}
         </div>
         {action}
       </header>
-      <div className="pt-fib6">{children}</div>
+      {description && <p className="pt-2 text-xs text-ink-500">{description}</p>}
+      <div className="pt-4">{children}</div>
     </section>
   );
 }

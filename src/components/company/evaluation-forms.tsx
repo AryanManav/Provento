@@ -216,7 +216,7 @@ export function ProjectFeedbackForm({
 
       {evaluationCriteria.length > 0 && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             The criteria you set when posting this project
           </p>
           <ul className="list-disc pl-5 text-sm text-slate-700 mt-1.5 space-y-0.5">
@@ -294,7 +294,7 @@ export function ProjectFeedbackForm({
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isPending} className="rounded-full">
+        <Button type="submit" disabled={isPending}>
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save evaluation"}
         </Button>
       </div>
@@ -364,7 +364,7 @@ export function ProjectOutcomeForm({
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isPending} className="rounded-full">
+        <Button type="submit" disabled={isPending}>
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record outcome"}
         </Button>
       </div>

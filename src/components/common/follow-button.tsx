@@ -50,7 +50,7 @@ export function FollowButton({
           disabled={pending}
           aria-pressed={stats.following}
           className={cn(
-            "inline-flex items-center gap-fib2 rounded-full px-fib5 py-fib3 text-sm font-semibold transition-colors disabled:opacity-70",
+            "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors disabled:opacity-70",
             stats.following
               ? "border border-line bg-white text-ink-700 hover:border-rose-200 hover:text-rose-700"
               : "bg-brand-600 text-white hover:bg-brand-700"

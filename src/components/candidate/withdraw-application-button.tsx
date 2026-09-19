@@ -17,9 +17,9 @@ export function WithdrawApplicationButton({ applicationId }: { applicationId: st
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-xs font-semibold text-ink-400 transition-colors hover:text-rose-600"
+        className="text-xs font-medium text-ink-500 transition-colors hover:text-rose-700"
       >
-        Withdraw application
+        Withdraw
       </button>
     );
   }
@@ -43,7 +43,7 @@ export function WithdrawApplicationButton({ applicationId }: { applicationId: st
             router.refresh();
           }
         }}
-        className="inline-flex items-center gap-fib2 rounded-full bg-rose-600 px-fib5 py-fib2 font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+        className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-2.5 py-1 font-medium text-white hover:bg-rose-700 disabled:opacity-60"
       >
         {pending && <Loader2 className="h-3 w-3 animate-spin" />}
         Withdraw
@@ -52,7 +52,7 @@ export function WithdrawApplicationButton({ applicationId }: { applicationId: st
         type="button"
         disabled={pending}
         onClick={() => setConfirming(false)}
-        className="font-semibold text-ink-500 hover:text-ink-800"
+        className="font-medium text-ink-500 hover:text-ink-800"
       >
         Keep it
       </button>

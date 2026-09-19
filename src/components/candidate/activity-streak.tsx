@@ -1,4 +1,3 @@
-import { Flame } from "lucide-react";
 import { buildActivityCalendar, type ActivityLevel } from "@/lib/activity";
 import { cn } from "@/lib/utils";
 
@@ -31,25 +30,27 @@ export function ActivityStreak({ activityDates }: ActivityStreakProps) {
   const { streak, streakAtRisk, longestStreak, activeDays } = calendar;
 
   return (
-    <section className="rounded-xl border border-line bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+    <section
+      aria-labelledby="activity-title"
+      className="rounded-xl border border-line bg-white p-4"
+    >
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-bold text-ink-900">Trialent consistency</h2>
-          <p className="mt-1 text-xs text-ink-500">
-            Real progress across your profile, applications, and paid work.
+          <h2 id="activity-title" className="text-sm font-semibold text-ink-900">
+            Activity
+          </h2>
+          <p className="mt-0.5 text-xs text-ink-500">
+            Progress on your profile, applications and paid work.
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <strong
-            className={cn(
-              "inline-flex items-center gap-1 text-2xl",
-              streak > 0 ? "text-money-600" : "text-ink-400"
-            )}
-          >
-            {streak > 0 && <Flame className="h-5 w-5" aria-hidden />}
+          <p className="tabular text-lg font-semibold leading-6 text-ink-900">
             {streak}
-          </strong>
-          <p className="text-[10px] uppercase tracking-wide text-ink-500">day streak</p>
+            <span className="ml-1 text-xs font-medium text-ink-500">
+              day{streak === 1 ? "" : "s"}
+            </span>
+          </p>
+          <p className="text-2xs text-ink-500">current streak</p>
         </div>
       </div>
 
@@ -89,7 +90,7 @@ export function ActivityStreak({ activityDates }: ActivityStreakProps) {
         ])}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-ink-500">
+      <div className="mt-3 flex items-center justify-between gap-3 text-2xs text-ink-500">
         <span>
           {activeDays} active day{activeDays === 1 ? "" : "s"} · best streak{" "}
           {longestStreak}
@@ -106,12 +107,12 @@ export function ActivityStreak({ activityDates }: ActivityStreakProps) {
         </span>
       </div>
 
-      <p className="mt-2 text-[11px] text-ink-500">
+      <p className="mt-3 border-t border-line pt-2.5 text-xs text-ink-600">
         {streak === 0
           ? "Update your profile, apply, or post progress on a project to start a streak."
           : streakAtRisk
-            ? "Make progress today to keep your streak going."
-            : "You've made progress today. Come back tomorrow to keep it going."}
+            ? "Nothing yet today — any progress keeps your streak."
+            : "Keep building your work history."}
       </p>
     </section>
   );

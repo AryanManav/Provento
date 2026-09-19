@@ -159,22 +159,17 @@ export function SkillsCard({
           </p>
         </div>
       ) : (
-        <ul className="space-y-fib3">
+        <ul className="-my-1 divide-y divide-line">
           {skills.map((skill) => (
-            <li
-              key={skill.id}
-              className="flex items-center gap-fib4 rounded-lg border border-line px-fib5 py-fib4"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-ink-900">
-                  {skill.skillName}
-                </p>
-                <p className="text-xs capitalize text-ink-400">
-                  {skill.skillLevel}
-                  {skill.yearsExperience > 0 &&
-                    ` · ${skill.yearsExperience} yr${skill.yearsExperience === 1 ? "" : "s"}`}
-                </p>
-              </div>
+            <li key={skill.id} className="group flex items-center gap-2 py-1.5">
+              <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink-900">
+                {skill.skillName}
+              </span>
+              <span className="shrink-0 text-xs capitalize text-ink-500">
+                {skill.skillLevel}
+                {skill.yearsExperience > 0 &&
+                  ` · ${skill.yearsExperience} yr${skill.yearsExperience === 1 ? "" : "s"}`}
+              </span>
               {!readOnly && (
                 <>
                   <button

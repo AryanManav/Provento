@@ -141,40 +141,122 @@ export const DEFAULT_CURRENCY = "INR";
 export interface NavLink {
   label: string;
   href: string;
+  /**
+   * Path prefixes that count as "inside" this item, for highlighting (and for
+   * unread badges). Defaults to the href itself.
+   */
+  match?: string[];
+  /** Only the exact path counts — for "Home" items that sit above other sections. */
+  exact?: boolean;
 }
 
-const HOW_IT_WORKS: NavLink = { label: "How it works", href: "/how-it-works" };
-const BROWSE_PROJECTS: NavLink = { label: "Browse projects", href: "/projects" };
+/** Everything a signed-in role can reach from anywhere, in one place. */
+export interface RoleNavigation {
+  /** The navbar's links — the same on every page for this role. */
+  primary: NavLink[];
+  /** The one call to action in the navbar, if any. */
+  action: NavLink | null;
+  /** The phone's bottom bar (at most five). Search is added by the bar itself. */
+  bottom: NavLink[];
+  /** The avatar menu, above Sign out. */
+  menu: NavLink[];
+}
 
-/**
- * Top-level navigation, by who is signed in. It holds what's *outside* your
- * workspace — the workspace's own pages (dashboard, applications, projects,
- * profile, settings) live in the sidebar, so nothing appears twice.
- */
+const CANDIDATE_WORK_PATHS = [
+  "/candidate/applications",
+  "/candidate/trials",
+  "/candidate/completed",
+];
+
+const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
+  candidate: {
+    primary: [
+      { label: "Home", href: "/candidate/dashboard", exact: true },
+      { label: "Projects", href: "/projects" },
+      { label: "Companies", href: "/companies" },
+      { label: "My work", href: "/candidate/applications", match: CANDIDATE_WORK_PATHS },
+    ],
+    action: null,
+    bottom: [
+      { label: "Home", href: "/candidate/dashboard", exact: true },
+      { label: "Projects", href: "/projects" },
+      {
+        label: "My work",
+        href: "/candidate/applications",
+        match: CANDIDATE_WORK_PATHS,
+      },
+      { label: "Profile", href: "/candidate/profile" },
+    ],
+    menu: [
+      { label: "My profile", href: "/candidate/profile" },
+      { label: "My work", href: "/candidate/applications" },
+      { label: "Settings", href: "/candidate/settings" },
+    ],
+  },
+  company: {
+    primary: [
+      { label: "Home", href: "/company/dashboard", exact: true },
+      { label: "Projects", href: "/company/projects" },
+      { label: "Candidates", href: "/company/candidates" },
+      { label: "Discover talent", href: "/search?type=candidates", match: ["/search"] },
+    ],
+    action: { label: "Post a project", href: "/company/projects/create" },
+    bottom: [
+      { label: "Home", href: "/company/dashboard", exact: true },
+      { label: "Projects", href: "/company/projects" },
+      { label: "Candidates", href: "/company/candidates" },
+      { label: "Company", href: "/company/profile" },
+    ],
+    menu: [
+      { label: "Company profile", href: "/company/profile" },
+      { label: "Team", href: "/company/profile/team" },
+      { label: "Settings", href: "/company/settings" },
+    ],
+  },
+  admin: {
+    primary: [
+      { label: "Overview", href: "/admin", exact: true },
+      { label: "Users", href: "/admin/users" },
+      { label: "Companies", href: "/admin/companies" },
+    ],
+    action: null,
+    bottom: [
+      { label: "Overview", href: "/admin", exact: true },
+      { label: "Users", href: "/admin/users" },
+      { label: "Companies", href: "/admin/companies" },
+    ],
+    menu: [{ label: "Admin overview", href: "/admin" }],
+  },
+};
+
+const VISITOR_NAVIGATION: NavLink[] = [
+  { label: "Projects", href: "/projects" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "For candidates", href: "/for-candidates" },
+  { label: "For startups", href: "/for-companies" },
+];
+
+/** The role's whole navigation; null for visitors (see primaryNavFor). */
+export function navigationFor(role: UserRole | null | undefined): RoleNavigation | null {
+  return role ? ROLE_NAVIGATION[role] : null;
+}
+
+/** The navbar's links for a role, or the marketing links for visitors. */
 export function primaryNavFor(role: UserRole | null | undefined): NavLink[] {
-  switch (role) {
-    case "candidate":
-      return [BROWSE_PROJECTS, { label: "Companies", href: "/companies" }];
-    case "company":
-    case "admin":
-      // Everything a startup or admin opens is in its sidebar; the navbar
-      // carries the startup's main action instead (see navbarActionFor).
-      return [];
-    default:
-      return [
-        BROWSE_PROJECTS,
-        HOW_IT_WORKS,
-        { label: "For candidates", href: "/for-candidates" },
-        { label: "For startups", href: "/for-companies" },
-      ];
-  }
+  return navigationFor(role)?.primary ?? VISITOR_NAVIGATION;
 }
 
 /** The one call to action a role gets in the navbar, if any. */
 export function navbarActionFor(role: UserRole | null | undefined): NavLink | null {
-  return role === "company"
-    ? { label: "Post a project", href: "/company/projects/create" }
-    : null;
+  return navigationFor(role)?.action ?? null;
+}
+
+/** True when `pathname` is inside a nav item (its href or any `match` prefix). */
+export function isNavActive(link: NavLink, pathname: string): boolean {
+  const prefixes = link.match ?? [link.href.split("?")[0]];
+  return prefixes.some(
+    (prefix) => pathname === prefix || (!link.exact && pathname.startsWith(`${prefix}/`))
+  );
 }
 
 export const PROFILE_MEDIA_BUCKET = "profile-media";

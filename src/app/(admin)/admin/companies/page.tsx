@@ -8,7 +8,7 @@ export default async function AdminCompaniesPage() {
   return (
     <div className="space-y-8">
       <div className="border-b border-slate-300 pb-5">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Company Verification
         </h1>
         <p className="text-sm text-slate-600 mt-1">

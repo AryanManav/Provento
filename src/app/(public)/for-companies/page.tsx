@@ -7,7 +7,7 @@ export default function ForCompaniesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 space-y-12">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">
           De-risk Junior Hiring with Evidence Before You Hire
         </h1>
         <p className="text-slate-600 max-w-2xl mx-auto">

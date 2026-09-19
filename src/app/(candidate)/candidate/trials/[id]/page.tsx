@@ -3,49 +3,46 @@ import { notFound } from "next/navigation";
 import {
   CalendarClock,
   CheckCircle2,
-  Hourglass,
-  MessagesSquare,
-  RotateCcw,
-  XCircle,
-  FileCheck2,
+  ChevronLeft,
+  ClipboardCheck,
+  Clock,
+  FileText,
   GitBranch,
+  Hourglass,
   Laptop,
+  ListChecks,
+  MessagesSquare,
+  Package,
+  RotateCcw,
+  Scale,
   Send,
+  XCircle,
 } from "lucide-react";
 import { requireCandidate } from "@/lib/auth/guards";
 import {
   getCandidateProfileId,
   getCandidateProjectEvaluation,
 } from "@/lib/data/candidate";
-import { isClosedWork } from "@/lib/applications";
+import { WORK_STATUS_DISPLAY, isClosedWork } from "@/lib/applications";
 import { getCandidateTrial } from "@/lib/data/trial";
-import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { getProjectThread } from "@/lib/data/thread";
+import { dueLabel } from "@/lib/next-action";
+import { MarkNotificationsRead } from "@/components/notifications/mark-notifications-read";
 import { SubmitWorkForm } from "@/components/candidate/submit-work-form";
+import { EvaluationCard } from "@/components/candidate/evaluation-card";
+import { RequirementChecklist } from "@/components/candidate/requirement-checklist";
+import { WorkStepper } from "@/components/candidate/work-stepper";
 import { ProjectThread } from "@/components/common/project-thread";
 import { SectionCard } from "@/components/common/section-card";
 import { AttachmentList } from "@/components/common/attachment-list";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
+import { BriefList, BriefSection } from "@/components/projects/brief";
 import { WORK_MODES, companyProfilePath } from "@/lib/constants";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { SubmissionView } from "@/lib/types/domain";
 
 export const dynamic = "force-dynamic";
-
-function CriteriaList({ title, items }: { title: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div className="space-y-fib3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-        {title}
-      </h3>
-      <ul className="list-disc space-y-fib2 pl-fib6 text-sm text-ink-700">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 const LOCAL_STEPS = [
   {
@@ -53,49 +50,52 @@ const LOCAL_STEPS = [
     text: "Create a repository and commit as you go — the history is evidence.",
   },
   { icon: Laptop, text: "Build in your own tools, against the acceptance criteria." },
-  { icon: FileCheck2, text: "Ask below if anything in the brief is unclear." },
+  {
+    icon: MessagesSquare,
+    text: "Ask in Clarifications if anything in the brief is unclear.",
+  },
   { icon: Send, text: "Submit the repository, plus any files a repo can't hold." },
 ];
 
-const DECISION_STYLE: Record<
+const DECISION: Record<
   SubmissionView["status"],
-  { label: string; chip: string; panel: string; icon: typeof CheckCircle2 }
+  { label: string; tone: StatusTone; icon: typeof CheckCircle2; accent: string }
 > = {
   submitted: {
     label: "Waiting for review",
-    chip: "bg-ink-100 text-ink-700",
-    panel: "border-line bg-white",
+    tone: "warning",
     icon: Hourglass,
+    accent: "bg-amber-400",
   },
   under_review: {
     label: "Under review",
-    chip: "bg-amber-50 text-amber-700",
-    panel: "border-amber-200 bg-amber-50",
+    tone: "warning",
     icon: Hourglass,
+    accent: "bg-amber-400",
   },
   accepted: {
     label: "Accepted",
-    chip: "bg-emerald-50 text-emerald-700",
-    panel: "border-emerald-200 bg-emerald-50",
+    tone: "success",
     icon: CheckCircle2,
+    accent: "bg-emerald-500",
   },
   revision_requested: {
     label: "Revision requested",
-    chip: "bg-amber-50 text-amber-800",
-    panel: "border-amber-300 bg-amber-50",
+    tone: "attention",
     icon: RotateCcw,
+    accent: "bg-accent-500",
   },
   rejected: {
     label: "Not accepted",
-    chip: "bg-rose-50 text-rose-700",
-    panel: "border-rose-200 bg-rose-50",
+    tone: "danger",
     icon: XCircle,
+    accent: "bg-rose-500",
   },
 };
 
 /**
- * The startup's latest decision, pinned above everything else so the student
- * never has to hunt for it — with the message, and a way to reply.
+ * The startup's latest decision, pinned near the top so the candidate never
+ * has to hunt for it — with the message, and a way to reply.
  */
 function DecisionPanel({
   submission,
@@ -106,30 +106,40 @@ function DecisionPanel({
   companyName: string;
   canResubmit: boolean;
 }) {
-  const style = DECISION_STYLE[submission.status];
+  const style = DECISION[submission.status];
   const Icon = style.icon;
   const decided = submission.reviewedAt !== null;
 
   return (
     <section
       aria-label="Startup's decision"
-      className={cn("rounded-2xl border p-fib6 shadow-xs", style.panel)}
+      className="relative overflow-hidden rounded-xl border border-line bg-white p-5"
     >
-      <div className="flex items-start gap-fib4">
-        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-ink-700" />
-        <div className="min-w-0 flex-1 space-y-fib3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-            {decided ? `${companyName}'s decision` : "Your latest submission"}
-          </p>
-          <h2 className="text-lg font-bold text-ink-900">
-            {decided ? style.label : "Submitted — waiting for the startup's decision"}
+      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-1", style.accent)} />
+      <div className="flex items-start gap-4">
+        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-ink-500" aria-hidden />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+              {decided ? `${companyName}'s decision` : "Your latest submission"}
+            </p>
+            <StatusBadge size="sm" tone={style.tone} label={style.label} />
+          </div>
+          <h2 className="text-base font-semibold text-ink-900">
+            {!decided
+              ? "Submitted — waiting for the startup's decision"
+              : submission.status === "revision_requested"
+                ? "Changes requested before a final decision"
+                : submission.status === "accepted"
+                  ? "Your work was accepted"
+                  : "Your work wasn't accepted"}
           </h2>
           <p className="text-xs text-ink-500">
-            On your submission of {formatDate(submission.submittedAt)}
+            Submitted {formatDate(submission.submittedAt)}
             {submission.reviewedAt && ` · decided ${formatDate(submission.reviewedAt)}`}
           </p>
           {submission.reviewNote && (
-            <blockquote className="whitespace-pre-wrap rounded-xl bg-white/70 px-fib5 py-fib4 text-sm text-ink-800">
+            <blockquote className="whitespace-pre-wrap rounded-lg border border-line bg-ink-50 px-4 py-3 text-sm text-ink-800">
               {submission.reviewNote}
             </blockquote>
           )}
@@ -138,23 +148,21 @@ function DecisionPanel({
               You&apos;ll get a notification the moment they decide.
             </p>
           )}
-          <div className="flex flex-wrap gap-fib4 pt-fib2">
-            <a
-              href="#clarifications"
-              className="inline-flex items-center gap-fib2 rounded-full bg-ink-900 px-fib5 py-fib3 text-sm font-semibold text-white hover:bg-ink-700"
-            >
-              <MessagesSquare className="h-4 w-4" />
-              {decided ? `Reply to ${companyName}` : "Message the startup"}
-            </a>
+          <div className="flex flex-wrap gap-2 pt-1">
             {submission.status === "revision_requested" && canResubmit && (
-              <a
-                href="#submit-work"
-                className="inline-flex items-center gap-fib2 rounded-full border border-ink-900 px-fib5 py-fib3 text-sm font-semibold text-ink-900 hover:bg-white"
-              >
-                <Send className="h-4 w-4" />
-                Submit a revision
+              <a href="#submit-work">
+                <Button size="sm">
+                  <Send className="h-3.5 w-3.5" aria-hidden />
+                  Submit a revision
+                </Button>
               </a>
             )}
+            <a href="#clarifications">
+              <Button size="sm" variant="outline">
+                <MessagesSquare className="h-3.5 w-3.5" aria-hidden />
+                {decided ? `Reply to ${companyName}` : "Message the startup"}
+              </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -169,161 +177,170 @@ export default async function CandidateTrialWorkspacePage({
 }) {
   const user = await requireCandidate();
   const { id } = await params;
-
   const candidateId = await getCandidateProfileId(user.id);
   if (!candidateId) notFound();
 
-  const [trial, messages, recorded] = await Promise.all([
+  const [trial, messages, evaluation] = await Promise.all([
     getCandidateTrial(candidateId, id),
     getProjectThread(id, candidateId, user.id),
     getCandidateProjectEvaluation(candidateId, id),
   ]);
   if (!trial) notFound();
+
   const closed = isClosedWork(trial);
   const cancelled = trial.status === "cancelled" || trial.workStatus === "cancelled";
-  const evaluation = recorded.feedback
-    ? { ...recorded.feedback, outcome: recorded.outcome }
-    : null;
-  // The last decided submission says whether the work was accepted.
-  const finalDecision = trial.submissions.find(
-    (submission) => submission.status === "accepted" || submission.status === "rejected"
-  );
-  const accepted = finalDecision?.status === "accepted";
-
+  const accepted = trial.workStatus === "completed";
   const latest = trial.submissions[0];
   const mode = WORK_MODES[trial.workMode];
+  const status = WORK_STATUS_DISPLAY[trial.workStatus];
+  const due = closed ? null : dueLabel(trial.projectDeadline);
+  const overdue = due?.startsWith("Overdue") ?? false;
+  const companyName = trial.companyName || "The startup";
 
   return (
-    <div className="space-y-fib6 pb-fib8">
+    <div className="space-y-6">
       <MarkNotificationsRead scopes={[{ projectId: id }]} />
       <Link
-        href="/candidate/trials"
-        className="text-sm font-medium text-brand-600 hover:underline"
+        href={closed ? "/candidate/completed" : "/candidate/trials"}
+        className="inline-flex items-center gap-1 text-sm text-ink-500 hover:text-ink-900"
       >
-        ← Trial projects
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+        {closed ? "Completed work" : "Active work"}
       </Link>
 
-      <section className="rounded-2xl border border-line bg-white p-fib6 shadow-xs">
-        <div className="flex flex-col justify-between gap-fib5 sm:flex-row sm:items-start">
+      <header className="rounded-xl border border-line bg-white">
+        <div className="flex flex-col justify-between gap-5 p-5 lg:flex-row lg:items-start">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-fib4">
-              <span className="rounded-full bg-brand-50 px-fib5 py-fib2 text-xs font-semibold text-brand-700">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge tone={status.tone} label={status.label} />
+              <span className="rounded-md border border-line px-2 py-0.5 text-xs font-medium text-ink-600">
                 {mode.label}
               </span>
-              <span className="rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
-                {trial.workStatus.replaceAll("_", " ")}
-              </span>
             </div>
-            <h1 className="mt-fib4 text-2xl font-bold text-ink-900">{trial.title}</h1>
+            <h1 className="mt-3 text-2xl font-semibold text-ink-900">{trial.title}</h1>
             <Link
               href={companyProfilePath(trial.companyId)}
-              className="mt-fib2 inline-block text-sm text-ink-500 hover:text-brand-600 hover:underline"
+              className="mt-1 inline-block text-sm text-ink-500 hover:text-ink-900 hover:underline"
             >
-              {trial.companyName || "Startup"}
+              {companyName}
             </Link>
           </div>
-          <div className="shrink-0 space-y-fib2 text-left sm:text-right">
-            <p className="text-2xl font-bold text-emerald-600">
-              {formatCurrency(trial.paymentAmount, trial.currency)}
-            </p>
-            <p className="flex items-center gap-fib2 text-sm text-ink-500 sm:justify-end">
-              <CalendarClock className="h-4 w-4" />
-              Due {formatDate(trial.projectDeadline)} · {trial.expectedHours}h
-            </p>
-          </div>
+          <dl className="grid shrink-0 grid-cols-3 gap-6 lg:text-right">
+            <div>
+              <dt className="text-xs text-ink-500">Fee</dt>
+              <dd className="tabular mt-0.5 text-lg font-semibold text-emerald-700">
+                {formatCurrency(trial.paymentAmount, trial.currency)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-ink-500">Deadline</dt>
+              <dd
+                className={cn(
+                  "mt-0.5 text-lg font-semibold",
+                  overdue ? "text-rose-700" : "text-ink-900"
+                )}
+              >
+                {due ?? formatDate(trial.projectDeadline)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-ink-500">Effort</dt>
+              <dd className="tabular mt-0.5 text-lg font-semibold text-ink-900">
+                {trial.expectedHours}h
+              </dd>
+            </div>
+          </dl>
         </div>
-      </section>
+        {!cancelled && (
+          <div className="border-t border-line px-5 py-3.5">
+            <WorkStepper status={trial.workStatus} />
+          </div>
+        )}
+      </header>
+
+      {cancelled && (
+        <div className="rounded-xl border border-line bg-white p-5 text-sm text-ink-600">
+          <p className="font-semibold text-ink-900">Project cancelled</p>
+          <p className="mt-1">
+            The startup closed this project. Your submissions stay below for reference.
+          </p>
+        </div>
+      )}
 
       {latest && (
         <DecisionPanel
           submission={latest}
-          companyName={trial.companyName || "The startup"}
+          companyName={companyName}
           canResubmit={trial.canSubmit}
         />
       )}
 
-      {closed && (accepted || cancelled || evaluation) && (
-        <section
-          className={cn(
-            "rounded-2xl border p-fib6",
-            accepted && !cancelled
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-line bg-white text-ink-800"
-          )}
-        >
-          <div className="flex items-start gap-fib4">
-            {accepted && !cancelled ? (
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-            ) : (
-              <FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-ink-400" />
-            )}
-            <div className="min-w-0 space-y-fib3">
-              <h2 className="font-bold">
-                {cancelled
-                  ? "Project cancelled"
-                  : accepted
-                    ? "Project completed — work accepted"
-                    : "The startup's evaluation"}
-              </h2>
-              {evaluation ? (
-                <>
-                  <p className="text-sm">
-                    Requirements{" "}
-                    {evaluation.requirementsCompleted
-                      ? "completed"
-                      : "not fully completed"}{" "}
-                    · Technical quality:{" "}
-                    <span className="font-semibold capitalize">
-                      {evaluation.technicalQuality.replaceAll("_", " ")}
-                    </span>
-                    {evaluation.outcome && (
-                      <>
-                        {" "}
-                        · Outcome:{" "}
-                        <span className="font-semibold capitalize">
-                          {evaluation.outcome.replaceAll("_", " ")}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm opacity-80">
-                    {evaluation.writtenFeedback}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm opacity-80">
-                  {cancelled
-                    ? "The startup closed this project. Your submissions stay below for reference."
-                    : "Your work was accepted and is now on your profile's verified work history. The startup's written feedback will appear here if they record it."}
-                </p>
-              )}
+      {evaluation.feedback ? (
+        <EvaluationCard
+          evaluation={evaluation}
+          companyName={companyName}
+          accepted={accepted}
+        />
+      ) : (
+        accepted && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+            <CheckCircle2
+              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
+              aria-hidden
+            />
+            <div className="text-sm">
+              <p className="font-semibold text-emerald-900">
+                Accepted — now on your verified work history
+              </p>
+              <p className="mt-0.5 text-emerald-900/80">
+                The startup&apos;s structured evaluation will appear here if they record
+                it.
+              </p>
             </div>
           </div>
-        </section>
+        )
       )}
 
-      <div className="grid items-start gap-fib6 lg:grid-cols-3">
-        <div className="space-y-fib6 lg:col-span-2">
-          <SectionCard title="The brief" icon={FileCheck2}>
-            <div className="space-y-fib6">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
-                {trial.problemStatement}
-              </p>
-              {trial.context && (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-500">
-                  {trial.context}
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {trial.requirements.length > 0 && !closed && (
+            <SectionCard title="Requirements" icon={ListChecks}>
+              <RequirementChecklist
+                projectId={trial.projectId}
+                requirements={trial.requirements}
+                readOnly={!trial.canSubmit}
+              />
+            </SectionCard>
+          )}
+
+          <SectionCard title="The brief" icon={FileText}>
+            <div className="space-y-6">
+              <BriefSection title="Overview">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+                  {trial.problemStatement}
                 </p>
+                {trial.context && (
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-500">
+                    {trial.context}
+                  </p>
+                )}
+              </BriefSection>
+              {closed && trial.requirements.length > 0 && (
+                <BriefSection title="Requirements" icon={ListChecks}>
+                  <BriefList items={trial.requirements} numbered />
+                </BriefSection>
               )}
-              <CriteriaList title="Requirements" items={trial.requirements} />
-              <CriteriaList title="Deliverables" items={trial.deliverables} />
-              <CriteriaList
-                title="Acceptance criteria"
-                items={trial.acceptanceCriteria}
-              />
-              <CriteriaList
-                title="How this will be evaluated"
-                items={trial.evaluationCriteria}
-              />
+              <BriefSection title="Deliverables" icon={Package}>
+                <BriefList items={trial.deliverables} />
+              </BriefSection>
+              <BriefSection title="Acceptance criteria" icon={ClipboardCheck}>
+                <BriefList items={trial.acceptanceCriteria} />
+              </BriefSection>
+              {trial.evaluationCriteria.length > 0 && (
+                <BriefSection title="How you'll be evaluated" icon={Scale}>
+                  <BriefList items={trial.evaluationCriteria} />
+                </BriefSection>
+              )}
             </div>
           </SectionCard>
 
@@ -341,11 +358,8 @@ export default async function CandidateTrialWorkspacePage({
                 />
               ) : (
                 <p className="text-sm text-ink-500">
-                  This project isn&rsquo;t accepting submissions right now — its status is{" "}
-                  <span className="font-medium capitalize">
-                    {trial.workStatus.replaceAll("_", " ")}
-                  </span>
-                  .
+                  Your work is with the startup. You can submit again if they request a
+                  revision.
                 </p>
               )}
             </SectionCard>
@@ -357,30 +371,30 @@ export default async function CandidateTrialWorkspacePage({
               icon={GitBranch}
               count={trial.submissions.length}
             >
-              <div className="space-y-fib5">
-                {trial.submissions.map((submission) => (
-                  <article
+              <ol className="space-y-3">
+                {trial.submissions.map((submission, index) => (
+                  <li
                     key={submission.id}
-                    className="space-y-fib4 rounded-xl border border-line p-fib5"
+                    className="space-y-3 rounded-lg border border-line p-4"
                   >
-                    <div className="flex items-center justify-between gap-fib4">
-                      <span className="text-xs text-ink-400">
-                        Submitted {formatDate(submission.submittedAt)}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs text-ink-500">
+                        <span className="font-medium text-ink-700">
+                          Submission {trial.submissions.length - index}
+                        </span>{" "}
+                        · {formatDate(submission.submittedAt)}
                       </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-fib4 py-fib1 text-xs font-semibold",
-                          DECISION_STYLE[submission.status].chip
-                        )}
-                      >
-                        {DECISION_STYLE[submission.status].label}
-                      </span>
+                      <StatusBadge
+                        size="sm"
+                        tone={DECISION[submission.status].tone}
+                        label={DECISION[submission.status].label}
+                      />
                     </div>
                     <a
                       href={submission.repositoryUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block break-all text-sm font-medium text-brand-600 hover:underline"
+                      className="block break-all font-mono text-xs text-brand-700 hover:underline"
                     >
                       {submission.repositoryUrl}
                     </a>
@@ -389,53 +403,80 @@ export default async function CandidateTrialWorkspacePage({
                     </p>
                     <AttachmentList attachments={submission.attachments} />
                     {submission.reviewNote && (
-                      <div className="rounded-lg border border-line bg-surface-muted px-fib5 py-fib4">
-                        <p className="text-xs font-semibold text-ink-500">
-                          {trial.companyName || "The startup"}&apos;s message
+                      <div className="rounded-md border border-line bg-ink-50 px-3 py-2.5">
+                        <p className="text-xs font-medium text-ink-600">
+                          {companyName}&apos;s message
                           {submission.reviewedAt &&
                             ` · ${formatDate(submission.reviewedAt)}`}
                         </p>
-                        <p className="mt-fib2 whitespace-pre-wrap text-sm text-ink-800">
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-ink-800">
                           {submission.reviewNote}
                         </p>
                       </div>
                     )}
-                  </article>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </SectionCard>
           )}
         </div>
 
-        <div className="space-y-fib6">
-          <section className="rounded-2xl border border-line bg-white p-fib6 shadow-xs">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-              How to work on this
-            </h2>
-            <ol className="mt-fib5 space-y-fib5">
-              {LOCAL_STEPS.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <li key={step.text} className="flex gap-fib4">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <p className="text-sm text-ink-600">
-                      <span className="font-semibold text-ink-800">{index + 1}.</span>{" "}
+        <aside className="space-y-6">
+          {!closed && (
+            <div className="rounded-xl border border-line bg-white p-5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-ink-900">
+                <CalendarClock className="h-4 w-4 text-ink-400" aria-hidden />
+                Due {formatDate(trial.projectDeadline)}
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-sm text-ink-500">
+                <Clock className="h-4 w-4 text-ink-400" aria-hidden />
+                About {trial.expectedHours} hours of work
+              </p>
+              <div className="mt-4 flex flex-col gap-2">
+                {trial.canSubmit && (
+                  <a href="#submit-work">
+                    <Button className="w-full">
+                      <Send className="h-4 w-4" aria-hidden />
+                      {latest ? "Submit a revision" : "Submit your work"}
+                    </Button>
+                  </a>
+                )}
+                <a href="#clarifications">
+                  <Button variant="outline" className="w-full">
+                    <MessagesSquare className="h-4 w-4" aria-hidden />
+                    Ask a question
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {!closed && (
+            <section className="rounded-xl border border-line bg-white p-5">
+              <h2 className="text-sm font-semibold text-ink-900">How to work on this</h2>
+              <ol className="mt-3 space-y-3">
+                {LOCAL_STEPS.map((step) => {
+                  const Icon = step.icon;
+                  return (
+                    <li key={step.text} className="flex gap-3 text-sm text-ink-600">
+                      <Icon
+                        className="mt-0.5 h-4 w-4 shrink-0 text-ink-400"
+                        aria-hidden
+                      />
                       {step.text}
-                    </p>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          )}
 
           <ProjectThread
             projectId={trial.projectId}
             messages={messages}
             viewer="candidate"
           />
-        </div>
+        </aside>
       </div>
     </div>
   );

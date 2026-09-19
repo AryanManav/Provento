@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/ui/form-field";
 import { Modal } from "@/components/common/modal";
 import { SectionCard } from "@/components/common/section-card";
+import { SkillTags } from "@/components/search/result-rows";
 import { StatusBanner } from "@/components/common/status-banner";
 import type { CandidateProjectView } from "@/lib/types/domain";
 import type { ActionResponse } from "@/lib/types/actions";
@@ -152,7 +153,8 @@ export function FeaturedProjectsCard({
   return (
     <SectionCard
       id="projects"
-      title="Featured projects"
+      title="Self-reported projects"
+      description="Personal and academic work, added by the candidate — not verified by Trialent."
       icon={FolderGit2}
       count={projects.length}
       action={
@@ -183,11 +185,11 @@ export function FeaturedProjectsCard({
           {projects.map((item) => (
             <article
               key={item.id}
-              className="flex flex-col justify-between rounded-xl border border-line p-fib6 transition-colors hover:border-brand-300"
+              className="flex flex-col justify-between rounded-lg border border-line p-4 transition-colors hover:border-ink-300"
             >
               <div className="space-y-fib4">
                 <div className="flex items-start justify-between gap-fib3">
-                  <h3 className="font-bold text-ink-900">{item.title}</h3>
+                  <h3 className="text-sm font-semibold text-ink-900">{item.title}</h3>
                   <div className="flex shrink-0 items-center">
                     {!readOnly && (
                       <>
@@ -222,16 +224,7 @@ export function FeaturedProjectsCard({
                 </p>
 
                 {item.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-fib3">
-                    {item.technologies.map((tech) => (
-                      <span
-                        key={tech}
-                        className="rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-medium text-ink-700"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
+                  <SkillTags skills={item.technologies} limit={6} />
                 )}
               </div>
 

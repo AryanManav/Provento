@@ -103,7 +103,7 @@ export function ProjectControls({
           <button
             type="button"
             onClick={() => setOpen(open === "withdraw" ? null : "withdraw")}
-            className="rounded-full border border-rose-200 px-fib5 py-fib2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            className="rounded-md border border-rose-200 px-fib5 py-fib2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
           >
             Withdraw
           </button>
@@ -111,7 +111,7 @@ export function ProjectControls({
             <button
               type="button"
               onClick={() => setOpen(open === "delete" ? null : "delete")}
-              className="inline-flex items-center gap-fib2 rounded-full border border-rose-200 px-fib5 py-fib2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+              className="inline-flex items-center gap-fib2 rounded-md border border-rose-200 px-fib5 py-fib2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
             >
               <Trash2 className="h-4 w-4" />
               Delete

@@ -92,7 +92,7 @@ export function ApplicationStatusForm({
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className="rounded-full bg-ink-900 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-ink-700"
+          className="rounded-md bg-ink-900 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-ink-700"
         >
           {choice === "selected" ? "Select candidate" : "Reject"}
         </button>

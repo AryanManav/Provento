@@ -1,5 +1,20 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  CalendarClock,
+  ChevronLeft,
+  ClipboardCheck,
+  Clock,
+  Code2,
+  FileText,
+  Globe,
+  ListChecks,
+  Package,
+  Scale,
+} from "lucide-react";
 import { getBrowsableProjectBySlug } from "@/lib/data/project";
 import {
   getCandidateApplicationForProject,
@@ -8,13 +23,63 @@ import {
 import { purposeLabel, spotsLeft } from "@/lib/projects";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ApplicationForm } from "@/components/candidate/application-form";
-import { Badge } from "@/components/ui/badge";
 import { WORK_MODES, companyProfilePath } from "@/lib/constants";
+import { ApplicationForm } from "@/components/candidate/application-form";
+import { Button } from "@/components/ui/button";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { Avatar } from "@/components/common/avatar";
-import { BadgeCheck, Building2, Globe } from "lucide-react";
+import {
+  BriefList,
+  BriefSection,
+  EVALUATION_DIMENSIONS,
+  EVALUATION_FACTS,
+  StackList,
+} from "@/components/projects/brief";
+import type { BrowseProjectView } from "@/lib/types/domain";
 
 export const dynamic = "force-dynamic";
+
+const AVAILABILITY: Record<
+  BrowseProjectView["availability"],
+  { label: string; tone: StatusTone; closedNote?: string }
+> = {
+  open: { label: "Applications open", tone: "success" },
+  full: {
+    label: "Full",
+    tone: "warning",
+    closedNote: "This project has reached its applicant limit.",
+  },
+  selected: {
+    label: "In progress",
+    tone: "active",
+    closedNote: "The startup has selected a candidate and work is under way.",
+  },
+  closed: {
+    label: "Closed",
+    tone: "neutral",
+    closedNote: "Applications for this project have closed.",
+  },
+};
+
+function Fact({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Clock;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
+      <dt className="flex items-center gap-2 text-ink-500">
+        <Icon className="h-4 w-4 text-ink-400" aria-hidden />
+        {label}
+      </dt>
+      <dd className="text-right font-medium text-ink-900">{value}</dd>
+    </div>
+  );
+}
 
 export default async function ProjectDetailPage({
   params,
@@ -35,182 +100,277 @@ export default async function ProjectDetailPage({
     ? await getCandidateApplicationForProject(candidateId, project.id)
     : null;
   const spots = spotsLeft(project.maxApplicants, project.applicationCount);
+  const availability = AVAILABILITY[project.availability];
+  const canApply =
+    user.role === "candidate" && !existing && project.availability === "open";
+  const company = project.companyName || "the startup";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
-      <Link href="/projects" className="text-sm text-indigo-600 hover:underline">
-        ← All projects
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <Link
+        href="/projects"
+        className="inline-flex items-center gap-1 text-sm text-ink-500 hover:text-ink-900"
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+        Browse projects
       </Link>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
-        <div className="flex justify-between gap-4">
-          <div>
-            <p className="text-sm text-slate-500">
-              <Link
-                href={companyProfilePath(project.companyId)}
-                className="font-medium hover:text-brand-600 hover:underline"
-              >
-                {project.companyName || "Startup"}
-              </Link>
-              {project.companyLocation ? ` · ${project.companyLocation}` : ""}
-            </p>
-            <h1 className="text-3xl font-bold text-slate-900 mt-1">{project.title}</h1>
-            <div className="mt-fib4 flex flex-wrap gap-fib3">
-              <span className="inline-flex rounded-full bg-brand-50 px-fib5 py-fib2 text-xs font-semibold text-brand-700">
-                {purposeLabel(project)}
-              </span>
-              <span className="inline-flex rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold text-ink-700">
-                {WORK_MODES[project.workMode].label}
-              </span>
-            </div>
-          </div>
-          <Badge
-            variant={
-              project.availability === "open"
-                ? "success"
-                : project.availability === "full"
-                  ? "warning"
-                  : "secondary"
-            }
-          >
-            {project.availability === "open"
-              ? "Applications open"
-              : project.availability === "full"
-                ? "Full"
-                : project.availability === "selected"
-                  ? "Candidate selected"
-                  : "Applications closed"}
-          </Badge>
-        </div>
-
-        <p className="text-slate-700 leading-relaxed">{project.description}</p>
-
-        <div className="flex flex-wrap gap-4 text-sm">
-          <span>
-            <b>{formatCurrency(project.paymentAmount, project.currency)}</b> paid
-            evaluation
-          </span>
-          <span>{project.expectedHours} hours estimated</span>
-          <span>Apply by {formatDate(project.applicationDeadline)}</span>
-          {spots !== null && (
-            <span>
-              {spots === 0
-                ? `All ${project.maxApplicants} places taken`
-                : `${spots} of ${project.maxApplicants} places left`}
-            </span>
-          )}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-fib5 rounded-xl border border-slate-200 bg-white p-6 sm:flex-row">
-        <Avatar
-          name={project.companyName || "Startup"}
-          src={project.company.logoUrl}
-          className="h-14 w-14 rounded-xl text-lg"
-        />
-        <div className="min-w-0 space-y-fib3">
-          <div className="flex flex-wrap items-center gap-fib3">
-            <h2 className="text-lg font-bold text-ink-900">
-              About {project.companyName || "the startup"}
-            </h2>
-            {project.company.verified && (
-              <span className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib4 py-fib1 text-xs font-semibold text-emerald-700">
-                <BadgeCheck className="h-3.5 w-3.5" />
-                Verified
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-ink-500">
-            {[
-              project.company.industry,
-              project.company.size && `${project.company.size} people`,
-              project.companyLocation,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "Early-stage startup"}
-          </p>
-          {project.company.description && (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
-              {project.company.description}
-            </p>
-          )}
+      <header className="mt-4 border-b border-line pb-6">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-ink-500">
           <Link
             href={companyProfilePath(project.companyId)}
-            className="mr-fib5 inline-flex items-center gap-fib2 text-sm font-semibold text-brand-600 hover:underline"
+            className="font-medium text-ink-700 hover:text-brand-700 hover:underline"
           >
-            <Building2 className="h-4 w-4" />
-            Company profile &amp; track record
+            {project.companyName || "Startup"}
           </Link>
-          {project.company.website && (
-            <a
-              href={project.company.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-fib2 text-sm font-semibold text-brand-600 hover:underline"
-            >
-              <Globe className="h-4 w-4" />
-              Visit website
-            </a>
+          {project.company.verified && (
+            <BadgeCheck
+              className="h-4 w-4 text-emerald-600"
+              aria-label="Verified company"
+            />
           )}
+          {project.companyLocation && <span>· {project.companyLocation}</span>}
         </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
-        <h2 className="text-xl font-bold">The challenge</h2>
-        <p className="whitespace-pre-wrap text-slate-700">{project.problemStatement}</p>
-
-        <h3 className="font-semibold">Deliverables</h3>
-        <ul className="list-disc pl-5 text-sm space-y-1">
-          {project.deliverables.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        <h3 className="font-semibold">Acceptance criteria</h3>
-        <ul className="list-disc pl-5 text-sm space-y-1">
-          {project.acceptanceCriteria.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        <h3 className="font-semibold">Skills</h3>
-        <div className="flex flex-wrap gap-2">
-          {project.skills.map((skill) => (
-            <Badge key={skill.name} variant={skill.required ? "default" : "secondary"}>
-              {skill.name}
-            </Badge>
-          ))}
+        <h1 className="mt-2 max-w-3xl text-3xl font-semibold text-ink-900">
+          {project.title}
+        </h1>
+        <p className="mt-3 max-w-3xl text-base text-ink-600">{project.description}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <StatusBadge tone={availability.tone} label={availability.label} />
+          <span className="rounded-md border border-line bg-white px-2 py-0.5 text-xs font-medium text-ink-600">
+            {purposeLabel(project)}
+          </span>
+          <span className="rounded-md border border-line bg-white px-2 py-0.5 text-xs font-medium text-ink-600">
+            {WORK_MODES[project.workMode].label}
+          </span>
         </div>
-      </section>
+      </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-bold mb-4">Apply for this evaluation</h2>
-        {user.role !== "candidate" ? (
-          <p className="text-sm text-slate-600">
-            Only candidate accounts can submit an application.
-          </p>
-        ) : existing ? (
-          <p className="text-sm text-slate-600">
-            You applied on {formatDate(existing.createdAt)}.{" "}
-            <Link href="/candidate/applications" className="font-semibold text-brand-600">
-              Track it in My Applications →
-            </Link>
-          </p>
-        ) : project.availability === "open" ? (
-          <ApplicationForm projectId={project.id} />
-        ) : (
-          <p className="text-sm text-slate-600">
-            {project.availability === "full"
-              ? "This project has reached its applicant limit, so it isn't taking more applications."
-              : project.availability === "selected"
-                ? "The startup has selected a candidate and work is under way, so applications are closed."
-                : "Applications for this project have closed."}{" "}
-            <Link href="/projects" className="font-semibold text-brand-600">
-              Browse other projects →
-            </Link>
-          </p>
-        )}
-      </section>
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-6">
+          <BriefSection id="overview" title="Overview" icon={FileText}>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+              {project.problemStatement}
+            </p>
+            {project.context && (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-500">
+                {project.context}
+              </p>
+            )}
+          </BriefSection>
+
+          {project.requirements.length > 0 && (
+            <BriefSection id="requirements" title="Requirements" icon={ListChecks}>
+              <BriefList items={project.requirements} numbered />
+            </BriefSection>
+          )}
+
+          <BriefSection id="deliverables" title="Deliverables" icon={Package}>
+            <BriefList items={project.deliverables} />
+          </BriefSection>
+
+          <BriefSection
+            id="stack"
+            title="Tech stack"
+            icon={Code2}
+            description="Outlined skills are required; the rest are nice to have."
+          >
+            <StackList skills={project.skills} />
+          </BriefSection>
+
+          <BriefSection
+            id="acceptance"
+            title="Acceptance criteria"
+            icon={ClipboardCheck}
+            description="What the work must do to be accepted."
+          >
+            <BriefList items={project.acceptanceCriteria} />
+          </BriefSection>
+
+          <BriefSection
+            id="evaluation"
+            title="How you'll be evaluated"
+            icon={Scale}
+            description={`${company} published these criteria before anyone applied. Every submission is judged against them.`}
+          >
+            <div className="rounded-xl border border-line bg-white">
+              {project.evaluationCriteria.length > 0 && (
+                <div className="border-b border-line p-4">
+                  <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+                    The startup&apos;s criteria
+                  </p>
+                  <div className="mt-2.5">
+                    <BriefList items={project.evaluationCriteria} />
+                  </div>
+                </div>
+              )}
+              <div className="grid gap-4 p-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+                    Quality, in bands
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-ink-700">
+                    {EVALUATION_DIMENSIONS.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-ink-500">
+                    Below, meets or exceeds expectations — never a single score.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+                    Observable facts
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-ink-700">
+                    {EVALUATION_FACTS.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-ink-500">
+                    Plus a written message with every decision.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </BriefSection>
+
+          <BriefSection id="company" title={`About ${company}`} icon={Building2}>
+            <div className="flex gap-4">
+              <Avatar
+                name={project.companyName || "Startup"}
+                src={project.company.logoUrl}
+                className="h-11 w-11 shrink-0 rounded-lg text-sm"
+              />
+              <div className="min-w-0 space-y-2">
+                <p className="text-sm text-ink-500">
+                  {[
+                    project.company.industry,
+                    project.company.size && `${project.company.size} people`,
+                    project.companyLocation,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Early-stage startup"}
+                </p>
+                {project.company.description && (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+                    {project.company.description}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                  <Link
+                    href={companyProfilePath(project.companyId)}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+                  >
+                    Profile &amp; track record
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </Link>
+                  {project.company.website && (
+                    <a
+                      href={project.company.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+                    >
+                      <Globe className="h-3.5 w-3.5" aria-hidden />
+                      Website
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </BriefSection>
+
+          <BriefSection id="apply" title="Apply to this project">
+            {user.role !== "candidate" ? (
+              <p className="text-sm text-ink-500">
+                Only candidate accounts can apply to projects.
+              </p>
+            ) : existing ? (
+              <p className="text-sm text-ink-600">
+                You applied on {formatDate(existing.createdAt)}.{" "}
+                <Link
+                  href="/candidate/applications"
+                  className="font-medium text-brand-700 hover:underline"
+                >
+                  Track it in My applications
+                </Link>
+              </p>
+            ) : project.availability === "open" ? (
+              <div className="rounded-xl border border-line bg-white p-5">
+                <ApplicationForm projectId={project.id} />
+              </div>
+            ) : (
+              <p className="text-sm text-ink-600">
+                {availability.closedNote}{" "}
+                <Link
+                  href="/projects"
+                  className="font-medium text-brand-700 hover:underline"
+                >
+                  Browse other projects
+                </Link>
+              </p>
+            )}
+          </BriefSection>
+        </div>
+
+        <aside className="lg:sticky lg:top-20">
+          <div className="rounded-xl border border-line bg-white p-5">
+            <p className="text-xs text-ink-500">Project fee</p>
+            <p className="tabular mt-1 text-3xl font-semibold text-ink-900">
+              {formatCurrency(project.paymentAmount, project.currency)}
+            </p>
+            <p className="mt-1 text-xs text-ink-500">Stated upfront by {company}</p>
+
+            <dl className="mt-4 divide-y divide-line border-y border-line">
+              <Fact
+                icon={Clock}
+                label="Effort"
+                value={`${project.expectedHours} hours`}
+              />
+              <Fact
+                icon={CalendarClock}
+                label="Apply by"
+                value={formatDate(project.applicationDeadline)}
+              />
+              <Fact
+                icon={CalendarClock}
+                label="Work due"
+                value={formatDate(project.projectDeadline)}
+              />
+              {spots !== null && (
+                <Fact
+                  icon={ListChecks}
+                  label="Places left"
+                  value={`${spots} of ${project.maxApplicants}`}
+                />
+              )}
+            </dl>
+
+            <div className="mt-4">
+              {canApply ? (
+                <a href="#apply" className="block">
+                  <Button className="w-full" size="lg">
+                    Apply to project
+                  </Button>
+                </a>
+              ) : existing ? (
+                <Link href="/candidate/applications" className="block">
+                  <Button className="w-full" variant="outline">
+                    View your application
+                  </Button>
+                </Link>
+              ) : (
+                <p className="text-center text-sm text-ink-500">
+                  {user.role !== "candidate"
+                    ? "Candidates apply from this page."
+                    : availability.closedNote}
+                </p>
+              )}
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type {
   SelectionWorkStatus,
 } from "@/lib/types/database.types";
 import type { ApplicationSummaryView } from "@/lib/types/domain";
+import type { StatusTone } from "@/lib/status";
 
 /**
  * Where an application stands from the candidate's side. The application
@@ -122,33 +123,43 @@ export const STAGE_DISPLAY: Record<
   ApplicationStage,
   {
     label: string;
-    tone: "neutral" | "info" | "warning" | "success" | "danger";
+    tone: StatusTone;
     action: string;
   }
 > = {
-  applied: { label: "Application sent", tone: "neutral", action: "View brief" },
+  applied: { label: "Applied", tone: "info", action: "View brief" },
   reviewing: { label: "Under review", tone: "warning", action: "View brief" },
-  shortlisted: { label: "Shortlisted", tone: "info", action: "View brief" },
-  building: { label: "Selected", tone: "success", action: "Open workspace" },
-  awaiting_review: {
-    label: "Submitted — awaiting review",
-    tone: "warning",
-    action: "Track evaluation",
-  },
+  shortlisted: { label: "Shortlisted", tone: "active", action: "View brief" },
+  building: { label: "Active", tone: "active", action: "Continue project" },
+  awaiting_review: { label: "Submitted", tone: "warning", action: "Track evaluation" },
   revision_requested: {
     label: "Revision requested",
-    tone: "danger",
+    tone: "attention",
     action: "See what to change",
   },
-  completed: { label: "Project completed", tone: "success", action: "View evaluation" },
+  completed: { label: "Completed", tone: "success", action: "View evaluation" },
   work_not_accepted: {
-    label: "Work not accepted",
+    label: "Not accepted",
     tone: "danger",
     action: "See their feedback",
   },
-  cancelled: { label: "Project cancelled", tone: "neutral", action: "View workspace" },
-  not_selected: { label: "Not selected", tone: "neutral", action: "View brief" },
+  cancelled: { label: "Cancelled", tone: "neutral", action: "View workspace" },
+  not_selected: { label: "Not selected", tone: "danger", action: "View brief" },
   withdrawn: { label: "Withdrawn", tone: "neutral", action: "View brief" },
+};
+
+/** A selected candidate's own work status, in the shared status language. */
+export const WORK_STATUS_DISPLAY: Record<
+  SelectionWorkStatus,
+  { label: string; tone: StatusTone }
+> = {
+  in_progress: { label: "Active", tone: "active" },
+  submitted: { label: "Submitted", tone: "warning" },
+  under_review: { label: "Under review", tone: "warning" },
+  revision_requested: { label: "Revision requested", tone: "attention" },
+  completed: { label: "Accepted", tone: "success" },
+  not_accepted: { label: "Not accepted", tone: "danger" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
 const PENDING_STAGES: ApplicationStage[] = ["applied", "reviewing", "shortlisted"];

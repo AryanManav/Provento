@@ -1,106 +1,131 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { dashboardFor, primaryNavFor } from "@/lib/constants";
+import { dashboardFor } from "@/lib/constants";
+import { Logo } from "@/components/layout/logo";
+import type { UserRole } from "@/lib/types/database.types";
+
+interface FooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Each column's links go somewhere real for whoever is reading: a candidate's
+ * "My work" is their own, a visitor's is the sign-up. Pages that don't exist
+ * yet (legal, about, careers) aren't linked until they do.
+ */
+function columnsFor(role: UserRole | null): { title: string; links: FooterLink[] }[] {
+  const candidate = role === "candidate";
+  const company = role === "company";
+  return [
+    {
+      title: "Candidates",
+      links: [
+        { label: "Browse projects", href: "/projects" },
+        candidate
+          ? { label: "My work", href: "/candidate/applications" }
+          : { label: "How it works for candidates", href: "/for-candidates" },
+        candidate
+          ? { label: "My profile", href: "/candidate/profile" }
+          : { label: "Join as a candidate", href: "/signup?role=candidate" },
+      ],
+    },
+    {
+      title: "Startups",
+      links: [
+        {
+          label: "Post a project",
+          href: company ? "/company/projects/create" : "/signup?role=company",
+        },
+        company
+          ? { label: "Candidates", href: "/company/candidates" }
+          : { label: "How it works for startups", href: "/for-companies" },
+        role
+          ? { label: "Discover talent", href: "/search?type=candidates" }
+          : { label: "Join as a startup", href: "/signup?role=company" },
+      ],
+    },
+    {
+      title: "Product",
+      links: [
+        { label: "How it works", href: "/how-it-works" },
+        { label: "Projects", href: "/projects" },
+        { label: "Companies", href: "/companies" },
+      ],
+    },
+  ];
+}
+
+const linkClass = "text-ink-500 transition-colors hover:text-ink-900";
 
 export async function PublicFooter() {
   const user = await getCurrentUser();
-  const links = primaryNavFor(user?.role);
+  const columns = columnsFor(user?.role ?? null);
 
   return (
-    <footer className="border-t border-line bg-ink-50 text-ink-600">
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-3 md:col-span-2">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
-                T
-              </div>
-              <span className="font-bold text-ink-900 text-lg">Trialent</span>
-            </div>
-            <p className="text-sm text-ink-500 max-w-sm">
-              Try junior technical talent through standardized, paid work before making a
-              hiring decision. Evidence before hiring.
-            </p>
-            <p className="text-xs text-ink-400">
-              © {new Date().getFullYear()} Trialent. All rights reserved.
-            </p>
-          </div>
+    <footer className="border-t border-line bg-white">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_repeat(4,1fr)]">
+        <div className="space-y-3">
+          <Logo />
+          <p className="max-w-xs text-sm text-ink-500">
+            Try talent through real work before you hire.
+          </p>
+        </div>
 
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-900 mb-3">
-              Platform
-            </h4>
-            <ul className="space-y-2 text-sm">
-              {links.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="hover:text-brand-600 transition-colors"
-                  >
+        {columns.map((column) => (
+          <nav key={column.title} aria-label={column.title}>
+            <h2 className="text-xs font-semibold text-ink-900">{column.title}</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {column.links.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className={linkClass}>
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
+        ))}
 
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-900 mb-3">
-              Account
-            </h4>
-            <ul className="space-y-2 text-sm">
-              {user ? (
-                <>
-                  <li>
-                    <Link
-                      href={dashboardFor(user.role)}
-                      className="hover:text-brand-600 transition-colors"
-                    >
-                      My Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <form action="/auth/signout" method="post">
-                      <button
-                        type="submit"
-                        className="hover:text-brand-600 transition-colors"
-                      >
-                        Sign Out
-                      </button>
-                    </form>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    <Link
-                      href="/login"
-                      className="hover:text-brand-600 transition-colors"
-                    >
-                      Sign In
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/signup?role=candidate"
-                      className="hover:text-brand-600 transition-colors"
-                    >
-                      Join as Candidate
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/signup?role=company"
-                      className="hover:text-brand-600 transition-colors"
-                    >
-                      Hire for Startup
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-        </div>
+        <nav aria-label="Account">
+          <h2 className="text-xs font-semibold text-ink-900">Account</h2>
+          <ul className="mt-3 space-y-2 text-sm">
+            {user ? (
+              <>
+                <li>
+                  <Link href={dashboardFor(user.role)} className={linkClass}>
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <form action="/auth/signout" method="post">
+                    <button type="submit" className={linkClass}>
+                      Sign out
+                    </button>
+                  </form>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link href="/login" className={linkClass}>
+                    Log in
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/signup" className={linkClass}>
+                    Create an account
+                  </Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </nav>
+      </div>
+      <div className="border-t border-line">
+        <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-400 sm:px-6">
+          © {new Date().getFullYear()} Trialent
+        </p>
       </div>
     </footer>
   );

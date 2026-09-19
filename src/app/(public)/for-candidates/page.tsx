@@ -7,7 +7,7 @@ export default function ForCandidatesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 space-y-12">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">
           Prove What You Can Build. Get Paid. Get Hired.
         </h1>
         <p className="text-slate-600 max-w-2xl mx-auto">
@@ -27,12 +27,11 @@ export default function ForCandidatesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Guaranteed Compensation</CardTitle>
+            <CardTitle className="text-lg">Paid work, priced upfront</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-slate-600">
-            Never do unpaid &quot;take-home tests&quot;. On Trialent, when a startup
-            selects you for a trial project, the project fee (e.g. ₹5,000) is held
-            securely and paid upon completion.
+            No unpaid &quot;take-home tests&quot;. Every project states its fee (e.g.
+            ₹5,000) on the brief, before you apply.
           </CardContent>
         </Card>
 

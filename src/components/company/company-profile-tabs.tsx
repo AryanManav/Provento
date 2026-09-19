@@ -2,53 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, Info, Link2, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { label: "Overview", href: "/company/profile", icon: Info },
-  { label: "Culture and stack", href: "/company/profile/culture", icon: Sparkles },
-  { label: "Links", href: "/company/profile/links", icon: Link2 },
-  { label: "Team", href: "/company/profile/team", icon: Users },
+  { label: "Basics", href: "/company/profile" },
+  { label: "Culture and stack", href: "/company/profile/culture" },
+  { label: "Links", href: "/company/profile/links" },
+  { label: "Team", href: "/company/profile/team" },
 ] as const;
 
-/** Sections of the company profile, plus a jump to the public page candidates see. */
-export function CompanyProfileTabs({ publicHref }: { publicHref: string | null }) {
+/** The parts of the company profile, each edited on its own tab. */
+export function CompanyProfileTabs() {
   const pathname = usePathname();
 
   return (
     <nav
       aria-label="Company profile sections"
-      className="flex gap-fib2 overflow-x-auto border-b border-line"
+      className="no-scrollbar -mx-1 overflow-x-auto border-b border-line px-1"
     >
-      {TABS.map(({ label, href, icon: Icon }) => {
-        const active = pathname === href;
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "-mb-px inline-flex shrink-0 items-center gap-fib2 border-b-2 px-fib5 py-fib4 text-sm font-semibold transition-colors",
-              active
-                ? "border-brand-600 text-brand-700"
-                : "border-transparent text-ink-500 hover:text-ink-900"
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
-        );
-      })}
-      {publicHref && (
-        <Link
-          href={publicHref}
-          className="-mb-px ml-auto inline-flex shrink-0 items-center gap-fib2 border-b-2 border-transparent px-fib5 py-fib4 text-sm font-semibold text-ink-500 hover:text-brand-700"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Public page
-        </Link>
-      )}
+      <ul className="flex gap-5">
+        {TABS.map(({ label, href }) => {
+          const active = pathname === href;
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "-mb-px flex whitespace-nowrap border-b-2 pb-2.5 pt-1 text-sm transition-colors",
+                  active
+                    ? "border-brand-600 font-medium text-ink-900"
+                    : "border-transparent text-ink-500 hover:border-ink-300 hover:text-ink-800"
+                )}
+              >
+                {label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }

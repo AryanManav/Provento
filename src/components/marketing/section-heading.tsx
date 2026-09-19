@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Every marketing section opens the same way: a pill label, a two-line heading
- * whose second half drops to grey, then an optional subhead. Hierarchy comes
- * from tonal value rather than a second font weight.
+ * Every marketing section opens the same way: an overline, a heading whose
+ * second half drops to grey, then an optional subhead. Hierarchy comes from
+ * tonal value rather than extra weight.
  */
 export function SectionHeading({
   chip,
@@ -14,6 +14,7 @@ export function SectionHeading({
   align = "center",
   className,
 }: {
+  /** The overline above the heading. */
   chip?: string;
   title: ReactNode;
   /** Rendered in muted grey on its own line, continuing the sentence. */
@@ -27,18 +28,18 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "space-y-fib5",
-        centered && "text-center flex flex-col items-center",
+        "space-y-3",
+        centered && "flex flex-col items-center text-center",
         className
       )}
     >
       {chip && (
-        <span className="inline-flex items-center rounded-full border border-line bg-white px-fib5 py-fib2 text-xs font-semibold text-ink-600 shadow-xs">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">
           {chip}
-        </span>
+        </p>
       )}
 
-      <h2 className="text-2xl sm:text-3xl font-bold text-ink-900 max-w-3xl text-balance">
+      <h2 className="max-w-3xl text-balance text-3xl font-semibold text-ink-900 sm:text-4xl">
         {title}
         {trailing && (
           <>
@@ -49,7 +50,9 @@ export function SectionHeading({
       </h2>
 
       {subtitle && (
-        <p className={cn("text-ink-500 max-w-xl", centered && "mx-auto")}>{subtitle}</p>
+        <p className={cn("max-w-2xl text-base text-ink-500", centered && "mx-auto")}>
+          {subtitle}
+        </p>
       )}
     </div>
   );

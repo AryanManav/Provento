@@ -45,7 +45,7 @@ export function AuthShell({
           </div>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-fib8">
-            <h1 className="text-3xl font-extrabold text-ink-950 sm:text-4xl">{title}</h1>
+            <h1 className="text-3xl font-semibold text-ink-950 sm:text-4xl">{title}</h1>
             <p className="mt-fib4 text-ink-400">{subtitle}</p>
 
             <div className="mt-fib8">{children}</div>

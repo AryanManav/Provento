@@ -1,63 +1,127 @@
-import { StatusBanner } from "@/components/common/status-banner";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/guards";
-import { homeFor } from "@/lib/constants";
 import {
   ArrowRight,
-  CheckCircle,
+  BadgeCheck,
+  Check,
   ClipboardList,
-  FileCheck2,
-  GitBranch,
+  FileSearch,
+  Hammer,
+  IndianRupee,
+  Minus,
+  Scale,
+  Send,
   ShieldCheck,
-  Sparkles,
-  Wallet,
+  Target,
+  UserCheck,
+  Users,
 } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { homeFor } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
-import { SignedOutCta } from "@/components/layout/signed-out-cta";
+import { StatusBanner } from "@/components/common/status-banner";
 import { SectionHeading } from "@/components/marketing/section-heading";
-import { HeroFragments } from "@/components/marketing/hero-fragments";
+import { HeroWorkflow } from "@/components/marketing/hero-workflow";
 
-const TRUST = [
-  "Standardized 5–10h projects",
-  "100% paid work for candidates",
-  "Evidence-based evaluations",
-];
-
-const LOOP = [
-  {
-    icon: ClipboardList,
-    title: "Write the brief",
-    body: "Requirements, deliverables, and the criteria you will judge against — authored once, reused every time.",
-  },
-  {
-    icon: GitBranch,
-    title: "Watch the work happen",
-    body: "Incremental commits and clarification questions, not a single opaque submission at the deadline.",
-  },
-  {
-    icon: FileCheck2,
-    title: "Evaluate real output",
-    body: "Score against your own criteria, with observable facts: revisions needed, deadline met, requirements completed.",
-  },
-  {
-    icon: Wallet,
-    title: "Decide with evidence",
-    body: "Hire, interview, or pass. The candidate is paid either way, and keeps a verified record of the work.",
-  },
-];
+const HERO_POINTS = ["Real projects", "Paid work", "Evidence-based evaluation"];
 
 const ROLES = [
-  "Frontend Developer",
-  "Backend Developer",
-  "Full-stack Developer",
-  "Software Engineer",
-  "QA/Test Engineer",
-  "Data Analyst",
-  "Data Engineer",
-  "AI/ML Engineer",
-  "DevOps Engineer",
+  "Frontend",
+  "Backend",
+  "Full-stack",
+  "Mobile",
+  "QA & testing",
+  "Data analysis",
+  "Data engineering",
+  "AI / ML",
+  "DevOps",
 ];
+
+const COMPARISON = {
+  traditional: [
+    "Resume screening on keywords",
+    "Generic, timed assessments",
+    "Several rounds of interviews",
+    "Little evidence of real output",
+  ],
+  trialent: [
+    "Real requirements from the startup",
+    "Paid, scoped work — 5 to 10 hours",
+    "Observable execution: commits, questions, delivery",
+    "Structured evaluation against stated criteria",
+  ],
+};
+
+const STEPS = [
+  {
+    icon: ClipboardList,
+    title: "Company posts a project",
+    body: "A scoped brief: requirements, deliverables, the fee, and exactly how the work will be evaluated.",
+  },
+  {
+    icon: Send,
+    title: "Candidates apply",
+    body: "Candidates read the full brief first and apply to the projects that fit their skills.",
+  },
+  {
+    icon: Hammer,
+    title: "The selected candidate builds",
+    body: "Paid work with a visible trail — commits, clarifying questions, and a submission against the brief.",
+  },
+  {
+    icon: Scale,
+    title: "The company evaluates",
+    body: "Against the criteria it published. Then it decides: interview, hire, or pass — with evidence.",
+  },
+];
+
+const FOR_CANDIDATES = [
+  "Discover real projects from startups",
+  "Paid projects, with the fee stated upfront",
+  "Build a verified history of accepted work",
+  "Receive structured, written evaluation",
+  "Get in front of teams that are hiring",
+];
+
+const FOR_STARTUPS = [
+  "Test real skills on your own problem",
+  "Reduce hiring uncertainty before interviews",
+  "Standardize how every candidate is evaluated",
+  "See actual engineering work, not claims",
+  "Identify who is worth interviewing",
+];
+
+const EVIDENCE = [
+  { label: "Requirements met", value: "4 of 4" },
+  { label: "Code quality", value: "Exceeds expectations" },
+  { label: "Testing", value: "Meets expectations" },
+  { label: "Documentation", value: "Meets expectations" },
+  { label: "Delivered on time", value: "Yes" },
+  { label: "Revisions required", value: "1" },
+];
+
+function CheckList({
+  items,
+  tone = "brand",
+}: {
+  items: string[];
+  tone?: "brand" | "muted";
+}) {
+  return (
+    <ul className="space-y-2.5">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-2.5 text-sm text-ink-700">
+          {tone === "brand" ? (
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+          ) : (
+            <Minus className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden />
+          )}
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default async function LandingPage({
   searchParams,
@@ -68,270 +132,337 @@ export default async function LandingPage({
   // Signed-in users skip the marketing page and land on their dashboard.
   const user = await getCurrentUser();
   if (user) redirect(homeFor(user.role));
+
   return (
-    <div className="pb-fib9">
+    <div>
       {account === "deleted" && (
-        <div className="mx-auto max-w-6xl px-fib5 pt-fib5 sm:px-fib6">
+        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
           <StatusBanner tone="success">
             Your account has been deleted. Thanks for trying Trialent.
           </StatusBanner>
         </div>
       )}
-      {/* ---------------------------------------------------------------- Hero */}
+
+      {/* Hero */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="bg-dot-grid mask-radial absolute inset-0" />
-        <HeroFragments />
-
-        <div className="relative mx-auto max-w-5xl px-fib6 py-fib9 text-center">
-          <span className="inline-flex items-center gap-fib4 rounded-full border border-line bg-white px-fib5 py-fib3 text-xs font-semibold uppercase tracking-wider text-ink-600 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-brand-600" />
-            Project-based talent discovery
-          </span>
-
-          <h1 className="mt-fib6 text-4xl font-extrabold leading-[1.05] text-ink-950 sm:text-5xl">
-            <span className="block text-balance">Try talent through real work</span>
-            <span className="block text-ink-400">before you hire.</span>
-          </h1>
-
-          <p className="mx-auto mt-fib6 max-w-xl text-base text-ink-500 sm:text-lg">
-            Startups evaluate emerging engineers through standardized, paid
-            micro-projects. Real evidence before any hiring decision.
-          </p>
-
-          <div className="mt-fib7 flex flex-col items-center justify-center gap-fib5 sm:flex-row">
-            <SignedOutCta>
-              <Link href="/signup?role=company">
-                <Button size="lg" className="h-12 w-full px-fib7 text-base sm:w-auto">
-                  Hire through paid projects
-                </Button>
-              </Link>
-              <Link href="/signup?role=candidate">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 w-full px-fib7 text-base sm:w-auto"
-                >
-                  Prove your skills
-                </Button>
-              </Link>
-            </SignedOutCta>
-          </div>
-
-          <div className="mt-fib7 flex flex-wrap items-center justify-center gap-x-fib7 gap-y-fib4 text-xs text-ink-500">
-            {TRUST.map((item) => (
-              <span key={item} className="flex items-center gap-fib3">
-                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* -------------------------------------------------- The shift in model */}
-      <section className="mx-auto max-w-6xl px-fib6 py-fib9">
-        <SectionHeading
-          chip="The problem"
-          title="Resumes and puzzle rounds"
-          trailing="tell you almost nothing"
-          subtitle="Traditional hiring guesses. Trialent evaluates genuine code and realistic execution."
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-line-grid opacity-40 mask-radial"
         />
-
-        <div className="mt-fib8 grid gap-fib6 md:grid-cols-2">
-          <article className="rounded-2xl border border-line bg-ink-50 p-fib7">
-            <p className="text-xs font-bold uppercase tracking-wider text-rose-600">
-              The traditional model
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:py-24">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">
+              Project-based talent evaluation
             </p>
-            <h3 className="mt-fib4 text-lg font-bold text-ink-900">
-              High risk, built on speculation
-            </h3>
-            <p className="mt-fib3 text-sm text-ink-500">
-              CV → algorithm quiz → behavioural chat → hire and hope
+            <h1 className="mt-4 text-balance text-4xl font-semibold text-ink-950 sm:text-5xl lg:text-6xl">
+              Evaluate talent through real work.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-ink-600">
+              Startups evaluate engineers through standardized, paid micro-projects —
+              giving both sides real evidence before a hiring decision.
             </p>
-            <ul className="mt-fib6 space-y-fib5 text-sm text-ink-600">
-              {[
-                "Resumes and degrees do not reflect day-to-day coding capability.",
-                "Algorithmic puzzles measure memorization, not architecture or debugging.",
-                "A mis-hire costs months of salary, onboarding, and team momentum.",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-fib4">
-                  <span className="mt-fib1 font-bold text-rose-500">✕</span>
-                  <span>{item}</span>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/projects">
+                <Button size="lg">
+                  Browse projects
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Button>
+              </Link>
+              <Link href="/how-it-works">
+                <Button size="lg" variant="outline">
+                  How it works
+                </Button>
+              </Link>
+            </div>
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
+              {HERO_POINTS.map((point) => (
+                <li key={point} className="flex items-center gap-2 text-sm text-ink-600">
+                  <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                  {point}
                 </li>
               ))}
             </ul>
-          </article>
-
-          <article className="rounded-2xl border border-brand-200 bg-brand-50/60 p-fib7 ring-1 ring-brand-500/10">
-            <p className="text-xs font-bold uppercase tracking-wider text-brand-700">
-              The Trialent model
-            </p>
-            <h3 className="mt-fib4 text-lg font-bold text-ink-900">
-              Evidence before hiring
-            </h3>
-            <p className="mt-fib3 text-sm text-ink-600">
-              Shortlist → paid realistic project → observe the work → decide
-            </p>
-            <ul className="mt-fib6 space-y-fib5 text-sm text-ink-700">
-              {[
-                "See how they write tests, structure schemas, and handle real edge cases.",
-                "Candidates are fairly paid for their effort — ₹5,000 for a 5–10 hour sprint.",
-                "Every project leaves verified proof for the candidate and clarity for you.",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-fib4">
-                  <CheckCircle className="mt-fib1 h-4 w-4 shrink-0 text-emerald-600" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
+          </div>
+          <HeroWorkflow />
         </div>
       </section>
 
-      {/* ------------------------------------------------------- The loop, bento */}
-      <section className="relative border-y border-line bg-ink-50 py-fib9">
-        <div className="bg-line-grid mask-radial absolute inset-0 opacity-60" />
+      {/* Roles band */}
+      <section className="border-b border-line bg-ink-50">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:gap-10">
+          <p className="shrink-0 text-sm font-medium text-ink-600">
+            Built for companies that value demonstrated ability — across
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {ROLES.map((role) => (
+              <li
+                key={role}
+                className="rounded-md border border-line bg-white px-2.5 py-1 text-xs font-medium text-ink-600"
+              >
+                {role}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
-        <div className="relative mx-auto max-w-6xl px-fib6">
+      {/* Problem */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
+        <SectionHeading
+          chip="Why Trialent"
+          title="Resumes tell you what someone claims."
+          trailing="Real projects show you how they work."
+        />
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-line bg-white p-6">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-md border border-line bg-ink-50 text-ink-500">
+                <FileSearch className="h-4 w-4" aria-hidden />
+              </span>
+              <h3 className="text-base font-semibold text-ink-900">Traditional hiring</h3>
+            </div>
+            <div className="mt-5">
+              <CheckList items={COMPARISON.traditional} tone="muted" />
+            </div>
+          </div>
+          <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-6">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-md border border-brand-200 bg-white text-brand-600">
+                <Target className="h-4 w-4" aria-hidden />
+              </span>
+              <h3 className="text-base font-semibold text-ink-900">
+                The Trialent approach
+              </h3>
+            </div>
+            <div className="mt-5">
+              <CheckList items={COMPARISON.trialent} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="border-y border-line bg-ink-50">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
           <SectionHeading
             chip="How it works"
-            title="One loop,"
-            trailing="from brief to hiring decision"
-            subtitle="Four steps. Each one leaves a record that neither side can fake after the fact."
+            title="Four steps from brief to decision."
+            subtitle="The same loop for every project, so every candidate is judged the same way."
           />
-
-          <div className="mt-fib8 grid gap-fib5 sm:grid-cols-2 lg:grid-cols-4">
-            {LOOP.map((step, index) => {
+          <ol className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((step, index) => {
               const Icon = step.icon;
               return (
-                <article
+                <li
                   key={step.title}
-                  className="rounded-2xl border border-line bg-white p-fib6 shadow-xs transition-shadow hover:shadow-md"
+                  className="rounded-xl border border-line bg-white p-5"
                 >
-                  <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 ring-1 ring-brand-100">
-                    <Icon className="h-5 w-5 text-brand-600" />
+                  <div className="flex items-center justify-between">
+                    <span className="tabular font-mono text-xs font-medium text-ink-400">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <Icon className="h-4 w-4 text-brand-600" aria-hidden />
                   </div>
-                  <p className="mt-fib5 text-xs font-semibold text-ink-400">
-                    Step {index + 1}
-                  </p>
-                  <h3 className="mt-fib2 font-bold text-ink-900">{step.title}</h3>
-                  <p className="mt-fib3 text-sm leading-relaxed text-ink-500">
-                    {step.body}
-                  </p>
-                </article>
+                  <h3 className="mt-6 text-sm font-semibold text-ink-900">
+                    {step.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm text-ink-500">{step.body}</p>
+                </li>
               );
             })}
+          </ol>
+        </div>
+      </section>
+
+      {/* Audiences */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="flex flex-col rounded-xl border border-line bg-white p-8">
+            <span className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-ink-50 text-ink-600">
+              <Users className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-ink-500">
+              For candidates
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink-900">
+              Prove what you can do, and get paid for it.
+            </h3>
+            <div className="mt-6 flex-1">
+              <CheckList items={FOR_CANDIDATES} />
+            </div>
+            <Link href="/projects" className="mt-8">
+              <Button>
+                Explore projects
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </Link>
+          </div>
+          <div className="flex flex-col rounded-xl border border-ink-800 bg-ink-900 p-8 text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink-700 bg-ink-800 text-ink-200">
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-ink-400">
+              For startups
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold">
+              See the work before you spend a round on the interview.
+            </h3>
+            <ul className="mt-6 flex-1 space-y-2.5">
+              {FOR_STARTUPS.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm text-ink-200">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" aria-hidden />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup?role=company" className="mt-8">
+              <Button className="bg-white text-ink-900 hover:bg-ink-100 active:bg-ink-200">
+                Post a project
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ----------------------------------------------------- Worked example */}
-      <section className="mx-auto max-w-6xl px-fib6 py-fib9">
-        <SectionHeading
-          chip="A real brief"
-          title="What a startup actually posts"
-          subtitle="Instead of four rounds of whiteboard interviews, a logistics startup posts this."
-        />
-
-        <div className="mt-fib8 overflow-hidden rounded-2xl bg-ink-950 text-white shadow-lg">
-          <div className="grid gap-fib7 p-fib7 sm:p-fib8 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <h3 className="text-xl font-bold tracking-tight">
-                Junior backend engineer trial
-              </h3>
-              <p className="mt-fib5 text-sm leading-relaxed text-ink-400">
-                REST API for inventory management, scoped so a capable junior can finish
-                it in a weekend without unpaid overtime.
-              </p>
-
-              <div className="mt-fib6 space-y-fib4 border-t border-ink-800 pt-fib6 text-sm text-ink-300">
-                <p className="font-semibold text-white">Concrete deliverables</p>
-                {[
-                  "Node.js / PostgreSQL repository with clean schema migrations.",
-                  "Token-based authentication and warehouse inventory CRUD endpoints.",
-                  "Integration tests covering critical paths, plus setup documentation.",
-                ].map((item) => (
-                  <p key={item} className="flex items-start gap-fib4">
-                    <span className="mt-fib1 text-brand-400">•</span>
-                    <span>{item}</span>
-                  </p>
-                ))}
+      {/* Evidence */}
+      <section className="border-y border-line bg-ink-50">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-24">
+          <div>
+            <SectionHeading
+              align="left"
+              chip="Evidence"
+              title="An evaluation you can act on."
+              subtitle="Companies evaluate against the criteria they published before anyone applied. Quality is recorded in clear bands next to observable facts — not a single opaque score."
+            />
+            <ul className="mt-6 space-y-3 text-sm text-ink-600">
+              <li className="flex gap-2.5">
+                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                Accepted work becomes verified history on the candidate&apos;s profile.
+              </li>
+              <li className="flex gap-2.5">
+                <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                Every decision comes with a written message to the candidate.
+              </li>
+            </ul>
+          </div>
+          <article
+            aria-label="Example evaluation"
+            className="rounded-xl border border-line bg-white shadow-md"
+          >
+            <header className="flex items-center justify-between border-b border-line px-5 py-4">
+              <div>
+                <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+                  Project evaluation · Example
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-ink-900">
+                  Real-time collaborative Kanban board
+                </p>
               </div>
-            </div>
-
-            <div className="space-y-fib5 lg:col-span-2">
-              {[
-                ["Scope", "5–10 hours · 5 day window"],
-                ["Guaranteed pay", "₹5,000 milestone"],
-                ["Outcome", "Hire, interview, or pass"],
-              ].map(([label, value]) => (
+              <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                <Check className="h-3.5 w-3.5" aria-hidden />
+                Accepted
+              </span>
+            </header>
+            <dl className="divide-y divide-line">
+              {EVIDENCE.map((row) => (
                 <div
-                  key={label}
-                  className="rounded-xl border border-ink-800 bg-ink-900 p-fib6"
+                  key={row.label}
+                  className="flex items-center justify-between gap-4 px-5 py-2.5 text-sm"
                 >
-                  <p className="text-xs font-medium text-ink-400">{label}</p>
-                  <p className="mt-fib2 font-semibold text-white">{value}</p>
+                  <dt className="text-ink-500">{row.label}</dt>
+                  <dd className="font-medium text-ink-900">{row.value}</dd>
                 </div>
               ))}
+            </dl>
+            <div className="border-t border-line px-5 py-4">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">
+                Company feedback
+              </p>
+              <p className="mt-1.5 text-sm text-ink-700">
+                &ldquo;Clear component structure and sensible state handling. Sync logic
+                was well tested; the README made review quick.&rdquo;
+              </p>
             </div>
+            <footer className="flex items-center justify-between rounded-b-xl border-t border-line bg-ink-50 px-5 py-3">
+              <span className="text-sm text-ink-600">Hiring signal</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">
+                <UserCheck className="h-4 w-4" aria-hidden />
+                Would interview
+              </span>
+            </footer>
+          </article>
+        </div>
+      </section>
+
+      {/* Payment */}
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-24">
+        <div className="order-2 lg:order-1">
+          <div className="rounded-xl border border-line bg-white p-6 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700">
+                <IndianRupee className="h-4 w-4" aria-hidden />
+              </span>
+              <p className="text-sm font-semibold text-ink-900">
+                Project terms · Example
+              </p>
+            </div>
+            <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-line pt-5">
+              <div>
+                <dt className="text-xs text-ink-500">Project value</dt>
+                <dd className="tabular mt-1 text-xl font-semibold text-ink-900">
+                  ₹5,000
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-ink-500">Scope</dt>
+                <dd className="tabular mt-1 text-xl font-semibold text-ink-900">
+                  8 hours
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-ink-500">Fee</dt>
+                <dd className="mt-1 text-xl font-semibold text-emerald-700">
+                  Stated upfront
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
-      </section>
-
-      {/* ------------------------------------------------------------- Roles */}
-      <section className="mx-auto max-w-6xl px-fib6 pb-fib9">
-        <SectionHeading
-          chip="Coverage"
-          title="Standardized evaluation"
-          trailing="across core technical roles"
-        />
-
-        <div className="mx-auto mt-fib7 flex max-w-3xl flex-wrap items-center justify-center gap-fib4">
-          {ROLES.map((role) => (
-            <span
-              key={role}
-              className="rounded-full border border-line bg-white px-fib5 py-fib3 text-sm font-medium text-ink-700 shadow-xs"
-            >
-              {role}
-            </span>
-          ))}
+        <div className="order-1 lg:order-2">
+          <SectionHeading
+            align="left"
+            chip="Paid work"
+            title="Real projects are paid projects."
+            subtitle="Every project states its fee and scope before anyone applies — no unpaid take-home tests, no open-ended assignments."
+          />
         </div>
       </section>
 
-      {/* --------------------------------------------------------- Closing CTA */}
-      <section className="mx-auto max-w-6xl px-fib6">
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-ink-50 px-fib7 py-fib9 text-center">
-          <div className="bg-dot-grid mask-radial absolute inset-0" />
-          <div className="relative">
-            <ShieldCheck className="mx-auto h-10 w-10 text-brand-600" />
-            <h2 className="mx-auto mt-fib6 max-w-2xl text-2xl font-bold text-ink-900 sm:text-3xl">
-              Stop guessing.
-              <span className="text-ink-400"> Watch them build something real.</span>
-            </h2>
-            <p className="mx-auto mt-fib5 max-w-lg text-ink-500">
-              Post one paid project and see what a candidate actually does with it.
-            </p>
-
-            <div className="mt-fib7 flex flex-col items-center justify-center gap-fib5 sm:flex-row">
-              <SignedOutCta>
-                <Link href="/signup?role=company">
-                  <Button size="lg" className="h-12 gap-fib3 px-fib7 text-base">
-                    <span>Post an evaluation project</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/how-it-works">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-12 gap-fib3 px-fib7 text-base"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    <span>See how it works</span>
-                  </Button>
-                </Link>
-              </SignedOutCta>
-            </div>
+      {/* Final CTA */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+        <div className="overflow-hidden rounded-2xl bg-ink-900 px-6 py-14 text-center sm:px-12">
+          <h2 className="mx-auto max-w-2xl text-balance text-3xl font-semibold text-white sm:text-4xl">
+            Stop guessing. See how candidates actually work.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base text-ink-300">
+            Post a paid project, or find one that shows what you can build.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/projects">
+              <Button size="lg" className="bg-white text-ink-900 hover:bg-ink-100">
+                Browse projects
+              </Button>
+            </Link>
+            <Link href="/for-companies">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-ink-600 bg-transparent text-white hover:border-ink-500 hover:bg-ink-800"
+              >
+                For startups
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

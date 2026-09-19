@@ -27,7 +27,7 @@ export default async function CreateProjectPage({
         <Link href="/company/projects" className="text-sm text-indigo-600">
           ← Projects
         </Link>
-        <h1 className="text-2xl font-bold mt-2">Create paid evaluation project</h1>
+        <h1 className="text-2xl font-semibold mt-2">Create paid evaluation project</h1>
       </div>
       {error && <StatusBanner tone="error">{error}</StatusBanner>}
       <form
@@ -90,7 +90,7 @@ export default async function CreateProjectPage({
                   <span className="block text-sm font-semibold text-ink-900">
                     {mode.label}
                     {!mode.available && (
-                      <span className="ml-fib3 rounded-full bg-ink-100 px-fib4 py-fib1 text-xs font-medium text-ink-500">
+                      <span className="ml-fib3 rounded-md bg-ink-100 px-fib4 py-fib1 text-xs font-medium text-ink-500">
                         Coming soon
                       </span>
                     )}

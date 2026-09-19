@@ -114,7 +114,7 @@ export default async function ManageProjectPage({
                 </h2>
               )}
               {application.status === "submitted" && (
-                <span className="rounded-full bg-brand-600 px-fib4 py-fib1 text-xs font-semibold text-white">
+                <span className="rounded-md bg-brand-600 px-fib4 py-fib1 text-xs font-semibold text-white">
                   New
                 </span>
               )}
@@ -123,7 +123,7 @@ export default async function ManageProjectPage({
               {application.candidateHeadline || application.candidateEmail}
             </p>
           </div>
-          <span className="rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
+          <span className="rounded-md bg-ink-100 px-fib5 py-fib2 text-xs font-semibold capitalize text-ink-700">
             {selected && application.workStatus
               ? `Selected · ${application.workStatus.replaceAll("_", " ")}`
               : application.status.replaceAll("_", " ")}
@@ -144,7 +144,7 @@ export default async function ManageProjectPage({
           {selected ? (
             <span
               aria-hidden="true"
-              className="inline-flex items-center gap-fib3 rounded-full bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
+              className="inline-flex items-center gap-fib3 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white transition-colors group-hover:bg-brand-700"
             >
               Evaluate work
               <CountBadge count={updates} className="bg-white text-brand-700" />
@@ -176,18 +176,18 @@ export default async function ManageProjectPage({
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{project.title}</h1>
+          <h1 className="text-2xl font-semibold">{project.title}</h1>
           <p className="text-sm text-slate-500 mt-1">
             Review applications, select candidates and evaluate their work.
           </p>
           <div className="mt-fib3 flex flex-wrap gap-fib3 text-xs font-semibold">
-            <span className="rounded-full bg-brand-50 px-fib4 py-fib2 text-brand-700">
+            <span className="rounded-md bg-brand-50 px-fib4 py-fib2 text-brand-700">
               {project.purpose === "hire"
                 ? `Hiring · ${selectedApplicants.length} of ${project.openings} opening${project.openings === 1 ? "" : "s"} filled`
                 : `Build only · ${selectedApplicants.length ? "candidate selected" : "no candidate yet"}`}
             </span>
             {project.maxApplicants !== null && (
-              <span className="rounded-full bg-ink-100 px-fib4 py-fib2 text-ink-700">
+              <span className="rounded-md bg-ink-100 px-fib4 py-fib2 text-ink-700">
                 {placesTaken} / {project.maxApplicants} application places taken
               </span>
             )}

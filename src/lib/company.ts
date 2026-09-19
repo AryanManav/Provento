@@ -1,4 +1,10 @@
-import type { ProjectOutcomeType, ProjectStatus } from "@/lib/types/database.types";
+import type {
+  ApplicationStatus,
+  ProjectOutcomeType,
+  ProjectStatus,
+  SelectionWorkStatus,
+} from "@/lib/types/database.types";
+import type { StatusTone } from "@/lib/status";
 import { COMPANY_SETUP_MIN_DESCRIPTION } from "@/lib/constants";
 import type { CompanyView } from "@/lib/types/domain";
 
@@ -32,15 +38,15 @@ export function companyProfileCompleteness(company: CompanyView | null): {
 /** A company-facing label for each project status, plus whether it needs them. */
 export const COMPANY_PROJECT_STATUS: Record<
   ProjectStatus,
-  { label: string; tone: "neutral" | "info" | "warning" | "success" | "danger" }
+  { label: string; tone: StatusTone }
 > = {
-  draft: { label: "Private — hidden from Browse", tone: "neutral" },
+  draft: { label: "Private", tone: "neutral" },
   pending_review: { label: "Pending review", tone: "neutral" },
-  published: { label: "Published", tone: "info" },
-  applications_open: { label: "Accepting applications", tone: "info" },
-  candidate_selected: { label: "Candidate selected", tone: "info" },
-  in_progress: { label: "In progress", tone: "info" },
-  submitted: { label: "Work submitted — review it", tone: "warning" },
+  published: { label: "Open", tone: "success" },
+  applications_open: { label: "Open", tone: "success" },
+  candidate_selected: { label: "Candidate selected", tone: "active" },
+  in_progress: { label: "In progress", tone: "active" },
+  submitted: { label: "Work submitted", tone: "attention" },
   under_review: { label: "Under review", tone: "warning" },
   revision_requested: { label: "Revision requested", tone: "warning" },
   completed: { label: "Completed", tone: "success" },
@@ -75,4 +81,83 @@ export function isCompanyReadyToPost(
     filled(company.companySize) &&
     filled(company.location)
   );
+}
+
+/**
+ * Where one application stands in a company's hiring pipeline. Once a
+ * candidate is selected, their own work status decides.
+ */
+export type PipelineStage =
+  | "new"
+  | "reviewing"
+  | "building"
+  | "to_evaluate"
+  | "accepted"
+  | "not_accepted"
+  | "rejected"
+  | "withdrawn"
+  | "cancelled";
+
+export function pipelineStage(
+  applicationStatus: ApplicationStatus,
+  workStatus: SelectionWorkStatus | null
+): PipelineStage {
+  if (applicationStatus === "withdrawn") return "withdrawn";
+  if (applicationStatus === "rejected") return "rejected";
+  if (applicationStatus !== "selected") {
+    return applicationStatus === "submitted" ? "new" : "reviewing";
+  }
+  switch (workStatus) {
+    case "submitted":
+    case "under_review":
+      return "to_evaluate";
+    case "completed":
+      return "accepted";
+    case "not_accepted":
+      return "not_accepted";
+    case "cancelled":
+      return "cancelled";
+    default:
+      return "building";
+  }
+}
+
+export const PIPELINE_DISPLAY: Record<
+  PipelineStage,
+  { label: string; tone: StatusTone; action: string }
+> = {
+  new: { label: "New application", tone: "attention", action: "Review application" },
+  reviewing: { label: "Reviewing", tone: "warning", action: "Decide" },
+  building: { label: "Building", tone: "active", action: "Open evaluation" },
+  to_evaluate: { label: "Work submitted", tone: "attention", action: "Evaluate work" },
+  accepted: { label: "Accepted", tone: "success", action: "View evaluation" },
+  not_accepted: { label: "Not accepted", tone: "danger", action: "View evaluation" },
+  rejected: { label: "Not selected", tone: "neutral", action: "View application" },
+  withdrawn: { label: "Withdrawn", tone: "neutral", action: "View application" },
+  cancelled: { label: "Cancelled", tone: "neutral", action: "View evaluation" },
+};
+
+/** The pipeline views on the Candidates page, and the stages each holds. */
+export const PIPELINE_VIEWS = {
+  all: { label: "All", stages: null },
+  review: { label: "To review", stages: ["new", "reviewing"] },
+  evaluation: { label: "In evaluation", stages: ["building", "to_evaluate"] },
+  decided: {
+    label: "Decided",
+    stages: ["accepted", "not_accepted", "rejected", "withdrawn", "cancelled"],
+  },
+} as const satisfies Record<string, { label: string; stages: PipelineStage[] | null }>;
+
+export type PipelineView = keyof typeof PIPELINE_VIEWS;
+
+/** Where an entry opens: the application before selection, the evaluation after. */
+export function pipelineHref(entry: {
+  projectId: string;
+  applicationId: string;
+  candidateId: string;
+  applicationStatus: ApplicationStatus;
+}): string {
+  return entry.applicationStatus === "selected"
+    ? `/company/projects/${entry.projectId}/review/${entry.candidateId}`
+    : `/company/projects/${entry.projectId}/applicants/${entry.applicationId}`;
 }

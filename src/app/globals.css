@@ -9,17 +9,48 @@
 }
 
 @layer base {
+  html {
+    font-feature-settings:
+      "cv11" 1,
+      "ss01" 1;
+  }
+
   body {
-    @apply bg-ink-100 text-ink-900 antialiased;
+    @apply bg-ink-100 text-sm text-ink-900 antialiased;
   }
 
   h1,
-  h2 {
+  h2,
+  h3 {
     @apply tracking-tight;
+  }
+
+  /* Amounts and counts line up in columns. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   :focus-visible {
     @apply outline-none ring-2 ring-brand-500/60 ring-offset-2 ring-offset-surface;
+  }
+}
+
+@layer utilities {
+  /* Swipeable strips (tabs, mobile nav) scroll without a visible bar. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

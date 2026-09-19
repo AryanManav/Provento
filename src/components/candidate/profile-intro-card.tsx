@@ -136,7 +136,7 @@ export function ProfileIntroCard({
             <Avatar
               name={user.fullName}
               src={user.avatarUrl}
-              className="h-24 w-24 rounded-2xl border-4 border-white text-2xl shadow-md"
+              className="h-24 w-24 rounded-full border-4 border-white text-2xl"
             />
             {!readOnly && (
               <ProfileImageUpload
@@ -182,9 +182,11 @@ export function ProfileIntroCard({
         )}
 
         <div className="mt-fib6 flex flex-wrap items-center gap-fib4">
-          <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{user.fullName}</h1>
+          <h1 className="text-2xl font-semibold text-ink-900 sm:text-3xl">
+            {user.fullName}
+          </h1>
           {verifiedCount > 0 && (
-            <span className="inline-flex items-center gap-fib2 rounded-full bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center gap-fib2 rounded-md bg-emerald-50 px-fib5 py-fib2 text-xs font-semibold text-emerald-700">
               <BadgeCheck className="h-3.5 w-3.5" />
               {verifiedCount} verified project{verifiedCount === 1 ? "" : "s"}
             </span>
@@ -194,7 +196,7 @@ export function ProfileIntroCard({
               href={`https://github.com/${verifiedGithub}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-fib2 rounded-full bg-ink-900 px-fib5 py-fib2 text-xs font-semibold text-white hover:bg-ink-700"
+              className="inline-flex items-center gap-fib2 rounded-md bg-ink-900 px-fib5 py-fib2 text-xs font-semibold text-white hover:bg-ink-700"
             >
               <Github className="h-3.5 w-3.5" />
               Verified @{verifiedGithub}
@@ -218,13 +220,13 @@ export function ProfileIntroCard({
         {(profile?.location || profile?.education) && (
           <div className="mt-fib5 flex flex-wrap gap-fib4">
             {profile.location && (
-              <span className="inline-flex items-center gap-fib3 rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
+              <span className="inline-flex items-center gap-fib3 rounded-md bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
                 <MapPin className="h-3.5 w-3.5" />
                 {profile.location}
               </span>
             )}
             {profile.education && (
-              <span className="inline-flex items-center gap-fib3 rounded-full bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
+              <span className="inline-flex items-center gap-fib3 rounded-md bg-ink-100 px-fib5 py-fib2 text-xs font-medium text-ink-600">
                 <GraduationCap className="h-3.5 w-3.5" />
                 {profile.education}
                 {profile.graduationYear ? ` · ${profile.graduationYear}` : ""}

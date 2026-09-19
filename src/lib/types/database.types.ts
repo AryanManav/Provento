@@ -861,6 +861,11 @@ export interface Database {
           subtitle: string | null;
           image_url: string | null;
           location: string | null;
+          /** Added by 20261003000000; absent until that migration runs. */
+          skills?: string[] | null;
+          verified_count?: number | null;
+          open_projects?: number | null;
+          company_size?: string | null;
         }[];
       };
       candidate_public_profile: {

@@ -72,6 +72,8 @@ export interface ProjectSummaryView {
   openings: number;
   /** The topic Browse lists it under. */
   category: ProjectCategory;
+  /** The tech stack, required skills first. */
+  stack: string[];
 }
 
 /** A project in Browse, with how many places are taken. */
@@ -146,6 +148,21 @@ export interface ApplicantView {
   candidateEmail: string | null;
 }
 
+/** One application in a company's hiring pipeline, across all its projects. */
+export interface PipelineEntry {
+  applicationId: string;
+  applicationStatus: ApplicationStatus;
+  workStatus: SelectionWorkStatus | null;
+  projectId: string;
+  projectTitle: string;
+  projectDeadline: string;
+  candidateId: string;
+  candidateName: string;
+  candidateHeadline: string | null;
+  candidateAvatarUrl: string | null;
+  appliedAt: string;
+}
+
 /**
  * A finished project whose delivered work the startup accepted — the evidence on
  * a candidate's profile. Written feedback and an outcome are added when the
@@ -169,9 +186,17 @@ export interface VerifiedTrialView {
   outcome: ProjectOutcomeType | null;
 }
 
+export interface ProfileChecklistItem {
+  label: string;
+  done: boolean;
+  href: string;
+}
+
 export interface CandidateDashboardStats {
   skillsCount: number;
   profileStrength: number;
+  /** What makes up the strength, in the order a candidate should fill it in. */
+  checklist: ProfileChecklistItem[];
 }
 
 export interface CompanyView {
@@ -308,6 +333,23 @@ export interface FeedbackView {
   createdAt: string;
 }
 
+/** A startup's evaluation, as the candidate it's about sees it. */
+export interface CandidateEvaluationView {
+  feedback: {
+    requirementsCompleted: boolean;
+    technicalQuality: string;
+    completeness: string;
+    testingQuality: string;
+    documentationQuality: string;
+    deadlineMet: boolean;
+    revisionsRequired: number;
+    writtenFeedback: string;
+    whatWasMissing: string | null;
+    recordedAt: string;
+  } | null;
+  outcome: ProjectOutcomeType | null;
+}
+
 export interface OutcomeView {
   id: string;
   outcome: ProjectOutcomeType;
@@ -393,7 +435,7 @@ export interface CompanyPublicView {
     interviews: number;
     cancelledProjects: number;
   };
-  openProjects: ProjectSummaryView[];
+  openProjects: BrowseProjectView[];
 }
 
 export interface AccountSettingsView {
@@ -426,9 +468,29 @@ export interface SearchResult {
   kind: "company" | "candidate";
   id: string;
   title: string;
+  /** Candidate headline, or company industry. */
   subtitle: string | null;
   imageUrl: string | null;
   location: string | null;
+  /** Candidate skills, or company tech stack. */
+  skills: string[];
+  /** Candidates: work a startup accepted. */
+  verifiedCount: number;
+  /** Companies: projects taking applications now. */
+  openProjects: number;
+  companySize: string | null;
+}
+
+/** A piece of work a startup accepted, as shown on a public profile. */
+export interface VerifiedWorkView {
+  projectId: string;
+  title: string;
+  companyId: string;
+  companyName: string;
+  category: ProjectCategory;
+  expectedHours: number;
+  stack: string[];
+  acceptedAt: string;
 }
 
 export interface FollowStats {
@@ -460,4 +522,5 @@ export interface CandidatePublicView {
     liveUrl: string | null;
   }[];
   verifiedProjects: number;
+  verifiedWork: VerifiedWorkView[];
 }

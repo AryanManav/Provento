@@ -1,26 +1,25 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Caveat } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const sans = Plus_Jakarta_Sans({
+const sans = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sans",
   display: "swap",
 });
 
-/** Used only for the handwritten note in the hero. */
-const hand = Caveat({
+/** Tabular data and code: amounts, IDs, tech stacks. */
+const mono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-hand",
+  weight: ["400", "500"],
+  variable: "--font-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Trialent - Try Talent Through Real Work Before You Hire",
+  title: "Trialent — Evaluate talent through real work",
   description:
-    "A project-based talent discovery and evaluation platform for startups to evaluate emerging technical talent through standardized paid work before hiring.",
+    "Startups evaluate engineers through standardized, paid micro-projects — giving both sides real evidence before a hiring decision.",
 };
 
 export default function RootLayout({
@@ -31,10 +30,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full ${sans.variable} ${hand.variable}`}
+      className={`h-full ${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+      <body className="flex min-h-full flex-col font-sans" suppressHydrationWarning>
         {children}
       </body>
     </html>

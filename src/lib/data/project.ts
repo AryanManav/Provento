@@ -19,7 +19,7 @@ import type {
 } from "@/lib/types/database.types";
 
 const SUMMARY_COLUMNS =
-  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, companies(name)";
+  "id, slug, title, description, status, expected_hours, payment_amount, currency, application_deadline, company_id, max_applicants, purpose, openings, category, companies(name), project_skills(skill_name, is_required)";
 
 interface RawProjectSummary {
   id: string;
@@ -37,6 +37,7 @@ interface RawProjectSummary {
   openings: number;
   category: ProjectCategory;
   companies: { name: string | null } | { name: string | null }[] | null;
+  project_skills?: { skill_name: string; is_required: boolean }[] | null;
 }
 
 function toSummary(row: RawProjectSummary): ProjectSummaryView {
@@ -56,6 +57,10 @@ function toSummary(row: RawProjectSummary): ProjectSummaryView {
     purpose: row.purpose ?? "hire",
     openings: row.openings ?? 1,
     category: row.category ?? "other",
+    // Required skills first: they're the stack the brief is built on.
+    stack: [...(row.project_skills ?? [])]
+      .sort((a, b) => Number(b.is_required) - Number(a.is_required))
+      .map((skill) => skill.skill_name),
   };
 }
 

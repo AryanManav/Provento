@@ -69,11 +69,11 @@ const grey = {
 };
 
 /**
- * Type and space both step by φ (1.618). Type uses √φ (1.272) for the half
- * steps, because a pure φ ramp jumps too far for dense UI text — `sm` is the
- * one pragmatic exception, kept at 14px for table and helper text.
+ * Type: a conventional product scale (12 → 60px) with tight leading on
+ * headings. Dense UI text lives at `sm` (14px); `base` is reading text.
  *
- * Spacing uses Fibonacci, which *is* φ expressed in integers.
+ * Space: a 4px grid. The `fibN` names are historical — they now resolve to the
+ * nearest grid step, so every screen that used them sits on the same grid.
  */
 const config: Config = {
   content: [
@@ -85,7 +85,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        hand: ["var(--font-hand)", "ui-serif", "cursive"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       colors: {
         // Semantic tokens — prefer these in new code.
@@ -107,40 +107,53 @@ const config: Config = {
         line: "var(--line)",
       },
       fontSize: {
-        xs: ["0.786rem", { lineHeight: "1.125rem" }], // 16 / φ^0.5
-        sm: ["0.875rem", { lineHeight: "1.3125rem" }], // pragmatic 14px
-        base: ["1rem", { lineHeight: "1.618rem" }], // φ leading
-        lg: ["1.272rem", { lineHeight: "1.75rem" }], // 16 × √φ
-        xl: ["1.618rem", { lineHeight: "2rem" }], // 16 × φ
-        "2xl": ["2.058rem", { lineHeight: "2.4rem" }],
-        "3xl": ["2.618rem", { lineHeight: "3rem" }], // 16 × φ²
-        "4xl": ["3.33rem", { lineHeight: "3.6rem" }],
-        "5xl": ["4.236rem", { lineHeight: "4.5rem" }], // 16 × φ³
-        "6xl": ["5.389rem", { lineHeight: "5.6rem" }], // 16 × φ^3.5
+        "2xs": ["0.6875rem", { lineHeight: "1rem" }], // 11 — overline, dense meta
+        xs: ["0.75rem", { lineHeight: "1rem" }], // 12 — caption, label
+        sm: ["0.875rem", { lineHeight: "1.25rem" }], // 14 — UI body
+        base: ["1rem", { lineHeight: "1.5rem" }], // 16 — reading body
+        lg: ["1.125rem", { lineHeight: "1.75rem" }], // 18 — body large, H4
+        xl: ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "-0.01em" }], // 20 — H3
+        "2xl": ["1.5rem", { lineHeight: "2rem", letterSpacing: "-0.015em" }], // 24 — H2
+        "3xl": ["1.875rem", { lineHeight: "2.25rem", letterSpacing: "-0.02em" }], // 30 — H1
+        "4xl": ["2.25rem", { lineHeight: "2.5rem", letterSpacing: "-0.025em" }], // 36
+        "5xl": ["3rem", { lineHeight: "3.25rem", letterSpacing: "-0.03em" }], // 48 — display
+        "6xl": ["3.75rem", { lineHeight: "4rem", letterSpacing: "-0.035em" }], // 60
       },
       spacing: {
-        // Fibonacci — φ in integers.
         fib1: "0.125rem", // 2
-        fib2: "0.1875rem", // 3
-        fib3: "0.3125rem", // 5
+        fib2: "0.25rem", // 4
+        fib3: "0.375rem", // 6
         fib4: "0.5rem", // 8
-        fib5: "0.8125rem", // 13
-        fib6: "1.3125rem", // 21
-        fib7: "2.125rem", // 34
-        fib8: "3.4375rem", // 55
-        fib9: "5.5625rem", // 89
+        fib5: "0.75rem", // 12
+        fib6: "1.25rem", // 20
+        fib7: "2rem", // 32
+        fib8: "3rem", // 48
+        fib9: "5rem", // 80
       },
       borderRadius: {
-        lg: "0.625rem",
-        xl: "0.875rem",
-        "2xl": "1.25rem",
+        sm: "0.25rem", // 4
+        DEFAULT: "0.375rem", // 6
+        md: "0.375rem", // 6
+        lg: "0.5rem", // 8 — controls
+        xl: "0.75rem", // 12 — cards
+        "2xl": "0.75rem", // 12 — cards (legacy name)
+        "3xl": "1rem", // 16 — large surfaces
       },
       boxShadow: {
-        xs: "0 1px 2px 0 rgb(15 14 13 / 0.04)",
-        sm: "0 1px 3px 0 rgb(15 14 13 / 0.06), 0 1px 2px -1px rgb(15 14 13 / 0.04)",
-        md: "0 4px 12px -2px rgb(15 14 13 / 0.08), 0 2px 4px -2px rgb(15 14 13 / 0.04)",
-        lg: "0 12px 32px -8px rgb(37 14 92 / 0.12), 0 4px 8px -4px rgb(15 14 13 / 0.05)",
-        glow: "0 0 0 1px rgb(107 46 240 / 0.12), 0 8px 24px -6px rgb(107 46 240 / 0.25)",
+        xs: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+        sm: "0 1px 2px 0 rgb(15 23 42 / 0.05), 0 1px 3px 0 rgb(15 23 42 / 0.04)",
+        md: "0 4px 8px -2px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04)",
+        lg: "0 12px 24px -8px rgb(15 23 42 / 0.10), 0 4px 8px -4px rgb(15 23 42 / 0.04)",
+        glow: "0 0 0 1px rgb(79 70 229 / 0.10), 0 8px 24px -8px rgb(79 70 229 / 0.20)",
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(2px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 150ms ease-out",
       },
     },
   },

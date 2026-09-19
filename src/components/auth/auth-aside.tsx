@@ -29,7 +29,7 @@ export function AuthAside({
           <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">
             Verified record
           </p>
-          <p className="mt-fib4 text-3xl font-extrabold text-ink-900">4 / 4</p>
+          <p className="mt-fib4 text-3xl font-semibold text-ink-900">4 / 4</p>
           <p className="text-xs text-ink-400">requirements completed</p>
 
           <div className="mt-fib6 flex items-end gap-fib3">
@@ -65,7 +65,7 @@ export function AuthAside({
             <KeyRound className="h-10 w-10 shrink-0 text-accent-500" />
           </div>
 
-          <p className="mt-fib6 text-lg font-bold text-ink-900">{headline}</p>
+          <p className="mt-fib6 text-lg font-semibold text-ink-900">{headline}</p>
           <p className="mt-fib3 text-sm leading-relaxed text-ink-500">{body}</p>
         </div>
 

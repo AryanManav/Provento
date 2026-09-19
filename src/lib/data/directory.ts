@@ -1,20 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
 import type { CandidatePublicView, FollowStats, SearchResult } from "@/lib/types/domain";
+import type { ProjectCategory } from "@/lib/types/database.types";
 
 /** Shortest query worth sending — search_directory ignores anything shorter. */
 export const MIN_SEARCH_LENGTH = 2;
 
 /**
  * Companies and discoverable candidates matching `query` (name, headline,
- * industry, skills or stack). Runs through search_directory, which returns only
- * public-safe fields.
+ * industry, location, skills or stack). With `browse`, a short or empty query
+ * lists instead — candidates by verified work, companies by open projects.
+ * Runs through search_directory, which returns only public-safe fields.
  */
-export async function searchDirectory(query: string): Promise<SearchResult[]> {
+export async function searchDirectory(
+  query: string,
+  { browse = false }: { browse?: boolean } = {}
+): Promise<SearchResult[]> {
   const term = query.trim().slice(0, 80);
-  if (term.length < MIN_SEARCH_LENGTH) return [];
+  if (term.length < MIN_SEARCH_LENGTH && !browse) return [];
 
   const supabase = await createClient();
-  const { data } = await supabase.rpc("search_directory", { query: term });
+  const { data } = await supabase.rpc("search_directory", {
+    query: term.length < MIN_SEARCH_LENGTH ? "" : term,
+  });
   return (data ?? []).map((row) => ({
     kind: row.kind === "company" ? "company" : "candidate",
     id: row.id,
@@ -22,6 +29,10 @@ export async function searchDirectory(query: string): Promise<SearchResult[]> {
     subtitle: row.subtitle,
     imageUrl: row.image_url,
     location: row.location,
+    skills: row.skills ?? [],
+    verifiedCount: row.verified_count ?? 0,
+    openProjects: row.open_projects ?? 0,
+    companySize: row.company_size ?? null,
   }));
 }
 
@@ -48,6 +59,16 @@ interface RawPublicProfile {
     live_url: string | null;
   }[];
   verified_projects: number;
+  verified_work?: {
+    project_id: string;
+    title: string;
+    company_id: string;
+    company_name: string;
+    category: ProjectCategory | null;
+    expected_hours: number;
+    stack: string[] | null;
+    accepted_at: string;
+  }[];
 }
 
 /**
@@ -87,6 +108,16 @@ export async function getCandidatePublicProfile(
       liveUrl: project.live_url,
     })),
     verifiedProjects: row.verified_projects ?? 0,
+    verifiedWork: (row.verified_work ?? []).map((work) => ({
+      projectId: work.project_id,
+      title: work.title,
+      companyId: work.company_id,
+      companyName: work.company_name,
+      category: work.category ?? "other",
+      expectedHours: work.expected_hours,
+      stack: work.stack ?? [],
+      acceptedAt: work.accepted_at,
+    })),
   };
 }
 
@@ -146,6 +177,10 @@ export async function getFollowing(userId: string): Promise<SearchResult[]> {
             subtitle: company.industry,
             imageUrl: company.logo_url,
             location: company.location,
+            skills: [],
+            verifiedCount: 0,
+            openProjects: 0,
+            companySize: null,
           },
         ]
       : [];
@@ -171,6 +206,10 @@ export async function getFollowing(userId: string): Promise<SearchResult[]> {
               subtitle: candidate.headline,
               imageUrl: candidate.avatarUrl,
               location: candidate.location,
+              skills: candidate.skills.map((skill) => skill.name),
+              verifiedCount: candidate.verifiedProjects,
+              openProjects: 0,
+              companySize: null,
             },
           ]
         : []

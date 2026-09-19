@@ -37,7 +37,7 @@ export function Modal({
         )}
       >
         <div className="flex items-center justify-between border-b border-line px-fib6 py-fib5">
-          <h2 id={titleId} className="text-lg font-bold text-ink-900">
+          <h2 id={titleId} className="text-lg font-semibold text-ink-900">
             {title}
           </h2>
           <button

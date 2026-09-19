@@ -21,7 +21,7 @@ export default async function CompanyDirectoryPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-fib6 px-fib5 py-fib7 sm:px-fib6">
       <div className="border-b border-line pb-fib6">
-        <h1 className="text-3xl font-extrabold text-ink-900">Companies</h1>
+        <h1 className="text-3xl font-semibold text-ink-900">Companies</h1>
         <p className="mt-fib2 text-sm text-ink-500">
           {companies.length} startup{companies.length === 1 ? "" : "s"} on Trialent ·{" "}
           {hiring} with open projects right now. Check who you&apos;d work for before you
@@ -48,7 +48,7 @@ export default async function CompanyDirectoryPage() {
                   className="h-12 w-12 rounded-xl text-base"
                 />
                 <div className="min-w-0">
-                  <p className="flex items-center gap-fib2 truncate font-bold text-ink-900 group-hover:text-brand-700">
+                  <p className="flex items-center gap-fib2 truncate font-semibold text-ink-900 group-hover:text-brand-700">
                     {company.name}
                     {company.verified && (
                       <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" />
@@ -83,7 +83,7 @@ export default async function CompanyDirectoryPage() {
 
               <span
                 className={cn(
-                  "mt-auto self-start rounded-full px-fib4 py-fib1 text-xs font-semibold",
+                  "mt-auto self-start rounded-md px-1.5 py-0.5 text-xs font-medium",
                   company.openProjects > 0
                     ? "bg-emerald-50 text-emerald-700"
                     : "bg-ink-100 text-ink-500"

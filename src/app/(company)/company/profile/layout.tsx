@@ -1,8 +1,16 @@
+import Link from "next/link";
+import { Eye } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCompanyIdForUser } from "@/lib/data/company";
 import { companyProfilePath } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/common/page-header";
 import { CompanyProfileTabs } from "@/components/company/company-profile-tabs";
 
+/**
+ * Editing the company's public page. The page itself lives at
+ * /companies/[id]; this is where each part of it is written.
+ */
 export default async function CompanyProfileLayout({
   children,
 }: {
@@ -12,15 +20,24 @@ export default async function CompanyProfileLayout({
   const companyId = await getCompanyIdForUser(user.id);
 
   return (
-    <div className="space-y-fib6 pb-fib8">
-      <div>
-        <h1 className="text-2xl font-bold text-ink-900">Company profile</h1>
-        <p className="mt-fib2 text-sm text-ink-500">
-          Candidates see this before applying to your paid projects. A complete profile
-          earns more, and better, applications.
-        </p>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <PageHeader
+          title="Edit company profile"
+          description="Candidates read your public page before applying to your projects. A complete page earns more, and better, applications."
+          actions={
+            companyId && (
+              <Link href={companyProfilePath(companyId)}>
+                <Button variant="outline">
+                  <Eye className="h-4 w-4" aria-hidden />
+                  View public page
+                </Button>
+              </Link>
+            )
+          }
+        />
+        <CompanyProfileTabs />
       </div>
-      <CompanyProfileTabs publicHref={companyId ? companyProfilePath(companyId) : null} />
       {children}
     </div>
   );

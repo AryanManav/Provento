@@ -42,11 +42,11 @@ export function CompanySetupForm({ company }: { company: CompanyView | null }) {
   return (
     <div className="space-y-fib6">
       <div className="space-y-fib3">
-        <span className="inline-flex items-center gap-fib2 rounded-full bg-brand-50 px-fib4 py-fib1 text-xs font-semibold text-brand-700">
+        <span className="inline-flex items-center gap-fib2 rounded-md bg-brand-50 px-fib4 py-fib1 text-xs font-semibold text-brand-700">
           <Building2 className="h-3.5 w-3.5" />
           Before you post
         </span>
-        <h1 className="text-3xl font-bold text-ink-900">Set up your company</h1>
+        <h1 className="text-3xl font-semibold text-ink-900">Set up your company</h1>
         <p className="text-sm text-ink-500">
           Candidates decide whether to do paid work for you from this. Once it&apos;s done
           your workspace opens and you can post projects. Logo, culture and links can be
@@ -161,8 +161,8 @@ export function CompanySetupForm({ company }: { company: CompanyView | null }) {
 
         <aside className="space-y-fib5 rounded-2xl border border-line bg-white p-fib6 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-ink-900">Required</h2>
-            <span className="text-sm font-bold text-brand-600">
+            <h2 className="font-semibold text-ink-900">Required</h2>
+            <span className="text-sm font-semibold text-brand-600">
               {done}/{checklist.length}
             </span>
           </div>

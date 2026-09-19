@@ -100,7 +100,7 @@ export default async function ApplicantProfilePage({
             {applicant.status === "selected" ? (
               <Link
                 href={`/company/projects/${project.id}/review/${applicant.profile.id}`}
-                className="inline-flex items-center gap-fib2 rounded-full bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-brand-700"
+                className="inline-flex items-center gap-fib2 rounded-md bg-brand-600 px-fib6 py-fib3 text-sm font-semibold text-white hover:bg-brand-700"
               >
                 Evaluate work →
               </Link>

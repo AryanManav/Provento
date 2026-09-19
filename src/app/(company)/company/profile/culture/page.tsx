@@ -28,7 +28,7 @@ export default async function CompanyCulturePage({
       {saved && <StatusBanner tone="success">Culture and stack saved.</StatusBanner>}
 
       <div>
-        <h2 className="text-lg font-bold text-ink-900">Culture and stack</h2>
+        <h2 className="text-lg font-semibold text-ink-900">Culture and stack</h2>
         <p className="text-sm text-ink-500">
           Shown on your public page, so candidates know what they&apos;d work with and
           how.
@@ -54,7 +54,7 @@ export default async function CompanyCulturePage({
             ([value, label]) => (
               <label
                 key={value}
-                className="flex cursor-pointer items-center gap-fib2 rounded-full border border-line px-fib5 py-fib3 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-700"
+                className="flex cursor-pointer items-center gap-fib2 rounded-md border border-line px-fib5 py-fib3 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-700"
               >
                 <input
                   type="radio"
